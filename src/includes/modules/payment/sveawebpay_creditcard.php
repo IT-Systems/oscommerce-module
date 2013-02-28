@@ -2,7 +2,7 @@
 /*
 HOSTED SVEAWEBPAY PAYMENT MODULE FOR OSCommerce
 -----------------------------------------------
-Version 4.0 - OSCommerce
+Version 4.3c - OSCommerce
 */
 
 class sveawebpay_creditcard {
@@ -15,7 +15,7 @@ class sveawebpay_creditcard {
 
     $_SESSION['SWP_CODE'] = $this->code;
 
-    $this->form_action_url = (MODULE_PAYMENT_SWPCREDITCARD_STATUS == 'True') ? 'https://test.sveaekonomi.se/webpay/payment' : 'https://webpay.sveaekonomi.se/webpay/payment';
+    $this->form_action_url = (MODULE_PAYMENT_SWPCREDITCARD_STATUS == 'Test') ? 'https://test.sveaekonomi.se/webpay/payment' : 'https://webpay.sveaekonomi.se/webpay/payment';
     $this->title = MODULE_PAYMENT_SWPCREDITCARD_TEXT_TITLE;
     $this->description = MODULE_PAYMENT_SWPCREDITCARD_TEXT_DESCRIPTION;
     $this->enabled = ((MODULE_PAYMENT_SWPCREDITCARD_STATUS == 'True') ? true : false);
@@ -240,8 +240,8 @@ class sveawebpay_creditcard {
     // Ordered Products
     foreach($order->products as $i => $Item) {
          
-        $tax = ($Item['tax'] / 100) * $this->convert_to_currency($Item['price'],$currency);
-        $price = $this->convert_to_currency($Item['price'],$currency) + $tax;
+        $tax = ($Item['tax'] / 100) * $this->convert_to_currency($Item['final_price'],$currency);
+        $price = $this->convert_to_currency($Item['final_price'],$currency) + $tax;
         
         $totalPrice = $totalPrice+($price * $Item['qty']);
         $totalTax = $totalTax + ($tax * $Item['qty']);

@@ -2,7 +2,7 @@
 /*
 HOSTED SVEAWEBPAY PAYMENT MODULE FOR OSCommerce
 -----------------------------------------------
-Version 4.3b - OSCommerce
+Version 4.3c - OSCommerce
 */
 
 class sveawebpay_invoice {
