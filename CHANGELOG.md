@@ -1,5 +1,9 @@
 # Changelog for Svea WebPay payment module
 
+## v 4.3c
++ Fixed production/test issue for card
++ Fixed bundled price issue in card payment
+
 ## v 4.3b
 + Fixed more encoding issues 
 + Fixed handling fee bugs
