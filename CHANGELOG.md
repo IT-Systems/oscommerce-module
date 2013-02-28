@@ -1,5 +1,9 @@
 # Changelog for Svea WebPay payment module
 
+## v 4.3b
++ Fixed more encoding issues 
++ Fixed handling fee bugs
+
 ## v 4.3a
 +  Fixed encoding issues
 +  Added jQuery include for partpay too
