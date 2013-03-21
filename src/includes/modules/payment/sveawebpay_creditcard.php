@@ -15,7 +15,7 @@ class sveawebpay_creditcard {
 
     $_SESSION['SWP_CODE'] = $this->code;
 
-    $this->form_action_url = (MODULE_PAYMENT_SWPCREDITCARD_STATUS == 'Test') ? 'https://test.sveaekonomi.se/webpay/payment' : 'https://webpay.sveaekonomi.se/webpay/payment';
+    $this->form_action_url = (MODULE_PAYMENT_SWPCREDITCARD_MODE == 'Test') ? 'https://test.sveaekonomi.se/webpay/payment' : 'https://webpay.sveaekonomi.se/webpay/payment';
     $this->title = MODULE_PAYMENT_SWPCREDITCARD_TEXT_TITLE;
     $this->description = MODULE_PAYMENT_SWPCREDITCARD_TEXT_DESCRIPTION;
     $this->enabled = ((MODULE_PAYMENT_SWPCREDITCARD_STATUS == 'True') ? true : false);
