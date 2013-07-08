@@ -2,7 +2,7 @@
 /*
 HOSTED SVEAWEBPAY PAYMENT MODULE FOR OSCommerce
 -----------------------------------------------
-Version 4.3c - OSCommerce
+Version 4.0 - OSCommerce
 */
 
 class sveawebpay_invoice {
@@ -12,13 +12,12 @@ class sveawebpay_invoice {
 
     $this->code = 'sveawebpay_invoice';
     $this->version = 2;
-    
-    
+
+
     $_SESSION['SWP_CODE'] = $this->code;
 
     //$this->form_action_url = MODULE_PAYMENT_SWPINVOICE_URL;
     //$this->form_action_url = tep_href_link(FILENAME_CHECKOUT_PROCESS, '', 'SSL', false);
-    
     $this->title = MODULE_PAYMENT_SWPINVOICE_TEXT_TITLE;
     $this->description = MODULE_PAYMENT_SWPINVOICE_TEXT_DESCRIPTION;
     $this->enabled = ((MODULE_PAYMENT_SWPINVOICE_STATUS == 'True') ? true : false);
@@ -85,48 +84,48 @@ class sveawebpay_invoice {
     global $order, $currencies;
 
     $fields = array();
-  
+
     // image
     if ($this->display_images)
-    
+
     $fields[] = array('title' => '<img src=images/SveaWebPay-Faktura-100px.png />', 'field' => '');
-    
+
     //Return error
     if (isset($_REQUEST['sveaError'])){
         $fields[] = array('title' => '<span style="color:red">'.$this->responseCodes($_REQUEST['sveaError']).'</span>', 'field' => '');
     }
-    
+
     //jQuery Fix for osCommerce MS2.2
     if (PROJECT_VERSION == 'osCommerce 2.2-MS2' || PROJECT_VERSION == 'osCommerce Online Merchant v2.2 RC2a'){
-        $jqueryJs = '<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>';
-        $fields[] = array('title' => '', 'field' => $jqueryJs);   
+    $jqueryJs = '<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>';
+    $fields[] = array('title' => '', 'field' => $jqueryJs);
     }
-    
+
     //Fields to insert/show when SWP is chosen
     $sveaJs =  '<script type="text/javascript" src="'.$this->web_root . 'ext/jquery/svea/checkout/svea.js"></script>';
-    
+
     $fields[] = array('title' => '', 'field' => $sveaJs);
-    
+
     $sveaIsCompany    = FORM_TEXT_COMPANY_OR_PRIVATE.' <br /><select name="sveaIsCompany" id="sveaIsCompany">
                         <option value="" selected="selected">'.FORM_TEXT_PRIVATE.'</option>
                         <option value="true">'.FORM_TEXT_COMPANY.'</option>
-                        </select><br />'; 
+                        </select><br />';
     $sveaPnr          = FORM_TEXT_SS_NO.'<br /><input type="text" name="sveaPnr" id="sveaPnr" maxlength="11" value=""><br />';
 
     //For finland there is no getAdress
     if ($order->info['currency'] == 'EUR'){
         $sveaGetAdressBtn = '';
     }else{
-        $sveaGetAdressBtn = '<button type="button" id="getSveaAdressInvoice" onclick="getAdress()">'.FORM_TEXT_INVOICE_GET_ADDRESS.'</button><br />'; 
+        $sveaGetAdressBtn = '<button type="button" id="getSveaAdressInvoice" onclick="getAdress()">'.FORM_TEXT_GET_ADDRESS.'</button><br />';
     }
-           
+
     $sveaAdressDD     = FORM_TEXT_INVOICE_ADDRESS.'<br /><select name="adressSelector_fakt" id="adressSelector_fakt" style="display:none"></select><br />';
-    
+
     $sveaField        = '<div id="sveaFaktField" style="display:none">'.$sveaIsCompany.$sveaPnr.$sveaAdressDD.$sveaGetAdressBtn.'</div>';
-             
+
     $fields[] = array('title' => $sveaField, 'field' => '<span id="pers_nr_error_fakt" style="color:red"></span>');
-    
-    
+
+
     // handling fee
     if (isset($this->handling_fee) && $this->handling_fee > 0) {
       $paymentfee_cost = $this->handling_fee;
@@ -155,9 +154,8 @@ class sveawebpay_invoice {
 
   function process_button() {
     require('ext/modules/payment/svea/svea.php');
-    
+
     global $order, $language;
-    
     //Get the order
     $new_order_rs = tep_db_query("select orders_id from ".TABLE_ORDERS." order by orders_id desc limit 1");
     $new_order_field = tep_db_fetch_array($new_order_rs);
@@ -166,35 +164,35 @@ class sveawebpay_invoice {
     $user_country = $order->billing['country']['iso_code_2'];
     $user_language = tep_db_fetch_array(tep_db_query("select code from " . TABLE_LANGUAGES . " where directory = '" . $language . "'"));
     $user_language = $user_language['code'];
-    
+
     // switch to default currency if the customers currency is not supported
     $currency = $order->info['currency'];
     if(!in_array($currency, $this->allowed_currencies))
       $currency = $this->default_currency;
-  
-    
+
+
     // we'll store the generated orderid in a session variable so we can check
     // it when returning from payment gateway for security reasons:
     // Set up SSN and company
     $_SESSION['swp_orderid'] = $hosted_params['OrderId'];
 
-    
+
     /*** Set up The request Array ***/
-    
+
     // Order rows
     foreach($order->products as $productId => $product) {
-    
+
         $orderRows = Array(
-              "Description" => utf8_encode($product['name']),
+              "Description" => $product['name'],
               "PricePerUnit" => $this->convert_to_currency(round($product['final_price'],2),$currency),
               "NrOfUnits" => $product['qty'],
               "Unit" => "st",
               "VatPercent" => $product['tax'],
               "DiscountPercent" => 0
             );
-            
+
         if (isset($clientInvoiceRows)){
-    
+
             $clientInvoiceRows[$productId] = $orderRows;
         }else{
             $clientInvoiceRows[] = $orderRows;
@@ -202,7 +200,7 @@ class sveawebpay_invoice {
 
     }
 
-    
+
     // handle order totals
 
     global $order_total_modules;
@@ -232,7 +230,7 @@ class sveawebpay_invoice {
             $shipping_description = $shipping->title;
 
             $clientInvoiceRows[] = Array(
-              "Description" => utf8_encode($shipping_description),
+              "Description" => $shipping_description,
               "PricePerUnit" => $this->convert_to_currency($_SESSION['shipping']['cost'],$currency),
               "NrOfUnits" => 1,
               "VatPercent" => (string) tep_get_tax_rate($shipping->tax_class, $order->delivery['country']['id'], $order->delivery['zone_id']),
@@ -242,12 +240,12 @@ class sveawebpay_invoice {
         case 'ot_coupon':
 
           $clientInvoiceRows[] = Array(
-              "Description" => utf8_encode(strip_tags($order_total['title'])),
+              "Description" => strip_tags($order_total['title']),
               "PricePerUnit" => -$this->convert_to_currency(strip_tags($order_total['value']),$currency),
               "NrOfUnits" => 1,
               "VatPercent" => 0,
               "DiscountPercent" => 0
-            );      
+            );
         break;
         // default case handles order totals like handling fee, but also
         // 'unknown' items from other plugins. Might cause problems.
@@ -259,7 +257,7 @@ class sveawebpay_invoice {
             $order_total['value'] = (strip_tags($order_total['value']) / ((100 + $tax_rate) / 100));
 
             $clientInvoiceRows[] = Array(
-              "Description" => utf8_encode(strip_tags($order_total['title'])),
+              "Description" => strip_tags($order_total['title']),
               "PricePerUnit" => $this->convert_to_currency(strip_tags($order_total['value']),$currency),
               "NrOfUnits" => 1,
               "VatPercent" => $tax_rate,
@@ -269,14 +267,26 @@ class sveawebpay_invoice {
       }
       $i++;
     }
-    
-    
+
+    if (isset($this->handling_fee) && $this->handling_fee > 0) {
+      $paymentfee_cost = $this->handling_fee;
+      $invoiceCost     = $this->handling_fee * 0.8;
+
+      $clientInvoiceRows[] = Array(
+              "Description" => 'Faktureringsavgift',
+              "PricePerUnit" => $this->convert_to_currency($invoiceCost,$currency),
+              "NrOfUnits" => 1,
+              "VatPercent" => 25,
+              "DiscountPercent" => 0
+            );
+    }
+
     //IsCompany
-    $company = ($_POST['sveaIsCompany'] == 'true') ? True: false;
-    
+    $company = ($_POST['sveaCompany'] == 'true') ? True: false;
+
     //Get svea configuration for each country based on currency
     $sveaConf = getCountryConfigInvoice($order->info['currency']) ;
-    
+
     //The createOrder Data
     $request = Array(
           "Auth" => Array(
@@ -293,11 +303,12 @@ class sveawebpay_invoice {
     		"AddressSelector" => $_POST['adressSelector_fakt'],
             "PreApprovedCustomerId" => 0
           ),
-          
+
           "InvoiceRows" => array('ClientInvoiceRowInfo' => $clientInvoiceRows)
         );
-     
+
      $_SESSION['swp_fakt_request'] = $request;
+
      if ($this->handling_fee > 0){
         echo '
         <script type="text/javascript">
@@ -305,12 +316,12 @@ class sveawebpay_invoice {
         </script>
         ';
      }
-     
-    
+
+
   }
 
      //Error Responses
-    function responseCodes($err){      
+    function responseCodes($err){
         switch ($err){
             case "CusomterCreditRejected" :
                 return ERROR_CODE_1;
@@ -342,20 +353,19 @@ class sveawebpay_invoice {
             default :
                 return ERROR_CODE_DEFAULT;
                 break;
-            
+
         }
     }
 
   function before_process() {
-            
+
     global $order, $order_totals, $language, $billto, $sendto;
-    
-    
+
+
     //Put all the data in request tag
     $data['request'] = $_SESSION['swp_fakt_request'];
-
    	$svea_server = (MODULE_PAYMENT_SWPINVOICE_MODE == 'Test') ? 'https://webservices.sveaekonomi.se/webpay_test/SveaWebPay.asmx?WSDL' : 'https://webservices.sveaekonomi.se/webpay/SveaWebPay.asmx?WSDL';
-    
+
     //Call Soap
     $client = new SoapClient( $svea_server );
 
@@ -365,30 +375,30 @@ class sveawebpay_invoice {
     /*****
     Responsehandling
     ******/
-     
+
     $response = $svea_req->CreateOrderResult->RejectionCode;
-    
-    
-    
+
+
+
     // handle failed payments
     if ($response != 'Accepted') {
       $_SESSION['SWP_ERROR'] = $this->responseCodes($response);
-      
+
       $payment_error_return = 'payment_error=' . $this->code;
       tep_redirect(tep_href_link(FILENAME_CHECKOUT_PAYMENT, $payment_error_return));
     }
-    
-    
+
+
     // handle successful payments
     if($response == 'Accepted'){
         unset($_SESSION['swp_fakt_request']);
         $order->info['securityNumber']     = $svea_req->CreateOrderResult->SecurityNumber;
- 
+
     }
-      
+
     if (isset($svea_req->CreateOrderResult->LegalName)) {
-      $name = explode(',',$svea_req->CreateOrderResult->LegalName); 
-        
+      $name = explode(',',$svea_req->CreateOrderResult->LegalName);
+
       $order->billing['firstname']       = $name[1];
       $order->billing['lastname']        = $name[0];
       $order->billing['street_address']  = $svea_req->CreateOrderResult->AddressLine1;
@@ -396,7 +406,7 @@ class sveawebpay_invoice {
       $order->billing['city']            = $svea_req->CreateOrderResult->Postarea;
       $order->billing['state']           = '';                    // "state" is not applicable in SWP countries
       $order->billing['postcode']        = $svea_req->CreateOrderResult->Postcode;
-    
+
       $order->delivery['firstname']      = $name[1];
       $order->delivery['lastname']       = $name[0];
       $order->delivery['street_address'] = $svea_req->CreateOrderResult->AddressLine1;
@@ -412,21 +422,21 @@ class sveawebpay_invoice {
 
     if(array_key_exists($_GET['PaymentMethod'], $table))
       $order->info['payment_method'] = $table[$_GET['PaymentMethod']];
-    
+
     // set billing and shipping address to the one fetched from Svea hosted page instead of the local OsCommerce account
     $firstname      =     $order->billing['firstname'];
-    $lastname       =     $order->billing['lastname'];    
+    $lastname       =     $order->billing['lastname'];
     $street_address =     $order->billing['street_address'];
     $suburb         =     $order->billing['suburb'];
-    $city           =     $order->billing['city'];        
+    $city           =     $order->billing['city'];
     $postcode       =     $order->billing['postcode'];
     $country        =     $order->billing['country']['id'];
-    
+
     // let's check if the address is already stored in the OsCommerce address book (not a first time user)
     $customer_id = $_SESSION['customer_id'];
     $query = tep_db_query("select address_book_id from " . TABLE_ADDRESS_BOOK . " where customers_id = '" . (int)$customer_id . "' and entry_firstname = '$firstname' and entry_lastname = '$lastname' and entry_street_address = '$street_address' and entry_postcode = '$postcode'");
     $address = tep_db_fetch_array($query);
-     
+
     // first time user; address wasn't found, let's insert it into the database for future use
     if (!$address) {
       $query = mysql_query("insert into " . TABLE_ADDRESS_BOOK . " values(NULL, '$customer_id', 'm', ' ', '$firstname', '$lastname', '$street_address', '$suburb', '$postcode', '$city', NULL, '$country', '0')");
@@ -438,7 +448,7 @@ class sveawebpay_invoice {
       $billto = $address['address_book_id'];
       $sendto = $address['address_book_id'];
     }
-    
+
   }
 
   // if payment accepted, insert order into database
@@ -451,22 +461,44 @@ class sveawebpay_invoice {
                               'customer_notified' => 0,
                               'comments'          => 'Accepted by SveaWebPay '.date("Y-m-d G:i:s") .' Security Number #: '.$order->info['securityNumber']);
     tep_db_perform(TABLE_ORDERS_STATUS_HISTORY, $sql_data_array);
-    
-   
+
+    if ($this->handling_fee > 0){
+
+    switch (MODULE_PAYMENT_SWPINVOICE_DEFAULT_CURRENCY){
+            case 'SEK':
+                $currency = 'kr';
+            break;
+            case 'EUR':
+                $currency = 'â‚¬';
+            break;
+
+    }
+
+    $handlingFee   = $this->convert_to_currency($this->handling_fee,$order->info['currency']);
+    $invoiceFeeVAT = $handlingFee * 0.2;
+    $invoicePrice  = $handlingFee * 0.8;
+
+    tep_db_query("UPDATE ".TABLE_ORDERS_TOTAL." set value = value+".$handlingFee.", text = CONCAT(FORMAT(value,0), '".$currency."') WHERE orders_id = ".$insert_id." AND class = 'ot_total'");
+    tep_db_query("UPDATE ".TABLE_ORDERS_TOTAL." set value = value+".$invoiceFeeVAT.", text = CONCAT(FORMAT(value,0), '".$currency."') WHERE orders_id = ".$insert_id." AND class = 'ot_tax'");
+    tep_db_query("UPDATE ".TABLE_ORDERS_TOTAL." set value = value+".$handlingFee.", text = CONCAT(FORMAT(value,0), '".$currency."') WHERE orders_id = ".$insert_id." AND class = 'ot_subtotal'");
+    tep_db_query("INSERT INTO ".TABLE_ORDERS_PRODUCTS." (orders_products_id, orders_id, products_id, products_model, products_name, products_price, final_price, products_tax, products_quantity)
+          VALUES ('','".$insert_id."','','','Faktureringsavgift','".$invoicePrice."','".$invoicePrice."','25.00','1')");
+     }
+
     return false;
   }
 
   // sets error message to the session error value
   function get_error() {
     $error_text['title'] = ERROR_MESSAGE_PAYMENT_FAILED;
-    
+
     if($_SESSION['SWP_ERROR'])
       $error_text['error'] = $_SESSION['SWP_ERROR'];
     else
-      $error_text['error'] = "Unexpected error during payment"; // if session variable was not found, normally this shouldn't happen 
-      
+      $error_text['error'] = "Unexpected error during payment"; // if session variable was not found, normally this shouldn't happen
+
     return $error_text;
-                 
+
   }
 
   // standard check if installed function
@@ -539,14 +571,13 @@ class sveawebpay_invoice {
 
   function convert_to_currency($value, $currency) {
     global $currencies;
-    
+
     $length = strlen($value);
     $decimal_pos = strpos($value, ".");
-    $decimal_places = ($length - $decimal_pos) -1;    
+    $decimal_places = ($length - $decimal_pos) -1;
     $decimal_symbol = $currencies->currencies[$currency]['decimal_point'];
-    
     // item price is ALWAYS given in internal price from the products DB, so just multiply by currency rate from currency table
-    return number_format(tep_round($value * $currencies->currencies[$currency]['value'], $decimal_places), 2, $decimal_symbol, '');
+    return tep_round($value * $currencies->currencies[$currency]['value'], $decimal_places);
   }
 }
 ?>

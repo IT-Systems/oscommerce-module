@@ -1,11 +1,14 @@
 # Changelog for Svea WebPay payment module
 
+## v 4.3.1c
++ Fixed rounding bug for price
+
 ## v 4.3c
 + Fixed production/test issue for card
 + Fixed bundled price issue in card payment
 
 ## v 4.3b
-+ Fixed more encoding issues 
++ Fixed more encoding issues
 + Fixed handling fee bugs
 
 ## v 4.3a
@@ -24,7 +27,7 @@
 +  Added Finnish language files
 +  Fixed a bug occurring when tax rate is set to 0
 
-##v 3.02 
+##v 3.02
 +  Fixed handling fee being calculated incorrectly when set to a percentage
 +  Fixed a minor currency conversion bug
 

@@ -2,7 +2,7 @@
 /*
 HOSTED SVEAWEBPAY PAYMENT MODULE FOR OSCommerce
 -----------------------------------------------
-Version 4.3c - OSCommerce
+Version 4.0 - OSCommerce
 */
 
 class sveawebpay_internetbank {
@@ -15,7 +15,7 @@ class sveawebpay_internetbank {
 
     $_SESSION['SWP_CODE'] = $this->code;
 
-    $this->form_action_url = (MODULE_PAYMENT_SWPINTERNETBANK_STATUS == 'Test') ? 'https://test.sveaekonomi.se/webpay/payment' : 'https://webpay.sveaekonomi.se/webpay/payment';
+    $this->form_action_url = (MODULE_PAYMENT_SWPINTERNETBANK_STATUS == 'True') ? 'https://test.sveaekonomi.se/webpay/payment' : 'https://webpay.sveaekonomi.se/webpay/payment';
     $this->title = MODULE_PAYMENT_SWPINTERNETBANK_TEXT_TITLE;
     $this->description = MODULE_PAYMENT_SWPINTERNETBANK_TEXT_DESCRIPTION;
     $this->enabled = ((MODULE_PAYMENT_SWPINTERNETBANK_STATUS == 'True') ? true : false);
@@ -114,7 +114,7 @@ class sveawebpay_internetbank {
 
   function process_button() {
     global $order, $language;
-  
+
     $new_order_rs = tep_db_query("select orders_id from ".TABLE_ORDERS." order by orders_id desc limit 1");
     $new_order_field = tep_db_fetch_array($new_order_rs);
 
@@ -122,29 +122,29 @@ class sveawebpay_internetbank {
     $user_country = $order->billing['country']['iso_code_2'];
     $user_language = tep_db_fetch_array(tep_db_query("select code from " . TABLE_LANGUAGES . " where directory = '" . $language . "'"));
     $user_language = $user_language['code'];
-    
+
     // switch to default currency if the customers currency is not supported
     $currency = $order->info['currency'];
     if(!in_array($currency, $this->allowed_currencies))
       $currency = $this->default_currency;
-      
-      
+
+
     //Import SVEA files
     include('svea/SveaConfig.php');
-    
+
     //SVEA config settings
     $configSvea = SveaConfig::getConfig();
     $configSvea->merchantId = MODULE_PAYMENT_SWPINTERNETBANK_MERCHANT_ID;
-    $configSvea->secret = MODULE_PAYMENT_SWPINTERNETBANK_SW; 
-    
+    $configSvea->secret = MODULE_PAYMENT_SWPINTERNETBANK_SW;
+
     //Build Order rows
     $totalPrice = 0;
     $totalTax = 0;
-    
+
     $paymentRequest = new SveaPaymentRequest();
     $orderSvea = new SveaOrder();
-    $paymentRequest->order = $orderSvea;;  
-           
+    $paymentRequest->order = $orderSvea;;
+
     // handle order totals
     global $order_total_modules;
     // ugly hack to accomodate ms2.2
@@ -174,19 +174,19 @@ class sveawebpay_internetbank {
             //Nya rader här
             $shippingPriceExVat   = $this->convert_to_currency($_SESSION['shipping']['cost'],$currency);
             $shippingTaxRate = (string) tep_get_tax_rate($shipping->tax_class, $order->delivery['country']['id'], $order->delivery['zone_id']);
-            $shippingTax     = ($shippingTaxRate / 100) * $shippingPriceExVat; 
-            
+            $shippingTax     = ($shippingTaxRate / 100) * $shippingPriceExVat;
+
             $orderRow = new SveaOrderRow();
             $orderRow->amount = number_format(round($shippingPriceExVat+$shippingTax,2),2,'','');
             $orderRow->vat = number_format(round($shippingTax,2),2,'','');
             $orderRow->name = $shipping_description;
             $orderRow->quantity = 1;
             $orderRow->unit = "st";
-                	
+
             //Add the order rows to your order
             $orderSvea->addOrderRow($orderRow);
-            
-            //Add to totals    
+
+            //Add to totals
             $totalPrice = $totalPrice+$shippingPriceExVat+$shippingTax;
             $totalTax = $totalTax + $shippingTax;
 
@@ -194,18 +194,18 @@ class sveawebpay_internetbank {
         case 'ot_coupon':
           //Nya rader här
           $discountPrice = -$this->convert_to_currency(strip_tags($order_total['value']),$currency);
-          
+
           $orderRow = new SveaOrderRow();
           $orderRow->amount = number_format(round($discountPrice,2),2,'','');
           $orderRow->vat = 0;
           $orderRow->name = strip_tags($order_total['title']);
           $orderRow->quantity = 1;
           $orderRow->unit = "st";
-          
+
           //Add the order rows to your order
           $orderSvea->addOrderRow($orderRow);
-        
-          //Add to totals    
+
+          //Add to totals
           $totalPrice = $totalPrice+$discountPrice;
 
         break;
@@ -217,36 +217,36 @@ class sveawebpay_internetbank {
           // if displayed WITH tax, REDUCE the value since it includes tax
           if (DISPLAY_PRICE_WITH_TAX == 'true')
             $order_total['value'] = (strip_tags($order_total['value']) / ((100 + $tax_rate) / 100));
-            $otherTax     = ($tax_rate / 100) * $order_total['value']; 
-            
+            $otherTax     = ($tax_rate / 100) * $order_total['value'];
+
             $orderRow = new SveaOrderRow();
             $orderRow->amount = number_format(round($order_total['value']+$otherTax,2),2,'','');
             $orderRow->vat = number_format(round($otherTax,2),2,'','');
             $orderRow->name = strip_tags($order_total['title']);
             $orderRow->quantity = 1;
             $orderRow->unit = "st";
-                	
+
             //Add the order rows to your order
             $orderSvea->addOrderRow($orderRow);
-            
-            //Add to totals    
+
+            //Add to totals
             $totalPrice = $totalPrice+$otherPriceExVat+$otherTax;
             $totalTax = $totalTax + $otherTax;
 
         break;
       }
     }
- 
+
     // Ordered Products
     foreach($order->products as $i => $Item) {
 
-        
-        $tax = ($Item['tax'] / 100) * $this->convert_to_currency($Item['final_price'],$currency);
-        $price = $this->convert_to_currency($Item['final_price'],$currency) + $tax;
-        
+
+        $tax = ($Item['tax'] / 100) * $this->convert_to_currency($Item['price'],$currency);
+        $price = $this->convert_to_currency($Item['price'],$currency) + $tax;
+
         $totalPrice = $totalPrice+($price * $Item['qty']);
         $totalTax = $totalTax + ($tax * $Item['qty']);
-        
+
         $orderRow = new SveaOrderRow();
         $orderRow->amount = number_format(round($price,2),2,'','');
         $orderRow->vat = number_format(round($tax,2),2,'','');
@@ -254,12 +254,12 @@ class sveawebpay_internetbank {
         $orderRow->quantity = $Item['qty'];
         $orderRow->sku = $Item['sku'];
         $orderRow->unit = "st";
-    
-    	
+
+
         //Add the order rows to your order
         $orderSvea->addOrderRow($orderRow);
     }
-       
+
     //Set base data for the order
     $orderSvea->amount = number_format(round($totalPrice,2),2,'','');
     $orderSvea->customerRefno = ($new_order_field['orders_id'] + 1).'-'.time();
@@ -267,17 +267,17 @@ class sveawebpay_internetbank {
     $orderSvea->vat = number_format(round($totalTax,2),2,'','');
     $orderSvea->currency = $currency;
     $orderSvea->cancelurl = tep_href_link(FILENAME_CHECKOUT_PAYMENT, '', 'SSL');
-    
+
     //Exclude other payments
     $paymethods = array ('CARD','SVEASPLITSE','SVEAINVOICESE');
-                
+
     foreach($paymethods as $method){
         $orderSvea->excludePaymentMethod($method);
     }
 
-    
+
     $paymentRequest->createPaymentMessage();
-    
+
 
     $formString  = "<input type='hidden' name='merchantid' value='{$paymentRequest->merchantid}'/>";
     $formString .= "<input type='hidden' name='message' value='{$paymentRequest->payment}'/>";
@@ -289,24 +289,24 @@ class sveawebpay_internetbank {
 
   function before_process() {
     global $order, $order_totals, $language, $billto, $sendto;
-  
+
     if ($_REQUEST['response']){
-        
+
         //REQUESTS
         $responseSvea   = $_REQUEST['response'];
         $macSvea        = $_REQUEST['mac'];
         $merchantidSvea = $_REQUEST['merchantid'];
-        
+
         //Import SVEA files
         include('svea/SveaConfig.php');
-        
+
         $resp = new SveaPaymentResponse($responseSvea);
 
         if($resp->validateMac($macSvea,MODULE_PAYMENT_SWPINTERNETBANK_SW) == true){
-            
-            //SUCCESS 
+
+            //SUCCESS
             if ($resp->statuscode == '0'){
-                	                
+
                     $table = array (
                             'KORTABSE'      => MODULE_PAYMENT_SWPINTERNETBANK_TEXT_TITLE,
                             'KORTINDK'      => MODULE_PAYMENT_SWPINTERNETBANK_TEXT_TITLE,
@@ -315,24 +315,24 @@ class sveawebpay_internetbank {
                             'KORTINSE'      => MODULE_PAYMENT_SWPINTERNETBANK_TEXT_TITLE,
                             'NETELLER'      => MODULE_PAYMENT_SWPINTERNETBANK_TEXT_TITLE,
                             'PAYSON'        => MODULE_PAYMENT_SWPINTERNETBANK_TEXT_TITLE);
-                
+
                     if(array_key_exists($_GET['PaymentMethod'], $table))
                       $order->info['payment_method'] = $table[$_GET['PaymentMethod']] . ' - ' . $_GET['PaymentMethod'];
-                    
+
                     // set billing and shipping address to the one of the local OsCommerce account
                     $firstname      =     $order->billing['firstname'];
-                    $lastname       =     $order->billing['lastname'];    
+                    $lastname       =     $order->billing['lastname'];
                     $street_address =     $order->billing['street_address'];
                     $suburb         =     $order->billing['suburb'];
-                    $city           =     $order->billing['city'];        
+                    $city           =     $order->billing['city'];
                     $postcode       =     $order->billing['postcode'];
                     $country        =     $order->billing['country']['id'];
-                    
+
                     // let's check if the address is already stored in the OsCommerce address book (not a first time user)
                     $customer_id = $_SESSION['customer_id'];
                     $query = tep_db_query("select address_book_id from " . TABLE_ADDRESS_BOOK . " where customers_id = '" . (int)$customer_id . "' and entry_firstname = '$firstname' and entry_lastname = '$lastname' and entry_street_address = '$street_address' and entry_postcode = '$postcode'");
                     $address = tep_db_fetch_array($query);
-                     
+
                     // first time user; address wasn't found, let's insert it into the database for future use
                     if (!$address) {
                       $query = mysql_query("insert into " . TABLE_ADDRESS_BOOK . " values(NULL, '$customer_id', 'm', ' ', '$firstname', '$lastname', '$street_address', '$suburb', '$postcode', '$city', NULL, '$country', '0')");
@@ -344,7 +344,7 @@ class sveawebpay_internetbank {
                       $billto = $address['address_book_id'];
                       $sendto = $address['address_book_id'];
                     }
-                
+
             }else{
                     //FAIL
                     $payment_error_return = 'payment_error=' . $this->code;
@@ -367,17 +367,17 @@ class sveawebpay_internetbank {
                           default:
                             $_SESSION['SWP_ERROR'] = ERROR_CODE_DEFAULT . $_GET['ErrorCode'];
                             break;
-                      }      
+                      }
                       tep_redirect(tep_href_link(FILENAME_CHECKOUT_PAYMENT, $payment_error_return));
                     }
-        
-           
+
+
         }else{
             //MAC NOT VALID
             die('nej');
         }
     }
-    
+
   }
 
   // if payment accepted, insert order into database
@@ -396,14 +396,14 @@ class sveawebpay_internetbank {
   // sets error message to the session error value
   function get_error() {
     $error_text['title'] = ERROR_MESSAGE_PAYMENT_FAILED;
-    
+
     if($_SESSION['SWP_ERROR'])
       $error_text['error'] = $_SESSION['SWP_ERROR'];
     else
-      $error_text['error'] = "Unexpected error during payment"; // if session variable was not found, normally this shouldn't happen 
-      
+      $error_text['error'] = "Unexpected error during payment"; // if session variable was not found, normally this shouldn't happen
+
     return $error_text;
-                 
+
   }
 
   // standard check if installed function
@@ -454,14 +454,14 @@ class sveawebpay_internetbank {
 
   function convert_to_currency($value, $currency) {
     global $currencies;
-    
+
     $length = strlen($value);
     $decimal_pos = strpos($value, ".");
-    $decimal_places = ($length - $decimal_pos) -1;    
+    $decimal_places = ($length - $decimal_pos) -1;
     $decimal_symbol = $currencies->currencies[$currency]['decimal_point'];
-    
+
     // item price is ALWAYS given in internal price from the products DB, so just multiply by currency rate from currency table
-    return number_format(tep_round($value * $currencies->currencies[$currency]['value'], $decimal_places), $decimal_places, $decimal_symbol, '');
+    return tep_round($value * $currencies->currencies[$currency]['value'], $decimal_places);
   }
 }
 ?>
