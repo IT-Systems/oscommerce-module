@@ -239,10 +239,9 @@ class sveawebpay_internetbank {
 
     // Ordered Products
     foreach($order->products as $i => $Item) {
-
-
-        $tax = ($Item['tax'] / 100) * $this->convert_to_currency($Item['price'],$currency);
-        $price = $this->convert_to_currency($Item['price'],$currency) + $tax;
+        //fix for using attributes and therfore using "final_price" and not "price". Add attributes on description
+        $tax = ($Item['tax'] / 100) * $this->convert_to_currency($Item['final_price'],$currency);
+        $price = $this->convert_to_currency($Item['final_price'],$currency) + $tax;
 
         $totalPrice = $totalPrice+($price * $Item['qty']);
         $totalTax = $totalTax + ($tax * $Item['qty']);
@@ -251,6 +250,12 @@ class sveawebpay_internetbank {
         $orderRow->amount = number_format(round($price,2),2,'','');
         $orderRow->vat = number_format(round($tax,2),2,'','');
         $orderRow->name = $Item['name'];
+        if(key_exists("attributes", $Item)){
+            $orderRow->description = "";
+            foreach ($Item['attributes'] as $attribute) {
+                $orderRow->description .= " [".$attribute['prefix']." ".$attribute['option']." ".$attribute['value']."]";
+            }
+        }
         $orderRow->quantity = $Item['qty'];
         $orderRow->sku = $Item['sku'];
         $orderRow->unit = "st";

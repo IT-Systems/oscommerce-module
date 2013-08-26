@@ -111,7 +111,7 @@ class sveawebpay_partpay {
         $sveaGetAdressBtn.= 'onclick="getAdressPP(\'1\')" >'.FORM_TEXT_GET_PAY_OPTIONS.'</button><br />';
     }else{
         $sveaAdressDD     = FORM_TEXT_INVOICE_ADDRESS.'<br /><select name="adressSelector_delbet" id="adressSelector_delbet" style="display:none"></select><br />';
-        $sveaGetAdressBtn.= 'onclick="getAdressPP(\'0\')" >'.FORM_TEXT_GET_ADDRESS.'</button><br />';
+        $sveaGetAdressBtn.= 'onclick="getAdressPP(\'0\')" >'.FORM_TEXT_INVOICE_GET_ADDRESS.'</button><br />';
     }
 
 
@@ -179,10 +179,16 @@ class sveawebpay_partpay {
 
     // Order rows
     foreach($order->products as $productId => $product) {
-
+         //fix for using attributes. Add attributes on description
+        $attributes = "";
+        if(key_exists("attributes", $product)){
+            foreach ($product['attributes'] as $attribute) {
+                $attributes .= " [".$attribute['prefix']." ".$attribute['option']." ".$attribute['value']."]";
+            }
+        }
         $orderRows = Array(
-              "ClientOrderRowNr" => $productId,
-              "Description" => $product['name'],
+              "ArticleNr" => $productId,
+              "Description" => $product['name'].$attributes,
               "PricePerUnit" => $this->convert_to_currency(round($product['final_price']),$currency),
               "NrOfUnits" => $product['qty'],
               "Unit" => "st",
@@ -196,7 +202,6 @@ class sveawebpay_partpay {
             $clientInvoiceRows[] = $orderRows;
         }
     }
-
     $i++;
     // handle order totals
 
@@ -227,7 +232,7 @@ class sveawebpay_partpay {
             $shipping_description = $shipping->title;
 
             $clientInvoiceRows[] = Array(
-    		  "ClientOrderRowNr" => $i+1,
+    		  "ArticleNr" => $i+1,
               "Description" => $shipping_description,
               "PricePerUnit" => $this->convert_to_currency($_SESSION['shipping']['cost'],$currency),
               "NrOfUnits" => 1,
@@ -238,7 +243,7 @@ class sveawebpay_partpay {
         case 'ot_coupon':
 
           $clientInvoiceRows[] = Array(
-    		  "ClientOrderRowNr" => $i+1,
+    		  "ArticleNr" => $i+1,
               "Description" => strip_tags($order_total['title']),
               "PricePerUnit" => -$this->convert_to_currency(strip_tags($order_total['value']),$currency),
               "NrOfUnits" => 1,
@@ -256,7 +261,7 @@ class sveawebpay_partpay {
             $order_total['value'] = (strip_tags($order_total['value']) / ((100 + $tax_rate) / 100));
 
             $clientInvoiceRows[] = Array(
-    		  "ClientOrderRowNr" => $i+1,
+    		  "ArticleNr" => $i+1,
               "Description" => strip_tags($order_total['title']),
               "PricePerUnit" => $this->convert_to_currency(strip_tags($order_total['value']),$currency),
               "NrOfUnits" => 1,
@@ -272,7 +277,7 @@ class sveawebpay_partpay {
       $invoiceCost     = $this->handling_fee * 0.8;
 
       $clientInvoiceRows[] = Array(
-    		  "ClientOrderRowNr" => $i+1,
+    		  "ArticleNr" => $i+1,
               "Description" => 'Faktureringsavgift',
               "PricePerUnit" => $this->convert_to_currency($invoiceCost,$currency),
               "NrOfUnits" => 1,

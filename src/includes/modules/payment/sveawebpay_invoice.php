@@ -116,7 +116,7 @@ class sveawebpay_invoice {
     if ($order->info['currency'] == 'EUR'){
         $sveaGetAdressBtn = '';
     }else{
-        $sveaGetAdressBtn = '<button type="button" id="getSveaAdressInvoice" onclick="getAdress()">'.FORM_TEXT_GET_ADDRESS.'</button><br />';
+        $sveaGetAdressBtn = '<button type="button" id="getSveaAdressInvoice" onclick="getAdress()">'.FORM_TEXT_INVOICE_GET_ADDRESS.'</button><br />';
     }
 
     $sveaAdressDD     = FORM_TEXT_INVOICE_ADDRESS.'<br /><select name="adressSelector_fakt" id="adressSelector_fakt" style="display:none"></select><br />';
@@ -181,9 +181,15 @@ class sveawebpay_invoice {
 
     // Order rows
     foreach($order->products as $productId => $product) {
-
+         //fix for using attributes. Add attributes on description
+        $attributes = "";
+        if(key_exists("attributes", $product)){
+            foreach ($product['attributes'] as $attribute) {
+                $attributes .= " [".$attribute['prefix']." ".$attribute['option']." ".$attribute['value']."]";
+            }
+        }
         $orderRows = Array(
-              "Description" => $product['name'],
+              "Description" => $product['name'].$attributes,
               "PricePerUnit" => $this->convert_to_currency(round($product['final_price'],2),$currency),
               "NrOfUnits" => $product['qty'],
               "Unit" => "st",
@@ -197,7 +203,7 @@ class sveawebpay_invoice {
         }else{
             $clientInvoiceRows[] = $orderRows;
         }
-
+        print_r($clientInvoiceRows);die;
     }
 
 
