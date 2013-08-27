@@ -250,12 +250,6 @@ class sveawebpay_creditcard {
         $orderRow->amount = number_format(round($price,2),2,'','');
         $orderRow->vat = number_format(round($tax,2),2,'','');
         $orderRow->name = $Item['name'];
-        if(key_exists("attributes", $Item)){
-            $orderRow->description = "";
-            foreach ($Item['attributes'] as $attribute) {
-                $orderRow->description .= " [".$attribute['prefix']." ".$attribute['option']." ".$attribute['value']."]";
-            }
-        }
         $orderRow->quantity = $Item['qty'];
         $orderRow->sku = $Item['sku'];
         $orderRow->unit = "st";

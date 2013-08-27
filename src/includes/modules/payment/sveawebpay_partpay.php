@@ -179,16 +179,9 @@ class sveawebpay_partpay {
 
     // Order rows
     foreach($order->products as $productId => $product) {
-         //fix for using attributes. Add attributes on description
-        $attributes = "";
-        if(key_exists("attributes", $product)){
-            foreach ($product['attributes'] as $attribute) {
-                $attributes .= " [".$attribute['prefix']." ".$attribute['option']." ".$attribute['value']."]";
-            }
-        }
         $orderRows = Array(
               "ArticleNr" => $productId,
-              "Description" => $product['name'].$attributes,
+              "Description" => $product['name'],
               "PricePerUnit" => $this->convert_to_currency(round($product['final_price']),$currency),
               "NrOfUnits" => $product['qty'],
               "Unit" => "st",
