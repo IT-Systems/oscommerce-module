@@ -203,7 +203,6 @@ class sveawebpay_invoice {
         }else{
             $clientInvoiceRows[] = $orderRows;
         }
-        print_r($clientInvoiceRows);die;
     }
 
 
