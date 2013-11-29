@@ -111,7 +111,7 @@ class sveawebpay_partpay {
         $sveaGetAdressBtn.= 'onclick="getAdressPP(\'1\')" >'.FORM_TEXT_GET_PAY_OPTIONS.'</button><br />';
     }else{
         $sveaAdressDD     = FORM_TEXT_INVOICE_ADDRESS.'<br /><select name="adressSelector_delbet" id="adressSelector_delbet" style="display:none"></select><br />';
-        $sveaGetAdressBtn.= 'onclick="getAdressPP(\'0\')" >'.FORM_TEXT_GET_ADDRESS.'</button><br />';
+        $sveaGetAdressBtn.= 'onclick="getAdressPP(\'0\')" >'.FORM_TEXT_INVOICE_GET_ADDRESS.'</button><br />';
     }
 
 
@@ -179,9 +179,8 @@ class sveawebpay_partpay {
 
     // Order rows
     foreach($order->products as $productId => $product) {
-
         $orderRows = Array(
-              "ClientOrderRowNr" => $productId,
+              "ArticleNr" => $productId,
               "Description" => $product['name'],
               "PricePerUnit" => $this->convert_to_currency(round($product['final_price']),$currency),
               "NrOfUnits" => $product['qty'],
@@ -196,7 +195,6 @@ class sveawebpay_partpay {
             $clientInvoiceRows[] = $orderRows;
         }
     }
-
     $i++;
     // handle order totals
 
@@ -227,7 +225,7 @@ class sveawebpay_partpay {
             $shipping_description = $shipping->title;
 
             $clientInvoiceRows[] = Array(
-    		  "ClientOrderRowNr" => $i+1,
+    		  "ArticleNr" => $i+1,
               "Description" => $shipping_description,
               "PricePerUnit" => $this->convert_to_currency($_SESSION['shipping']['cost'],$currency),
               "NrOfUnits" => 1,
@@ -238,7 +236,7 @@ class sveawebpay_partpay {
         case 'ot_coupon':
 
           $clientInvoiceRows[] = Array(
-    		  "ClientOrderRowNr" => $i+1,
+    		  "ArticleNr" => $i+1,
               "Description" => strip_tags($order_total['title']),
               "PricePerUnit" => -$this->convert_to_currency(strip_tags($order_total['value']),$currency),
               "NrOfUnits" => 1,
@@ -256,7 +254,7 @@ class sveawebpay_partpay {
             $order_total['value'] = (strip_tags($order_total['value']) / ((100 + $tax_rate) / 100));
 
             $clientInvoiceRows[] = Array(
-    		  "ClientOrderRowNr" => $i+1,
+    		  "ArticleNr" => $i+1,
               "Description" => strip_tags($order_total['title']),
               "PricePerUnit" => $this->convert_to_currency(strip_tags($order_total['value']),$currency),
               "NrOfUnits" => 1,
@@ -272,7 +270,7 @@ class sveawebpay_partpay {
       $invoiceCost     = $this->handling_fee * 0.8;
 
       $clientInvoiceRows[] = Array(
-    		  "ClientOrderRowNr" => $i+1,
+    		  "ArticleNr" => $i+1,
               "Description" => 'Faktureringsavgift',
               "PricePerUnit" => $this->convert_to_currency($invoiceCost,$currency),
               "NrOfUnits" => 1,
@@ -285,6 +283,7 @@ class sveawebpay_partpay {
     $sveaConf = getCountryConfigPP($order->info['currency']) ;
 
     //The createOrder Data
+    //Bugfix! SoapClient can't take empty strings! Anneli 131129
     $request = Array(
           "Auth" => Array(
             "Username" => $sveaConf['username'],
@@ -295,9 +294,9 @@ class sveawebpay_partpay {
         	'PayPlan' => Array(
         		'SendAutomaticGiropaymentForm' => false,
                 'ClientPaymentPlanNr' => ($new_order_field['orders_id'] + 1).'-'.time(),
-        		'CampainCode' => $_POST['paymentOptions'],
+        		'CampainCode' => isset($_POST['paymentOptions']) ? $_POST['paymentOptions'] : 0,
         		'CountryCode' => $sveaConf['countryCode'],
-        		'SecurityNumber' => $_POST['sveaPnr_delbet'],
+        		'SecurityNumber' => isset($_POST['sveaPnr_delbet']) ? $_POST['sveaPnr_delbet'] : 0,
         		'IsCompany' => ''
         	),
           "InvoiceRows" => array('ClientInvoiceRowInfo' => $clientInvoiceRows)
@@ -308,7 +307,7 @@ class sveawebpay_partpay {
 
 
     //Error Responses
-    function responseCodes($err){
+    function responseCodes($err,$errormessage = NULL){
         switch ($err){
             case "CustomerCreditRejected" :
                 return ERROR_CODE_1;
@@ -338,7 +337,7 @@ class sveawebpay_partpay {
                 return ERROR_CODE_9;
                 break;
             default :
-                return ERROR_CODE_DEFAULT;
+                return ERROR_CODE_DEFAULT." : ".$errormessage;
                 break;
 
         }
@@ -355,11 +354,12 @@ class sveawebpay_partpay {
    	$svea_server = (MODULE_PAYMENT_SWPPARTPAY_MODE == 'Test') ? 'https://webservices.sveaekonomi.se/webpay_test/SveaWebPay.asmx?WSDL' : 'https://webservices.sveaekonomi.se/webpay/SveaWebPay.asmx?WSDL';
 
     //Call Soap
-    $client = new SoapClient( $svea_server );
+    $client = new SoapClient( $svea_server,array('trace' => TRUE) );
 
      //Make soap call to below method using above data
-    $svea_req = $client->CreatePaymentPlan( $data );
 
+    $svea_req = $client->CreatePaymentPlan( $data, array('trace' => TRUE) );
+    //print_r($client->__getLastRequest());die; debug
     /*****
     Responsehandling
     ******/
@@ -367,8 +367,8 @@ class sveawebpay_partpay {
 
     // handle failed payments
     if ($response != 'Accepted') {
-      $_SESSION['SWP_ERROR'] = $this->responseCodes($response);
-
+      $_SESSION['SWP_ERROR'] = $this->responseCodes($response,$svea_req->CreatePaymentPlanResult->ErrorMessage);
+   
       $payment_error_return = 'payment_error=' . $this->code;
       tep_redirect(tep_href_link(FILENAME_CHECKOUT_PAYMENT, $payment_error_return));
     }
@@ -543,4 +543,5 @@ class sveawebpay_partpay {
     return tep_round($value * $currencies->currencies[$currency]['value'], $decimal_places);
   }
 }
+
 ?>

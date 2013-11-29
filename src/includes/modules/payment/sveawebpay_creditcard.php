@@ -239,9 +239,9 @@ class sveawebpay_creditcard {
 
     // Ordered Products
     foreach($order->products as $i => $Item) {
-
-        $tax = ($Item['tax'] / 100) * $this->convert_to_currency($Item['price'],$currency);
-        $price = $this->convert_to_currency($Item['price'],$currency) + $tax;
+        //fix for using attributes and therfore using "final_price" and not "price". Add attributes on description
+        $tax = ($Item['tax'] / 100) * $this->convert_to_currency($Item['final_price'],$currency);
+        $price = $this->convert_to_currency($Item['final_price'],$currency) + $tax;
 
         $totalPrice = $totalPrice+($price * $Item['qty']);
         $totalTax = $totalTax + ($tax * $Item['qty']);
