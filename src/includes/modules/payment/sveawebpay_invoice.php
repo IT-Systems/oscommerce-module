@@ -287,6 +287,7 @@ class sveawebpay_invoice {
     $sveaConf = getCountryConfigInvoice($order->info['currency']) ;
 
     //The createOrder Data
+    //Bugfix! SoapClient can't take empty strings! Anneli 131129
     $request = Array(
           "Auth" => Array(
             "Username" => $sveaConf['username'],
@@ -296,10 +297,10 @@ class sveawebpay_invoice {
           "Order" => Array(
     		"ClientOrderNr" => ($new_order_field['orders_id'] + 1).'-'.time(),
             "CountryCode" => $sveaConf['countryCode'],
-            "SecurityNumber" => $_POST['sveaPnr'],
+            "SecurityNumber" => isset($_POST['sveaPnr']) ? $_POST['sveaPnr'] : 0,
             "IsCompany" => $company,
             "OrderDate" => date(c),
-    		"AddressSelector" => $_POST['adressSelector_fakt'],
+    		"AddressSelector" => isset($_POST['adressSelector_fakt']) ? $_POST['adressSelector_fakt'] : 0,
             "PreApprovedCustomerId" => 0
           ),
 
@@ -320,7 +321,7 @@ class sveawebpay_invoice {
   }
 
      //Error Responses
-    function responseCodes($err){
+    function responseCodes($err,$errormessage = NULL){
         switch ($err){
             case "CusomterCreditRejected" :
                 return ERROR_CODE_1;
@@ -350,7 +351,7 @@ class sveawebpay_invoice {
                 return ERROR_CODE_9;
                 break;
             default :
-                return ERROR_CODE_DEFAULT;
+                return ERROR_CODE_DEFAULT." : ".$errormessage;
                 break;
 
         }
@@ -381,7 +382,7 @@ class sveawebpay_invoice {
 
     // handle failed payments
     if ($response != 'Accepted') {
-      $_SESSION['SWP_ERROR'] = $this->responseCodes($response);
+      $_SESSION['SWP_ERROR'] = $this->responseCodes($response,$svea_req->CreatePaymentPlanResult->ErrorMessage);
 
       $payment_error_return = 'payment_error=' . $this->code;
       tep_redirect(tep_href_link(FILENAME_CHECKOUT_PAYMENT, $payment_error_return));
