@@ -358,7 +358,7 @@ class sveawebpay_partpay {
 
      //Make soap call to below method using above data
 
-    $svea_req = $client->CreatePaymentPlan( $data, array('trace' => TRUE) );
+    $svea_req = $client->CreatePaymentPlan( $data );
     //print_r($client->__getLastRequest());die; debug
     /*****
     Responsehandling
@@ -368,7 +368,7 @@ class sveawebpay_partpay {
     // handle failed payments
     if ($response != 'Accepted') {
       $_SESSION['SWP_ERROR'] = $this->responseCodes($response,$svea_req->CreatePaymentPlanResult->ErrorMessage);
-   
+
       $payment_error_return = 'payment_error=' . $this->code;
       tep_redirect(tep_href_link(FILENAME_CHECKOUT_PAYMENT, $payment_error_return));
     }
