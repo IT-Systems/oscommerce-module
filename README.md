@@ -21,3 +21,7 @@ Would the customer then click cancel, the process does not continue.  This does 
 We can recommend the following certificate providers:
 * InfraSec:  infrasec.se
 * VeriSign : verisign.com
+
+## History
+
+4.3.3 (131206) Better handling of SoapFault exceptions in invoice, part payment payment methods.

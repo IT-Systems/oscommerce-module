@@ -289,23 +289,23 @@ class sveawebpay_invoice {
     //The createOrder Data
     //Bugfix! SoapClient can't take empty strings! Anneli 131129
     $request = Array(
-          "Auth" => Array(
-            "Username" => $sveaConf['username'],
-            "Password" => $sveaConf['password'],
-            "ClientNumber" => $sveaConf['clientno']
-           ),
-          "Order" => Array(
-    		"ClientOrderNr" => ($new_order_field['orders_id'] + 1).'-'.time(),
-            "CountryCode" => $sveaConf['countryCode'],
-            "SecurityNumber" => isset($_POST['sveaPnr']) ? $_POST['sveaPnr'] : 0,
-            "IsCompany" => $company,
-            "OrderDate" => date(c),
-    		"AddressSelector" => isset($_POST['adressSelector_fakt']) ? $_POST['adressSelector_fakt'] : 0,
-            "PreApprovedCustomerId" => 0
-          ),
+        "Auth" => Array(
+          "Username" => $sveaConf['username'],              //req
+          "Password" => $sveaConf['password'],              //req
+          "ClientNumber" => $sveaConf['clientno']           //req
+         ),
+        "Order" => Array(
+              "ClientOrderNr" => ($new_order_field['orders_id'] + 1).'-'.time(),    //optional, tom sträng ok
+          "CountryCode" => $sveaConf['countryCode'],                                //optional, tom sträng ok
+          "SecurityNumber" => isset($_POST['sveaPnr']) ? $_POST['sveaPnr'] : 0,     //req, 
+          "IsCompany" => $company,                                                  //req, men tom sträng är ok, syns i anrop som "false"
+          "OrderDate" => date(c),                                                   //req, tom sträng är inte ok => Server was unable to read request. ---> There is an error in XML document (2, 426). ---> The string '' is not a valid AllXsd value.
+          "AddressSelector" => isset($_POST['adressSelector_fakt']) ? $_POST['adressSelector_fakt'] : 0,      // optional, tom sträng ok
+          "PreApprovedCustomerId" => 0
+        ),
 
-          "InvoiceRows" => array('ClientInvoiceRowInfo' => $clientInvoiceRows)
-        );
+        "InvoiceRows" => array('ClientInvoiceRowInfo' => $clientInvoiceRows)        // req
+    ); 
 
      $_SESSION['swp_fakt_request'] = $request;
 
@@ -368,22 +368,39 @@ class sveawebpay_invoice {
 
     //Call Soap
     $client = new SoapClient( $svea_server );
+  
+//    $data['request']['Order']['IsCompany'] = "";
+//    unset($data['request']['IsCompany']);    
+//    print_r( $data ); 
+//    die();
 
+//    $data = NULL;
+ 
+    $response = $errormessage = "foo";
+    
      //Make soap call to below method using above data
-    $svea_req = $client->CreateOrder( $data );
+    try {
+        $svea_req = $client->CreateOrder( $data );
+        $response = $svea_req->CreateOrderResult->RejectionCode;
+        $errormessage = $svea_req->CreateOrderResult->ErrorMessage;
+    }
+    catch( SoapFault $soapfault ) {
+        $response =  $soapfault->faultcode;
+        $errormessage = $soapfault->getMessage();
+    }
+
+//    print_r($response);
+//    print_r($errormessage);
+//    die(); 
 
     /*****
     Responsehandling
     ******/
-
-    $response = $svea_req->CreateOrderResult->RejectionCode;
-
-
-
+        
     // handle failed payments
     if ($response != 'Accepted') {
-      $_SESSION['SWP_ERROR'] = $this->responseCodes($response,$svea_req->CreatePaymentPlanResult->ErrorMessage);
 
+      $_SESSION['SWP_ERROR'] = $this->responseCodes($response,$errormessage);        
       $payment_error_return = 'payment_error=' . $this->code;
       tep_redirect(tep_href_link(FILENAME_CHECKOUT_PAYMENT, $payment_error_return));
     }
