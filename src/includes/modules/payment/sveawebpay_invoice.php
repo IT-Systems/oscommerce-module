@@ -369,12 +369,12 @@ class sveawebpay_invoice {
     //Call Soap
     $client = new SoapClient( $svea_server );
   
-//    $data['request']['Order']['IsCompany'] = "";
-//    unset($data['request']['IsCompany']);    
+//    $data = NULL;                                   // trigger SoapFault
+//    $data['request']['Order']['OrderDate'] = "";    // trigger SoapFault
+//    unset($data['request']['whatever']);    
 //    print_r( $data ); 
 //    die();
 
-//    $data = NULL;
  
     $response = $errormessage = "foo";
     
