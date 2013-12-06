@@ -24,4 +24,4 @@ We can recommend the following certificate providers:
 
 ## History
 
-4.3.3 (131206) Better handling of SoapFault exceptions in invoice, part payment payment methods.
+4.3.3 (131206) Invoice payments now accepted from company customers. Better handling of SoapFault exceptions in invoice, part payment payment methods.

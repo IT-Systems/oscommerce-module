@@ -281,7 +281,7 @@ class sveawebpay_invoice {
     }
 
     //IsCompany
-    $company = ($_POST['sveaCompany'] == 'true') ? True: false;
+    $company = ($_POST['sveaIsCompany'] == 'true') ? true: false;
 
     //Get svea configuration for each country based on currency
     $sveaConf = getCountryConfigInvoice($order->info['currency']) ;
