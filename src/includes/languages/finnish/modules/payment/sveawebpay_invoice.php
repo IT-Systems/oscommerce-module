@@ -2,10 +2,10 @@
 /*
 SVEAWEBPAY PAYMENT MODULE FOR osCOMMERCE 2.3
 -----------------------------------------------
-Version 4.0
+Version 5.0
 */
 define('MODULE_PAYMENT_SWPINVOICE_TEXT_TITLE','SVEA Lasku');
-define('MODULE_PAYMENT_SWPINVOICE_TEXT_DESCRIPTION','SveaWebPay Lasku Webservice  - versio 4.0');
+define('MODULE_PAYMENT_SWPINVOICE_TEXT_DESCRIPTION','SveaWebPay Lasku Webservice  - versio 5.0');
 define('MODULE_PAYMENT_SWPINVOICE_HANDLING_APPLIES','Tilaukseen lisätään %s palvelumaksusta');
 define('ERROR_ALLOWED_CURRENCIES_NOT_DEFINED','Yksi tai useampi sallituista valuutoista ei ole määritelty. Nämä on määriteltävä käyttämään SveaWebPay hosted solutionia. Kirjaudu admin paneeliin ja varmista että.');
 define('ERROR_DEFAULT_CURRENCY_NOT_ALLOWED','Standardivaluuta ei ole sallitussa luettelossa. Kirjaudu admin paneeliin ja varmista että oletusvaluutta kuuluu niihin sallituihin maksu-moduulissa.');  

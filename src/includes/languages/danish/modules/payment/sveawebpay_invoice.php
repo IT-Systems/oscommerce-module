@@ -2,10 +2,10 @@
 /*
 SVEAWEBPAY PAYMENT MODULE FOR osCOMMERCE 2.3
 -----------------------------------------------
-Version 4.0
+Version 5.0
 */
 define('MODULE_PAYMENT_SWPINVOICE_TEXT_TITLE','SVEA Invoice');
-define('MODULE_PAYMENT_SWPINVOICE_TEXT_DESCRIPTION','SveaWebPay Webservice Invoice - vers. 4.0');
+define('MODULE_PAYMENT_SWPINVOICE_TEXT_DESCRIPTION','SveaWebPay Webservice Invoice - vers. 5.0');
 define('MODULE_PAYMENT_SWPINVOICE_HANDLING_APPLIES','Et admininistrationsgebyr på %s vil blive føjet til ordren ved kassen.');
 define('ERROR_ALLOWED_CURRENCIES_NOT_DEFINED','En eller flere af de tilladte valutaer er ikke præciserede. Dette skal ske, førend SweaWebPay Hosted Solution kan benyttes. Login på dit admin panel og tjek, at alle valutaer er listede som tilladte i betalingsmodulet, og at de rigtige vekselkurser er indstillede korrekt.');
 define('ERROR_DEFAULT_CURRENCY_NOT_ALLOWED','Standardvalutaen er ikke blandt de listede som tilladte. Login i dit admin panel og tjek, at standardvalutaen er på listen over tilladte valutaer i betalingsmodulet.');  
