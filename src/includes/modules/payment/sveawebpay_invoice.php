@@ -19,7 +19,7 @@ class sveawebpay_invoice {
 //    $this->handling_fee = MODULE_PAYMENT_SWPINVOICE_HANDLING_FEE;
 //    $this->default_currency = MODULE_PAYMENT_SWPINVOICE_DEFAULT_CURRENCY;
 //    $this->allowed_currencies = explode(',', MODULE_PAYMENT_SWPINVOICE_ALLOWED_CURRENCIES);
-//    $this->display_images = ((MODULE_PAYMENT_SWPINVOICE_IMAGES == 'True') ? true : false);
+    $this->display_images = ((MODULE_PAYMENT_SWPINVOICE_IMAGES == 'True') ? true : false);
 //    $this->ignore_list = explode(',', MODULE_PAYMENT_SWPINVOICE_IGNORE);
 //    if ((int)MODULE_PAYMENT_SWPINVOICE_ORDER_STATUS_ID > 0)
 //      $this->order_status = MODULE_PAYMENT_SWPINVOICE_ORDER_STATUS_ID;
@@ -75,18 +75,17 @@ class sveawebpay_invoice {
   function javascript_validation() {
     return false;
   }
-//
-//  // sets information displayed when choosing between payment options
-//  function selection() {
+
+  // sets information displayed when choosing between payment options
+  function selection() {
 //    global $order, $currencies;
 //
-//    $fields = array();
-//
-//    // image
-//    if ($this->display_images)
-//
-//    $fields[] = array('title' => '<img src=images/SveaWebPay-Faktura-100px.png />', 'field' => '');
-//
+    $fields = array();
+
+    // image
+    if ($this->display_images)
+        $fields[] = array('title' => '<img src=images/SveaWebPay-Faktura-100px.png />', 'field' => '');
+
 //    //Return error
 //    if (isset($_REQUEST['sveaError'])){
 //        $fields[] = array('title' => '<span style="color:red">'.$this->responseCodes($_REQUEST['sveaError']).'</span>', 'field' => '');
@@ -136,11 +135,12 @@ class sveawebpay_invoice {
 //        $fields[] = array('title' => sprintf(MODULE_PAYMENT_SWPINVOICE_HANDLING_APPLIES, $currencies->format($paymentfee_cost+$paymentfee_tax)), 'field' => '');
 //      }
 //    }
-//    return array( 'id'      => $this->code,
-//                  'module'  => $this->title,
-//                  'fields'  => $fields);
-//  }
-//
+    return array( 'id'      => $this->code,
+                  'module'  => $this->title,
+                  'fields'  => $fields
+    );
+  }
+
 //  function pre_confirmation_check() {
 //    return false;
 //  }
@@ -546,17 +546,17 @@ class sveawebpay_invoice {
 //    tep_db_query($common . ") values ('Accepted Currencies', 'MODULE_PAYMENT_SWPINVOICE_ALLOWED_CURRENCIES','SEK,NOK,DKK,EUR', 'The accepted currencies, separated by commas.  These <b>MUST</b> exist within your currencies table, along with the correct exchange rates.','6','0',now())");
 //    tep_db_query($common . ", set_function) values ('Default Currency', 'MODULE_PAYMENT_SWPINVOICE_DEFAULT_CURRENCY', 'SEK', 'Default currency used, if the customer uses an unsupported currency it will be converted to this. This should also be in the supported currencies list.', '6', '0', now(), 'tep_cfg_select_option(array(\'SEK\',\'NOK\',\'DKK\',\'EUR\'), ')");
 //    tep_db_query($common . ", set_function, use_function) values ('Set Order Status', 'MODULE_PAYMENT_SWPINVOICE_ORDER_STATUS_ID', '0', 'Set the status of orders made with this payment module to this value', '6', '0', now(), 'tep_cfg_pull_down_order_statuses(', 'tep_get_order_status_name')");
-//    tep_db_query($common . ", set_function) values ('Display SveaWebPay Images', 'MODULE_PAYMENT_SWPINVOICE_IMAGES', 'True', 'Do you want to display SveaWebPay images when choosing between payment options?', '6', '0', now(), 'tep_cfg_select_option(array(\'True\', \'False\'), ')");
+    tep_db_query($common . ", set_function) values ('Display SveaWebPay Images', 'MODULE_PAYMENT_SWPINVOICE_IMAGES', 'True', 'Do you want to display SveaWebPay images when choosing between payment options?', '6', '0', now(), 'tep_cfg_select_option(array(\'True\', \'False\'), ')");
 //    tep_db_query($common . ") values ('Ignore OT list', 'MODULE_PAYMENT_SWPINVOICE_IGNORE','ot_pretotal', 'Ignore the following order total codes, separated by commas.','6','0',now())");
 //    tep_db_query($common . ", set_function, use_function) values ('Payment Zone', 'MODULE_PAYMENT_SWPINVOICE_ZONE', '0', 'If a zone is selected, only enable this payment method for that zone.', '6', '2', now(), 'tep_cfg_pull_down_zone_classes(', 'tep_get_zone_class_title')");
 //    tep_db_query($common . ") values ('Sort order of display.', 'MODULE_PAYMENT_SWPINVOICE_SORT_ORDER', '0', 'Sort order of display. Lowest is displayed first.', '6', '0', now())");
   }
 
-//  // standard uninstall function
-//  function remove() {
-//    tep_db_query("delete from " . TABLE_CONFIGURATION . " where configuration_key in ('" . implode("', '", $this->keys()) . "')");
-//  }
-//
+  // standard uninstall function
+  function remove() {
+    tep_db_query("delete from " . TABLE_CONFIGURATION . " where configuration_key in ('" . implode("', '", $this->keys()) . "')");
+  }
+
   // must perfectly match keys inserted in install function
   function keys() {
     return array( 'MODULE_PAYMENT_SWPINVOICE_STATUS',
@@ -577,7 +577,7 @@ class sveawebpay_invoice {
 //                  'MODULE_PAYMENT_SWPINVOICE_ALLOWED_CURRENCIES',
 //                  'MODULE_PAYMENT_SWPINVOICE_DEFAULT_CURRENCY',
 //                  'MODULE_PAYMENT_SWPINVOICE_ORDER_STATUS_ID',
-//                  'MODULE_PAYMENT_SWPINVOICE_IMAGES',
+                  'MODULE_PAYMENT_SWPINVOICE_IMAGES',
 //                  'MODULE_PAYMENT_SWPINVOICE_IGNORE',
 //                  'MODULE_PAYMENT_SWPINVOICE_ZONE',
 //                  'MODULE_PAYMENT_SWPINVOICE_SORT_ORDER'
