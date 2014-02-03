@@ -78,29 +78,148 @@ class sveawebpay_invoice {
 
   // sets information displayed when choosing between payment options
   function selection() {
-//    global $order, $currencies;
-//
-    $fields = array();
+        global $order, $currencies;
 
-    // image
-    if ($this->display_images)
-        $fields[] = array('title' => '<img src=images/SveaWebPay-Faktura-100px.png />', 'field' => '');
+        $fields = array();
 
-//    //Return error
-//    if (isset($_REQUEST['sveaError'])){
-//        $fields[] = array('title' => '<span style="color:red">'.$this->responseCodes($_REQUEST['sveaError']).'</span>', 'field' => '');
-//    }
-//
-//    //jQuery Fix for osCommerce MS2.2
-//    if (PROJECT_VERSION == 'osCommerce 2.2-MS2' || PROJECT_VERSION == 'osCommerce Online Merchant v2.2 RC2a'){
-//    $jqueryJs = '<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>';
-//    $fields[] = array('title' => '', 'field' => $jqueryJs);
-//    }
-//
-//    //Fields to insert/show when SWP is chosen
-//    $sveaJs =  '<script type="text/javascript" src="'.$this->web_root . 'ext/jquery/svea/checkout/svea.js"></script>';
-//
-//    $fields[] = array('title' => '', 'field' => $sveaJs);
+        // image
+        if ($this->display_images)
+            $fields[] = array('title' => '<img src=images/SveaWebPay-Faktura-100px.png />', 'field' => '');
+
+        // TODO error handling
+
+        // insert svea js
+        $sveaJs =   '<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>' .
+                    '<script type="text/javascript" src="' . $this->web_root . 'ext/jquery/svea/checkout/svea.js"></script>';
+        $fields[] = array('title' => '', 'field' => $sveaJs);
+
+        // get required fields depending on customer country and payment method
+
+        // customer country is taken from customer settings
+        $customer_country = $order->customer['country']['iso_code_2'];
+
+        // fill in all fields as required by customer country and payment method
+        $sveaAddressDD = $sveaInitialsDiv = $sveaBirthDateDiv  = '';
+
+        // get ssn & selects private/company for SE, NO, DK, FI
+        if( ($customer_country == 'SE') ||     // e.g. == 'SE'
+            ($customer_country == 'NO') ||
+            ($customer_country == 'DK') )
+        {
+            // input text field for individual/company SSN
+            $sveaSSN =          FORM_TEXT_SS_NO . '<br /><input type="text" name="sveaSSN" id="sveaSSN" maxlength="11" /><br />';
+        }
+
+        if( ($customer_country == 'FI') )
+        {
+           // input text field for individual/company SSN, without getAddresses hook
+            $sveaSSNFI =        FORM_TEXT_SS_NO . '<br /><input type="text" name="sveaSSNFI" id="sveaSSNFI" maxlength="11" /><br />';
+        }
+
+        // radiobutton for choosing individual or organization
+        $sveaIsCompanyField =
+                            '<label><input type="radio" name="sveaIsCompany" value="false" checked>' . FORM_TEXT_PRIVATE . '</label>' .
+                            '<label><input type="radio" name="sveaIsCompany" value="true">' . FORM_TEXT_COMPANY . '</label><br />';
+
+        // these are the countries we support getAddress in (getAddress also depends on sveaSSN being present)
+        if( ($customer_country == 'SE') ||
+            ($customer_country == 'NO') ||
+            ($customer_country == 'DK') )
+        {
+            $sveaAddressDD =    '<br /><label for ="sveaAddressSelector" style="display:none">' . FORM_TEXT_INVOICE_ADDRESS . '</label><br />' .
+                                '<select name="sveaAddressSelector" id="sveaAddressSelector" style="display:none"></select><br />';
+        }
+
+        // if customer is located in Netherlands, get initials
+        if( $customer_country == 'NL' ) {
+
+            $sveaInitialsDiv =  '<div id="sveaInitials_div" >' .
+                                    '<label for="sveaInitials">' . FORM_TEXT_INITIALS . '</label><br />' .
+                                    '<input type="text" name="sveaInitials" id="sveaInitials" maxlength="5" />' .
+                                '</div><br />';
+        }
+
+        // if customer is located in Netherlands or DE, get birth date
+        if( ($customer_country == 'NL') ||
+            ($customer_country == 'DE') )
+        {
+            //Years from 1913 to date('Y')
+            $years = '';
+            for($y = 1913; $y <= date('Y'); $y++){
+                $selected = "";
+                if( $y == (date('Y')-30) )      // selected is backdated 30 years
+                    $selected = "selected";
+
+                $years .= "<option value='$y' $selected>$y</option>";
+            }
+            $birthYear = "<select name='sveaBirthYear' id='sveaBirthYear'>$years</select>";
+
+            //Months to 12
+            $months = "";
+            for($m = 1; $m <= 12; $m++){
+                $val = $m;
+                if($m < 10)
+                    $val = "$m";
+
+                $months .= "<option value='$val'>$m</option>";
+            }
+            $birthMonth = "<select name='sveaBirthMonth' id='sveaBirthMonth'>$months</select>";
+            
+            //Days, to 31
+            $days = "";
+            for($d = 1; $d <= 31; $d++){
+
+                $val = $d;
+                if($d < 10)
+                    $val = "$d";
+
+                $days .= "<option value='$val'>$d</option>";
+            }
+            $birthDay = "<select name='sveaBirthDay' id='sveaBirthDay'>$days</select>";
+
+            
+            $sveaBirthDateDiv = '<div id="sveaBirthDate_div" >' .
+                                    //'<label for="sveaBirthDate">' . FORM_TEXT_BIRTHDATE . '</label><br />' .
+                                    //'<input type="text" name="sveaBirthDate" id="sveaBirthDate" maxlength="8" />' .
+                                    '<label for="sveaBirthYear">' . FORM_TEXT_BIRTHDATE . '</label><br />' .
+                                    $birthYear . $birthMonth . $birthDay .
+                                '</div><br />';
+
+            $sveaVatNoDiv = '<div id="sveaVatNo_div" hidden="true">' .
+                                    '<label for="sveaVatNo" >' . FORM_TEXT_VATNO . '</label><br />' .
+                                    '<input type="text" name="sveaVatNo" id="sveaVatNo" maxlength="14" />' .
+                                '</div><br />';
+        }
+        
+        // TODO add handling fee here
+        
+        $sveaError = '<br /><span id="sveaSSN_error_invoice" style="color:red"></span>';
+
+        // create and add the field to be shown by our js when we select SveaInvoice payment method
+        $sveaField =    '<div id="sveaInvoiceField" style="display:none">' .
+                            $sveaIsCompanyField .   //  SE, DK, NO
+                            $sveaSSN .              //  SE, DK, NO
+                            $sveaSSNFI .            //  FI, no getAddresses
+                            $sveaSubmitAddress.
+                            $sveaAddressDD .        //  SE, Dk, NO
+                            $sveaInitialsDiv .      //  NL
+                            $sveaBirthDateDiv .     //  NL, DE
+                            $sveaVatNoDiv .         // NL, DE
+                            $sveaHandlingFee .
+                            // FI, NL, DE also uses customer address data from zencart
+                        '</div>';
+
+        $fields[] = array('title' => '', 'field' => '<br />' . $sveaField . $sveaError);
+
+        // TODO check this -- $_SESSION["swp_order_info_pre_coupon"]  = serialize($order->info);  // store order info needed to reconstruct amount pre coupon later
+                
+        if(     $order->billing['country']['iso_code_2'] == "SE" ||
+                $order->billing['country']['iso_code_2'] == "DK" ||
+                $order->billing['country']['iso_code_2'] == "NO" )      // but don't show button/do getAddress unless customer is company!
+        {
+             $sveaSubmitAddress = '<button id="sveaSubmitGetAddress" type="button">'.FORM_TEXT_GET_ADDRESS.'</button>';
+        }
+            
 //
 //    $sveaIsCompany    = FORM_TEXT_COMPANY_OR_PRIVATE.' <br /><select name="sveaIsCompany" id="sveaIsCompany">
 //                        <option value="" selected="selected">'.FORM_TEXT_PRIVATE.'</option>
@@ -135,11 +254,11 @@ class sveawebpay_invoice {
 //        $fields[] = array('title' => sprintf(MODULE_PAYMENT_SWPINVOICE_HANDLING_APPLIES, $currencies->format($paymentfee_cost+$paymentfee_tax)), 'field' => '');
 //      }
 //    }
-    return array( 'id'      => $this->code,
-                  'module'  => $this->title,
-                  'fields'  => $fields
-    );
-  }
+        return array( 'id'      => $this->code,
+                      'module'  => $this->title,
+                      'fields'  => $fields
+        );
+    }
 
 //  function pre_confirmation_check() {
 //    return false;
