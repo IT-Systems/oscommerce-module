@@ -67,9 +67,14 @@ class sveawebpay_invoice {
 //    }
 //  }
 //
-//  function javascript_validation() {
-//    return false;
-//  }
+  
+  /**
+   * called at start of checkout_payment.php
+   * @return boolean
+   */
+  function javascript_validation() {
+    return false;
+  }
 //
 //  // sets information displayed when choosing between payment options
 //  function selection() {
