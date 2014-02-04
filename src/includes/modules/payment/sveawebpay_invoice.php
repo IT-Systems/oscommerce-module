@@ -2,7 +2,10 @@
 /**
  * SVEAWEBPAY PAYMENT MODULE FOR osCommerce
  */
-class sveawebpay_invoice {
+
+require_once(DIR_FS_CATALOG . 'sveawebpay_common.php');     // osCommerce module common functions
+
+class sveawebpay_invoice extends SveaOsCommerce {
 
   function sveawebpay_invoice() {
     global $order;
@@ -17,8 +20,8 @@ class sveawebpay_invoice {
 //    //$this->sveawebpay_url = MODULE_PAYMENT_SWPINVOICE_URL;
 //    $this->clientno_fakt = MODULE_PAYMENT_SWPINVOICE_CLIENTNO;
 //    $this->handling_fee = MODULE_PAYMENT_SWPINVOICE_HANDLING_FEE;
-//    $this->default_currency = MODULE_PAYMENT_SWPINVOICE_DEFAULT_CURRENCY;
-//    $this->allowed_currencies = explode(',', MODULE_PAYMENT_SWPINVOICE_ALLOWED_CURRENCIES);
+    $this->default_currency = MODULE_PAYMENT_SWPINVOICE_DEFAULT_CURRENCY;
+    $this->allowed_currencies = explode(',', MODULE_PAYMENT_SWPINVOICE_ALLOWED_CURRENCIES);
     $this->display_images = ((MODULE_PAYMENT_SWPINVOICE_IMAGES == 'True') ? true : false);
 //    $this->ignore_list = explode(',', MODULE_PAYMENT_SWPINVOICE_IGNORE);
 //    if ((int)MODULE_PAYMENT_SWPINVOICE_ORDER_STATUS_ID > 0)
@@ -268,19 +271,227 @@ class sveawebpay_invoice {
 //      print_r( $_POST );      
     return false;
   }
+
+  function confirmation() {
+    return false;
+  }
+  
+  
+    /** process_button() is called from tpl_checkout_confirmation.php in
+     *  includes/templates/template_default/templates when we press the
+     *  continue checkout button after having selected payment method and
+     *  entered required payment method input.
+     *
+     *  Here we prepare to populate the order object by creating the
+     *  WebPayItem::orderRow objects that make up the order.
+     */
+    function process_button() {
+
+        global $db, $order, $order_totals, $language;
+
+        // handle postback of payment method info fields, if present
+        $post_sveaSSN = isset($_POST['sveaSSN']) ? $_POST['sveaSSN'] : "swp_not_set" ;
+        $post_sveaSSNFI = isset($_POST['sveaSSNFI']) ? $_POST['sveaSSNFI'] : "swp_not_set" ;
+        $post_sveaIsCompany = isset($_POST['sveaIsCompany']) ? $_POST['sveaIsCompany'] : "swp_not_set" ;
+        $post_sveaAddressSelector = isset($_POST['sveaAddressSelector']) ? $_POST['sveaAddressSelector'] : "swp_not_set";
+        $post_sveaVatNo = isset($_POST['sveaVatNo']) ? $_POST['sveaVatNo'] : "swp_not_set";
+        $post_sveaBirthDay = isset($_POST['sveaBirthDay']) ? $_POST['sveaBirthDay'] : "swp_not_set";
+        $post_sveaBirthMonth = isset($_POST['sveaBirthMonth']) ? $_POST['sveaBirthMonth'] : "swp_not_set";
+        $post_sveaBirthYear = isset($_POST['sveaBirthYear']) ? $_POST['sveaBirthYear'] : "swp_not_set";
+        $post_sveaInitials = isset($_POST['sveaInitials']) ? $_POST['sveaInitials'] : "swp_not_set" ;
+
+        // calculate the order number
+        $new_order_rs = tep_db_query("select orders_id from ".TABLE_ORDERS." order by orders_id desc limit 1");
+        $new_order_field = tep_db_fetch_array($new_order_rs);
+        $client_order_number = ($new_order_field['orders_id'] + 1);
+
+//print_r( $client_order_number); die;
+        
+        // localization parameters
+        if( isset( $order->billing['country']['iso_code_2'] ) ) {
+            $user_country = $order->billing['country']['iso_code_2']; 
+        }
+        // no billing address set, fallback to session country_id
+        else {
+            $country = zen_get_countries_with_iso_codes( $_SESSION['customer_country_id'] );
+            $user_country =  $country['countries_iso_code_2'];
+        }
+//print_r( $user_country ); die;
+       
+    $user_language = tep_db_fetch_array(tep_db_query("select code from " . TABLE_LANGUAGES . " where directory = '" . $language . "'"));
+    $user_language = $user_language['code'];
+//print_r( $user_language );
+      
+        $currency = $this->getCurrency($order->info['currency']);
+//print_r( $currency ); die;
+        
+//        // Create and initialize order object, using either test or production configuration
+//        $sveaConfig = (MODULE_PAYMENT_SWPINVOICE_MODE === 'Test') ? new ZenCartSveaConfigTest() : new ZenCartSveaConfigProd();
 //
-//  function confirmation() {
-//    return false;
-//  }
+//        $swp_order = WebPay::createOrder( $sveaConfig )
+//            ->setCountryCode( $user_country )
+//            ->setCurrency($currency)                       //Required for card & direct payment and PayPage payment.
+//            ->setClientOrderNumber($client_order_number)   //Required for card & direct payment, PaymentMethod payment and PayPage payments
+//            ->setOrderDate(date('c'))                      //Required for synchronous payments
+//        ;
 //
+//        // for each item in cart, create WebPayItem::orderRow objects and add to order
+//        foreach ($order->products as $productId => $product) {
+//
+//            $amount_ex_vat = floatval( $this->convertToCurrency(round($product['final_price'], 2), $currency) );
+//
+//            $swp_order->addOrderRow(
+//                    WebPayItem::orderRow()
+//                            ->setQuantity($product['qty'])          //Required
+//                            ->setAmountExVat($amount_ex_vat)          //Optional, see info above
+//                            ->setVatPercent(intval($product['tax']))  //Optional, see info above
+//                            ->setDescription($product['name'])        //Optional
+//           );
+//        }
+//
+//        // creates non-item order rows from Order Total entries
+//        $swp_order = $this->parseOrderTotals( $order_totals, $swp_order );
+//
+//        // Check if customer is company
+//        if( $post_sveaIsCompany === 'true')
+//        {
+//            // create company customer object
+//            $swp_customer = WebPayItem::companyCustomer();
+//           
+//            // set company name
+//            $swp_customer->setCompanyName( $order->billing['company'] );
+//
+//            // set company SSN
+//            if( ($user_country == 'SE') ||
+//                ($user_country == 'NO') ||
+//                ($user_country == 'DK') )
+//            {
+//                $swp_customer->setNationalIdNumber( $post_sveaSSN );
+//            }
+//            if( ($user_country == 'FI') )
+//            {
+//                $swp_customer->setNationalIdNumber( $post_sveaSSNFI );
+//            }
+//
+//            // set addressSelector from getAddresses
+//            if( ($user_country == 'SE') ||
+//                ($user_country == 'NO') ||
+//                ($user_country == 'DK') )
+//            {
+//                $swp_customer->setAddressSelector( $post_sveaAddressSelector );
+//            }
+//
+//            // set vatNo
+//            if( ($user_country == 'NL') ||
+//                ($user_country == 'DE') )
+//            {
+//                $swp_customer->setVatNumber( $post_sveaVatNo );
+//            }
+//
+//            // set housenumber
+//            if( ($user_country == 'NL') ||
+//                ($user_country == 'DE') )
+//            {
+//                $myStreetAddress = Svea\Helper::splitStreetAddress( $order->billing['street_address'] ); // Split street address and house no
+//            }
+//            else // other countries disregard housenumber field, so put entire address in streetname field     
+//            {
+//                $myStreetAddress[0] = $order->billing['street_address'];
+//                $myStreetAddress[1] = $order->billing['street_address'];
+//                $myStreetAddress[2] = "";
+//            }
+//            
+//            // set common fields
+//            $swp_customer
+//                ->setStreetAddress( $myStreetAddress[1], $myStreetAddress[2] )
+//                ->setZipCode($order->billing['postcode'])
+//                ->setLocality($order->billing['city'])
+//                ->setEmail($order->customer['email_address'])
+//                ->setIpAddress($_SERVER['REMOTE_ADDR'])
+//                ->setCoAddress($order->billing['suburb'])                       // c/o address
+//                ->setPhoneNumber($order->customer['telephone']);
+//
+//            // add customer to order
+//            $swp_order->addCustomerDetails($swp_customer);
+//        }
+//        else    // customer is private individual
+//        {
+//            // create individual customer object
+//            $swp_customer = WebPayItem::individualCustomer();
+//
+//            // set individual customer name
+//            $swp_customer->setName( $order->billing['firstname'], $order->billing['lastname'] );
+//
+//            // set individual customer SSN
+//            if( ($user_country == 'SE') ||
+//                ($user_country == 'NO') ||
+//                ($user_country == 'DK') )
+//            {
+//                $swp_customer->setNationalIdNumber( $post_sveaSSN );
+//            }
+//            if( ($user_country == 'FI') )
+//            {
+//                $swp_customer->setNationalIdNumber( $post_sveaSSNFI );
+//            }
+//
+//            // set BirthDate if required
+//            if( ($user_country == 'NL') ||
+//                ($user_country == 'DE') )
+//            {
+//                $swp_customer->setBirthDate(intval($post_sveaBirthYear), intval($post_sveaBirthMonth), intval($post_sveaBirthDay));
+//            }
+//
+//            // set initials if required
+//            if( ($user_country == 'NL') )
+//            {
+//                $swp_customer->setInitials($post_sveaInitials);
+//            }
+//
+//            // set housenumber
+//            if( ($user_country == 'NL') ||
+//                ($user_country == 'DE') )
+//            {
+//                $myStreetAddress = Svea\Helper::splitStreetAddress( $order->billing['street_address'] ); // Split street address and house no
+//            }
+//            else // other countries disregard housenumber field, so put entire address in streetname field     
+//            {
+//                $myStreetAddress[0] = $order->billing['street_address'];
+//                $myStreetAddress[1] = $order->billing['street_address'];
+//                $myStreetAddress[2] = "";
+//            }
+//
+//            // set common fields
+//            $swp_customer
+//                ->setStreetAddress( $myStreetAddress[1], $myStreetAddress[2] )  // street, housenumber
+//                ->setZipCode($order->billing['postcode'])
+//                ->setLocality($order->billing['city'])
+//                ->setEmail($order->customer['email_address'])
+//                ->setIpAddress($_SERVER['REMOTE_ADDR'])
+//                ->setCoAddress($order->billing['suburb'])                       // c/o address
+//                ->setPhoneNumber($order->customer['telephone'])
+//            ;
+//
+//            // add customer to order
+//            $swp_order->addCustomerDetails($swp_customer);
+//        }
+//
+//        // store our order object in session, to be retrieved in before_process()
+//        $_SESSION["swp_order"] = serialize($swp_order);
+
+        // we're done here
+        return false;
+    }
+  
+  
+  
+//
+//  OLD osCommerce function
+//  
 //  function process_button() {
 //    require('ext/modules/payment/svea/svea.php');
 //
 //    global $order, $language;
-//    //Get the order
-//    $new_order_rs = tep_db_query("select orders_id from ".TABLE_ORDERS." order by orders_id desc limit 1");
-//    $new_order_field = tep_db_fetch_array($new_order_rs);
-//
+
 //    // localization parameters
 //    $user_country = $order->billing['country']['iso_code_2'];
 //    $user_language = tep_db_fetch_array(tep_db_query("select code from " . TABLE_LANGUAGES . " where directory = '" . $language . "'"));
@@ -667,8 +878,8 @@ class sveawebpay_invoice {
 //    tep_db_query($common . ") values ('SveaWebPay Client no DK', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_DK', '60006', '', '6', '0', now())");
 //    tep_db_query($common . ", set_function) values ('Transaction Mode', 'MODULE_PAYMENT_SWPINVOICE_MODE', 'Test', 'Transaction mode used for processing orders. Production should be used for a live working cart. Test for testing.', '6', '0', now(), 'tep_cfg_select_option(array(\'Production\', \'Test\'), ')");
 //    tep_db_query($common . ") values ('Handling Fee', 'MODULE_PAYMENT_SWPINVOICE_HANDLING_FEE', '', 'This handling fee will be applied to all orders using this payment method.  The figure can either be set to a specific amount eg <b>5.00</b>, or set to a percentage of the order total, by ensuring the last character is a \'%\' eg <b>5.00%</b>.', '6', '0', now())");
-//    tep_db_query($common . ") values ('Accepted Currencies', 'MODULE_PAYMENT_SWPINVOICE_ALLOWED_CURRENCIES','SEK,NOK,DKK,EUR', 'The accepted currencies, separated by commas.  These <b>MUST</b> exist within your currencies table, along with the correct exchange rates.','6','0',now())");
-//    tep_db_query($common . ", set_function) values ('Default Currency', 'MODULE_PAYMENT_SWPINVOICE_DEFAULT_CURRENCY', 'SEK', 'Default currency used, if the customer uses an unsupported currency it will be converted to this. This should also be in the supported currencies list.', '6', '0', now(), 'tep_cfg_select_option(array(\'SEK\',\'NOK\',\'DKK\',\'EUR\'), ')");
+    tep_db_query($common . ") values ('Accepted Currencies', 'MODULE_PAYMENT_SWPINVOICE_ALLOWED_CURRENCIES','SEK,NOK,DKK,EUR', 'The accepted currencies, separated by commas.  These <b>MUST</b> exist within your currencies table, along with the correct exchange rates.','6','0',now())");
+    tep_db_query($common . ", set_function) values ('Default Currency', 'MODULE_PAYMENT_SWPINVOICE_DEFAULT_CURRENCY', 'SEK', 'Default currency used, if the customer uses an unsupported currency it will be converted to this. This should also be in the supported currencies list.', '6', '0', now(), 'tep_cfg_select_option(array(\'SEK\',\'NOK\',\'DKK\',\'EUR\'), ')");
 //    tep_db_query($common . ", set_function, use_function) values ('Set Order Status', 'MODULE_PAYMENT_SWPINVOICE_ORDER_STATUS_ID', '0', 'Set the status of orders made with this payment module to this value', '6', '0', now(), 'tep_cfg_pull_down_order_statuses(', 'tep_get_order_status_name')");
     tep_db_query($common . ", set_function) values ('Display SveaWebPay Images', 'MODULE_PAYMENT_SWPINVOICE_IMAGES', 'True', 'Do you want to display SveaWebPay images when choosing between payment options?', '6', '0', now(), 'tep_cfg_select_option(array(\'True\', \'False\'), ')");
 //    tep_db_query($common . ") values ('Ignore OT list', 'MODULE_PAYMENT_SWPINVOICE_IGNORE','ot_pretotal', 'Ignore the following order total codes, separated by commas.','6','0',now())");
@@ -698,8 +909,8 @@ class sveawebpay_invoice {
 //                  'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_DK',
 //                  'MODULE_PAYMENT_SWPINVOICE_MODE',
 //                  'MODULE_PAYMENT_SWPINVOICE_HANDLING_FEE',
-//                  'MODULE_PAYMENT_SWPINVOICE_ALLOWED_CURRENCIES',
-//                  'MODULE_PAYMENT_SWPINVOICE_DEFAULT_CURRENCY',
+                  'MODULE_PAYMENT_SWPINVOICE_ALLOWED_CURRENCIES',
+                  'MODULE_PAYMENT_SWPINVOICE_DEFAULT_CURRENCY',
 //                  'MODULE_PAYMENT_SWPINVOICE_ORDER_STATUS_ID',
                   'MODULE_PAYMENT_SWPINVOICE_IMAGES',
 //                  'MODULE_PAYMENT_SWPINVOICE_IGNORE',
