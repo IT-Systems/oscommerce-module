@@ -225,41 +225,7 @@ class sveawebpay_invoice extends SveaOsCommerce {
         {
              $sveaSubmitAddress = '<button id="sveaSubmitGetAddress" type="button">'.FORM_TEXT_GET_ADDRESS.'</button>';
         }
-            
-//
-//    $sveaIsCompany    = FORM_TEXT_COMPANY_OR_PRIVATE.' <br /><select name="sveaIsCompany" id="sveaIsCompany">
-//                        <option value="" selected="selected">'.FORM_TEXT_PRIVATE.'</option>
-//                        <option value="true">'.FORM_TEXT_COMPANY.'</option>
-//                        </select><br />';
-//    $sveaPnr          = FORM_TEXT_SS_NO.'<br /><input type="text" name="sveaPnr" id="sveaPnr" maxlength="11" value=""><br />';
-//
-//    //For finland there is no getAdress
-//    if ($order->info['currency'] == 'EUR'){
-//        $sveaGetAdressBtn = '';
-//    }else{
-//        $sveaGetAdressBtn = '<button type="button" id="getSveaAdressInvoice" onclick="getAdress()">'.FORM_TEXT_INVOICE_GET_ADDRESS.'</button><br />';
-//    }
-//
-//    $sveaAdressDD     = FORM_TEXT_INVOICE_ADDRESS.'<br /><select name="adressSelector_fakt" id="adressSelector_fakt" style="display:none"></select><br />';
-//
-//    $sveaField        = '<div id="sveaFaktField" style="display:none">'.$sveaIsCompany.$sveaPnr.$sveaAdressDD.$sveaGetAdressBtn.'</div>';
-//
-//    $fields[] = array('title' => $sveaField, 'field' => '<span id="pers_nr_error_fakt" style="color:red"></span>');
-//
-//
-//    // handling fee
-//    if (isset($this->handling_fee) && $this->handling_fee > 0) {
-//      $paymentfee_cost = $this->handling_fee;
-//      if (substr($paymentfee_cost, -1) == '%')
-//        $fields[] = array('title' => sprintf(MODULE_PAYMENT_SWPINVOICE_HANDLING_APPLIES, $paymentfee_cost), 'field' => '');
-//      else
-//      {
-//        $tax_class = MODULE_ORDER_TOTAL_SWPHANDLING_TAX_CLASS;
-//        if (DISPLAY_PRICE_WITH_TAX == "true" && $tax_class > 0)
-//          $paymentfee_tax = $paymentfee_cost * tep_get_tax_rate($tax_class, $order->delivery['country']['id'], $order->delivery['zone_id']) / 100;
-//        $fields[] = array('title' => sprintf(MODULE_PAYMENT_SWPINVOICE_HANDLING_APPLIES, $currencies->format($paymentfee_cost+$paymentfee_tax)), 'field' => '');
-//      }
-//    }
+
         return array( 'id'      => $this->code,
                       'module'  => $this->title,
                       'fields'  => $fields
