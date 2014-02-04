@@ -665,7 +665,6 @@ class SveaOsCommerce {
 //    }
 //   
     /**
-     * (Not in zencart module)
      * get order totals from globals and return them in a format akin to that of the
      * order_total::process() (which accumulates values in output array, so we can't
      * just call it again, but need to look at what the order total presentation left us
@@ -723,16 +722,16 @@ class SveaOsCommerce {
 
                 // if shipping fee, create WebPayItem::shippingFee object and add to order
                 case 'ot_shipping':
-
+                  
                     // makes use of zencart $order-info[] shipping information to populate object
                     // shop shows prices including tax, take this into accord when calculating tax
                     if (DISPLAY_PRICE_WITH_TAX == 'false') {
-                        $amountExVat = $order->info['shipping_cost'];
-                        $amountIncVat = $order->info['shipping_cost'] + $order->info['shipping_tax'];
+                        $amountExVat = $order_total['value'];
+                        $amountIncVat = $order_total['value']//; TODO fix this, as it doesn't pick up the tax if shop is set to display prices without tax!
                     }
                     else {
-                        $amountExVat = $order->info['shipping_cost'] - $order->info['shipping_tax'];
-                        $amountIncVat = $order->info['shipping_cost'] ;
+                        $amountExVat = $GLOBALS['shipping']['cost'];
+                        $amountIncVat = $order_total['value'];
                     }
 
                     // add WebPayItem::shippingFee to swp_order object
