@@ -260,9 +260,14 @@ class sveawebpay_invoice {
         );
     }
 
-//  function pre_confirmation_check() {
-//    return false;
-//  }
+    /**
+     * called at start of checkout_confirmation.php
+     * @return boolean
+     */
+  function pre_confirmation_check() {
+//      print_r( $_POST );      
+    return false;
+  }
 //
 //  function confirmation() {
 //    return false;
