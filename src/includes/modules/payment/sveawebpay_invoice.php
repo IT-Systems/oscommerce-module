@@ -296,14 +296,17 @@ class sveawebpay_invoice extends SveaOsCommerce {
         
         // Create and initialize order object, using either test or production configuration
         $sveaConfig = (MODULE_PAYMENT_SWPINVOICE_MODE === 'Test') ? new OsCommerceSveaConfigTest() : new OsCommerceSveaConfigProd();
-//
-//        $swp_order = WebPay::createOrder( $sveaConfig )
-//            ->setCountryCode( $user_country )
-//            ->setCurrency($currency)                       //Required for card & direct payment and PayPage payment.
-//            ->setClientOrderNumber($client_order_number)   //Required for card & direct payment, PaymentMethod payment and PayPage payments
-//            ->setOrderDate(date('c'))                      //Required for synchronous payments
-//        ;
-//
+
+        $swp_order = WebPay::createOrder( $sveaConfig )
+            ->setCountryCode( $user_country )
+            ->setCurrency($currency)                       //Required for card & direct payment and PayPage payment.
+            ->setClientOrderNumber($client_order_number)   //Required for card & direct payment, PaymentMethod payment and PayPage payments
+            ->setOrderDate(date('c'))                      //Required for synchronous payments
+        ;
+
+//print_r( $swp_order ); die;
+
+
 //        // for each item in cart, create WebPayItem::orderRow objects and add to order
 //        foreach ($order->products as $productId => $product) {
 //
@@ -321,132 +324,135 @@ class sveawebpay_invoice extends SveaOsCommerce {
 //        // creates non-item order rows from Order Total entries
 //        $swp_order = $this->parseOrderTotals( $order_totals, $swp_order );
 //
-//        // Check if customer is company
-//        if( $post_sveaIsCompany === 'true')
-//        {
-//            // create company customer object
-//            $swp_customer = WebPayItem::companyCustomer();
-//           
-//            // set company name
-//            $swp_customer->setCompanyName( $order->billing['company'] );
-//
-//            // set company SSN
-//            if( ($user_country == 'SE') ||
-//                ($user_country == 'NO') ||
-//                ($user_country == 'DK') )
-//            {
-//                $swp_customer->setNationalIdNumber( $post_sveaSSN );
-//            }
-//            if( ($user_country == 'FI') )
-//            {
-//                $swp_customer->setNationalIdNumber( $post_sveaSSNFI );
-//            }
-//
-//            // set addressSelector from getAddresses
-//            if( ($user_country == 'SE') ||
-//                ($user_country == 'NO') ||
-//                ($user_country == 'DK') )
-//            {
-//                $swp_customer->setAddressSelector( $post_sveaAddressSelector );
-//            }
-//
-//            // set vatNo
-//            if( ($user_country == 'NL') ||
-//                ($user_country == 'DE') )
-//            {
-//                $swp_customer->setVatNumber( $post_sveaVatNo );
-//            }
-//
-//            // set housenumber
-//            if( ($user_country == 'NL') ||
-//                ($user_country == 'DE') )
-//            {
-//                $myStreetAddress = Svea\Helper::splitStreetAddress( $order->billing['street_address'] ); // Split street address and house no
-//            }
-//            else // other countries disregard housenumber field, so put entire address in streetname field     
-//            {
-//                $myStreetAddress[0] = $order->billing['street_address'];
-//                $myStreetAddress[1] = $order->billing['street_address'];
-//                $myStreetAddress[2] = "";
-//            }
-//            
-//            // set common fields
-//            $swp_customer
-//                ->setStreetAddress( $myStreetAddress[1], $myStreetAddress[2] )
-//                ->setZipCode($order->billing['postcode'])
-//                ->setLocality($order->billing['city'])
-//                ->setEmail($order->customer['email_address'])
-//                ->setIpAddress($_SERVER['REMOTE_ADDR'])
-//                ->setCoAddress($order->billing['suburb'])                       // c/o address
-//                ->setPhoneNumber($order->customer['telephone']);
-//
-//            // add customer to order
-//            $swp_order->addCustomerDetails($swp_customer);
-//        }
-//        else    // customer is private individual
-//        {
-//            // create individual customer object
-//            $swp_customer = WebPayItem::individualCustomer();
-//
-//            // set individual customer name
-//            $swp_customer->setName( $order->billing['firstname'], $order->billing['lastname'] );
-//
-//            // set individual customer SSN
-//            if( ($user_country == 'SE') ||
-//                ($user_country == 'NO') ||
-//                ($user_country == 'DK') )
-//            {
-//                $swp_customer->setNationalIdNumber( $post_sveaSSN );
-//            }
-//            if( ($user_country == 'FI') )
-//            {
-//                $swp_customer->setNationalIdNumber( $post_sveaSSNFI );
-//            }
-//
-//            // set BirthDate if required
-//            if( ($user_country == 'NL') ||
-//                ($user_country == 'DE') )
-//            {
-//                $swp_customer->setBirthDate(intval($post_sveaBirthYear), intval($post_sveaBirthMonth), intval($post_sveaBirthDay));
-//            }
-//
-//            // set initials if required
-//            if( ($user_country == 'NL') )
-//            {
-//                $swp_customer->setInitials($post_sveaInitials);
-//            }
-//
-//            // set housenumber
-//            if( ($user_country == 'NL') ||
-//                ($user_country == 'DE') )
-//            {
-//                $myStreetAddress = Svea\Helper::splitStreetAddress( $order->billing['street_address'] ); // Split street address and house no
-//            }
-//            else // other countries disregard housenumber field, so put entire address in streetname field     
-//            {
-//                $myStreetAddress[0] = $order->billing['street_address'];
-//                $myStreetAddress[1] = $order->billing['street_address'];
-//                $myStreetAddress[2] = "";
-//            }
-//
-//            // set common fields
-//            $swp_customer
-//                ->setStreetAddress( $myStreetAddress[1], $myStreetAddress[2] )  // street, housenumber
-//                ->setZipCode($order->billing['postcode'])
-//                ->setLocality($order->billing['city'])
-//                ->setEmail($order->customer['email_address'])
-//                ->setIpAddress($_SERVER['REMOTE_ADDR'])
-//                ->setCoAddress($order->billing['suburb'])                       // c/o address
-//                ->setPhoneNumber($order->customer['telephone'])
-//            ;
-//
-//            // add customer to order
-//            $swp_order->addCustomerDetails($swp_customer);
-//        }
+        // Check if customer is company
+        if( $post_sveaIsCompany === 'true')
+        {
+            // create company customer object
+            $swp_customer = WebPayItem::companyCustomer();
+           
+            // set company name
+            $swp_customer->setCompanyName( $order->billing['company'] );
+
+            // set company SSN
+            if( ($user_country == 'SE') ||
+                ($user_country == 'NO') ||
+                ($user_country == 'DK') )
+            {
+                $swp_customer->setNationalIdNumber( $post_sveaSSN );
+            }
+            if( ($user_country == 'FI') )
+            {
+                $swp_customer->setNationalIdNumber( $post_sveaSSNFI );
+            }
+
+            // set addressSelector from getAddresses
+            if( ($user_country == 'SE') ||
+                ($user_country == 'NO') ||
+                ($user_country == 'DK') )
+            {
+                $swp_customer->setAddressSelector( $post_sveaAddressSelector );
+            }
+
+            // set vatNo
+            if( ($user_country == 'NL') ||
+                ($user_country == 'DE') )
+            {
+                $swp_customer->setVatNumber( $post_sveaVatNo );
+            }
+
+            // set housenumber
+            if( ($user_country == 'NL') ||
+                ($user_country == 'DE') )
+            {
+                $myStreetAddress = Svea\Helper::splitStreetAddress( $order->billing['street_address'] ); // Split street address and house no
+            }
+            else // other countries disregard housenumber field, so put entire address in streetname field     
+            {
+                $myStreetAddress[0] = $order->billing['street_address'];
+                $myStreetAddress[1] = $order->billing['street_address'];
+                $myStreetAddress[2] = "";
+            }
+            
+            // set common fields
+            $swp_customer
+                ->setStreetAddress( $myStreetAddress[1], $myStreetAddress[2] )
+                ->setZipCode($order->billing['postcode'])
+                ->setLocality($order->billing['city'])
+                ->setEmail($order->customer['email_address'])
+                ->setIpAddress($_SERVER['REMOTE_ADDR'])
+                ->setCoAddress($order->billing['suburb'])                       // c/o address
+                ->setPhoneNumber($order->customer['telephone']);
+
+            // add customer to order
+            $swp_order->addCustomerDetails($swp_customer);
+        }
+        else    // customer is private individual
+        {
+            // create individual customer object
+            $swp_customer = WebPayItem::individualCustomer();
+
+            // set individual customer name
+            $swp_customer->setName( $order->billing['firstname'], $order->billing['lastname'] );
+
+            // set individual customer SSN
+            if( ($user_country == 'SE') ||
+                ($user_country == 'NO') ||
+                ($user_country == 'DK') )
+            {
+                $swp_customer->setNationalIdNumber( $post_sveaSSN );
+            }
+            if( ($user_country == 'FI') )
+            {
+                $swp_customer->setNationalIdNumber( $post_sveaSSNFI );
+            }
+
+            // set BirthDate if required
+            if( ($user_country == 'NL') ||
+                ($user_country == 'DE') )
+            {
+                $swp_customer->setBirthDate(intval($post_sveaBirthYear), intval($post_sveaBirthMonth), intval($post_sveaBirthDay));
+            }
+
+            // set initials if required
+            if( ($user_country == 'NL') )
+            {
+                $swp_customer->setInitials($post_sveaInitials);
+            }
+
+            // set housenumber
+            if( ($user_country == 'NL') ||
+                ($user_country == 'DE') )
+            {
+                $myStreetAddress = Svea\Helper::splitStreetAddress( $order->billing['street_address'] ); // Split street address and house no
+            }
+            else // other countries disregard housenumber field, so put entire address in streetname field     
+            {
+                $myStreetAddress[0] = $order->billing['street_address'];
+                $myStreetAddress[1] = $order->billing['street_address'];
+                $myStreetAddress[2] = "";
+            }
+
+            // set common fields
+            $swp_customer
+                ->setStreetAddress( $myStreetAddress[1], $myStreetAddress[2] )  // street, housenumber
+                ->setZipCode($order->billing['postcode'])
+                ->setLocality($order->billing['city'])
+                ->setEmail($order->customer['email_address'])
+                ->setIpAddress($_SERVER['REMOTE_ADDR'])
+                ->setCoAddress($order->billing['suburb'])                       // c/o address
+                ->setPhoneNumber($order->customer['telephone'])
+            ;
+
+            // add customer to order
+            $swp_order->addCustomerDetails($swp_customer);
+        }
 //
 //        // store our order object in session, to be retrieved in before_process()
 //        $_SESSION["swp_order"] = serialize($swp_order);
 
+        
+print_r( $swp_order ); die;
+        
         // we're done here
         return false;
     }
