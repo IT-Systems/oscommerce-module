@@ -3,6 +3,9 @@
  * SVEAWEBPAY PAYMENT MODULE FOR osCommerce
  */
 
+// Include Svea php integration package files
+require_once(DIR_FS_CATALOG . 'ext/modules/payment/svea/Includes.php');         // use new php integration package for v4
+require_once(DIR_FS_CATALOG . 'sveawebpay_config.php');     // sveaConfig implementation
 require_once(DIR_FS_CATALOG . 'sveawebpay_common.php');     // osCommerce module common functions
 
 class sveawebpay_invoice extends SveaOsCommerce {
@@ -209,7 +212,7 @@ class sveawebpay_invoice extends SveaOsCommerce {
                             $sveaBirthDateDiv .     //  NL, DE
                             $sveaVatNoDiv .         // NL, DE
                             $sveaHandlingFee .
-                            // FI, NL, DE also uses customer address data from zencart
+                            // FI, NL, DE also uses customer address data from osCommerce
                         '</div>';
 
         $fields[] = array('title' => '', 'field' => '<br />' . $sveaField . $sveaError);
@@ -325,8 +328,8 @@ class sveawebpay_invoice extends SveaOsCommerce {
         $currency = $this->getCurrency($order->info['currency']);
 //print_r( $currency ); die;
         
-//        // Create and initialize order object, using either test or production configuration
-//        $sveaConfig = (MODULE_PAYMENT_SWPINVOICE_MODE === 'Test') ? new ZenCartSveaConfigTest() : new ZenCartSveaConfigProd();
+        // Create and initialize order object, using either test or production configuration
+        $sveaConfig = (MODULE_PAYMENT_SWPINVOICE_MODE === 'Test') ? new OsCommerceSveaConfigTest() : new OsCommerceSveaConfigProd();
 //
 //        $swp_order = WebPay::createOrder( $sveaConfig )
 //            ->setCountryCode( $user_country )
@@ -876,7 +879,7 @@ class sveawebpay_invoice extends SveaOsCommerce {
 //    tep_db_query($common . ") values ('SveaWebPay Client no NO', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_NO', '32666', '', '6', '0', now())");
 //    tep_db_query($common . ") values ('SveaWebPay Client no FI', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_FI', '29995', '', '6', '0', now())");
 //    tep_db_query($common . ") values ('SveaWebPay Client no DK', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_DK', '60006', '', '6', '0', now())");
-//    tep_db_query($common . ", set_function) values ('Transaction Mode', 'MODULE_PAYMENT_SWPINVOICE_MODE', 'Test', 'Transaction mode used for processing orders. Production should be used for a live working cart. Test for testing.', '6', '0', now(), 'tep_cfg_select_option(array(\'Production\', \'Test\'), ')");
+    tep_db_query($common . ", set_function) values ('Transaction Mode', 'MODULE_PAYMENT_SWPINVOICE_MODE', 'Test', 'Transaction mode used for processing orders. Production should be used for a live working cart. Test for testing.', '6', '0', now(), 'tep_cfg_select_option(array(\'Production\', \'Test\'), ')");
 //    tep_db_query($common . ") values ('Handling Fee', 'MODULE_PAYMENT_SWPINVOICE_HANDLING_FEE', '', 'This handling fee will be applied to all orders using this payment method.  The figure can either be set to a specific amount eg <b>5.00</b>, or set to a percentage of the order total, by ensuring the last character is a \'%\' eg <b>5.00%</b>.', '6', '0', now())");
     tep_db_query($common . ") values ('Accepted Currencies', 'MODULE_PAYMENT_SWPINVOICE_ALLOWED_CURRENCIES','SEK,NOK,DKK,EUR', 'The accepted currencies, separated by commas.  These <b>MUST</b> exist within your currencies table, along with the correct exchange rates.','6','0',now())");
     tep_db_query($common . ", set_function) values ('Default Currency', 'MODULE_PAYMENT_SWPINVOICE_DEFAULT_CURRENCY', 'SEK', 'Default currency used, if the customer uses an unsupported currency it will be converted to this. This should also be in the supported currencies list.', '6', '0', now(), 'tep_cfg_select_option(array(\'SEK\',\'NOK\',\'DKK\',\'EUR\'), ')");
@@ -907,7 +910,7 @@ class sveawebpay_invoice extends SveaOsCommerce {
 //                  'MODULE_PAYMENT_SWPINVOICE_USERNAME_DK',
 //                  'MODULE_PAYMENT_SWPINVOICE_PASSWORD_DK',
 //                  'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_DK',
-//                  'MODULE_PAYMENT_SWPINVOICE_MODE',
+                  'MODULE_PAYMENT_SWPINVOICE_MODE',
 //                  'MODULE_PAYMENT_SWPINVOICE_HANDLING_FEE',
                   'MODULE_PAYMENT_SWPINVOICE_ALLOWED_CURRENCIES',
                   'MODULE_PAYMENT_SWPINVOICE_DEFAULT_CURRENCY',
