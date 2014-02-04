@@ -236,4 +236,15 @@ if (isset($_POST['paymentOptions'])):
     echo 'jQuery("#paymentOptions").show();';
 
 endif;
+
+// rework 140204 kgm
+
+/**
+ *  get iso 3166 customerCountry from zencart customer settings
+ */
+if( isset($_POST['SveaAjaxGetCustomerCountry']) ) {
+    $country = tep_get_countries_with_iso_codes( $_SESSION['customer_country_id'] );
+    echo $country['countries_iso_code_2'];
+}
+
 ?>
