@@ -17,9 +17,7 @@ jQuery(document).ready(function (){
             SveaAjaxGetCustomerCountry: true
         }
     }).done( function( msg ) {
-        jQuery('#pmt-sveawebpay_invoice').attr("sveaCustomerCountry",msg);
-        jQuery('#pmt-sveawebpay_partpay').attr("sveaCustomerCountry",msg);
-        jQuery('#pmt-sveawebpay_internetbank').attr("sveaCustomerCountry",msg);
+        jQuery('#bodyContent').attr("sveaCustomerCountry",msg);
     });
 
     // first, uncheck all payment buttons
