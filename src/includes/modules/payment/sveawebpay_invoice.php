@@ -717,22 +717,22 @@ class sveawebpay_invoice extends SveaOsCommerce {
     tep_db_query($common . ", set_function) values ('Enable SveaWebPay Invoice Module', 'MODULE_PAYMENT_SWPINVOICE_STATUS', 'True', 'Do you want to accept SveaWebPay payments?', '6', '0', now(), 'tep_cfg_select_option(array(\'True\', \'False\'), ')");
     tep_db_query($common . ") values ('SveaWebPay Username SV', 'MODULE_PAYMENT_SWPINVOICE_USERNAME_SV', 'sverigetest', 'Username for SveaWebPay Invoice Sweden', '6', '0', now())");
     tep_db_query($common . ") values ('SveaWebPay Password SV', 'MODULE_PAYMENT_SWPINVOICE_PASSWORD_SV', 'sverigetest', 'Password for SveaWebPay Invoice Sweden', '6', '0', now())");
-//    tep_db_query($common . ") values ('SveaWebPay Username NO', 'MODULE_PAYMENT_SWPINVOICE_USERNAME_NO', 'xxx', 'Username for SveaWebPay Invoice Norway', '6', '0', now())");
-//    tep_db_query($common . ") values ('SveaWebPay Password NO', 'MODULE_PAYMENT_SWPINVOICE_PASSWORD_NO', 'xxx', 'Password for SveaWebPay Invoice Norway', '6', '0', now())");
-//    tep_db_query($common . ") values ('SveaWebPay Username FI', 'MODULE_PAYMENT_SWPINVOICE_USERNAME_FI', 'xxx', 'Username for SveaWebPay Invoice Finland', '6', '0', now())");
-//    tep_db_query($common . ") values ('SveaWebPay Password FI', 'MODULE_PAYMENT_SWPINVOICE_PASSWORD_FI', 'xxx', 'Password for SveaWebPay Invoice Finland', '6', '0', now())");
-//    tep_db_query($common . ") values ('SveaWebPay Username DK', 'MODULE_PAYMENT_SWPINVOICE_USERNAME_DK', 'xxx', 'Username for SveaWebPay Invoice Denmark', '6', '0', now())");
-//    tep_db_query($common . ") values ('SveaWebPay Password DK', 'MODULE_PAYMENT_SWPINVOICE_PASSWORD_DK', 'xx', 'Password for SveaWebPay Invoice Denmark', '6', '0', now())");
+    tep_db_query($common . ") values ('SveaWebPay Username NO', 'MODULE_PAYMENT_SWPINVOICE_USERNAME_NO', 'norgetest2', 'Username for SveaWebPay Invoice Norway', '6', '0', now())");
+    tep_db_query($common . ") values ('SveaWebPay Password NO', 'MODULE_PAYMENT_SWPINVOICE_PASSWORD_NO', 'norgetest2', 'Password for SveaWebPay Invoice Norway', '6', '0', now())");
+    tep_db_query($common . ") values ('SveaWebPay Username FI', 'MODULE_PAYMENT_SWPINVOICE_USERNAME_FI', 'finlandtest2', 'Username for SveaWebPay Invoice Finland', '6', '0', now())");
+    tep_db_query($common . ") values ('SveaWebPay Password FI', 'MODULE_PAYMENT_SWPINVOICE_PASSWORD_FI', 'finlandtest2', 'Password for SveaWebPay Invoice Finland', '6', '0', now())");
+    tep_db_query($common . ") values ('SveaWebPay Username DK', 'MODULE_PAYMENT_SWPINVOICE_USERNAME_DK', 'danmarktest2', 'Username for SveaWebPay Invoice Denmark', '6', '0', now())");
+    tep_db_query($common . ") values ('SveaWebPay Password DK', 'MODULE_PAYMENT_SWPINVOICE_PASSWORD_DK', 'danmarktest2', 'Password for SveaWebPay Invoice Denmark', '6', '0', now())");
     tep_db_query($common . ") values ('SveaWebPay Username NL', 'MODULE_PAYMENT_SWPINVOICE_USERNAME_NL', 'hollandtest', 'Username for SveaWebPay Invoice Netherlands', '6', '0', now())");
     tep_db_query($common . ") values ('SveaWebPay Password NL', 'MODULE_PAYMENT_SWPINVOICE_PASSWORD_NL', 'hollandtest', 'Password for SveaWebPay Invoice Netherlands', '6', '0', now())");
-//    tep_db_query($common . ") values ('SveaWebPay Username DK', 'MODULE_PAYMENT_SWPINVOICE_USERNAME_DE', 'xxx', 'Username for SveaWebPay Invoice Germany', '6', '0', now())");
-//    tep_db_query($common . ") values ('SveaWebPay Password DK', 'MODULE_PAYMENT_SWPINVOICE_PASSWORD_DE', 'xx', 'Password for SveaWebPay Invoice Germany', '6', '0', now())");
-//    tep_db_query($common . ") values ('SveaWebPay Client no SV', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_SV', '79021', '', '6', '0', now())");
-//    tep_db_query($common . ") values ('SveaWebPay Client no NO', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_NO', '0', '', '6', '0', now())");
-//    tep_db_query($common . ") values ('SveaWebPay Client no FI', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_FI', '0', '', '6', '0', now())");
-//    tep_db_query($common . ") values ('SveaWebPay Client no DK', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_DK', '0', '', '6', '0', now())");
+    tep_db_query($common . ") values ('SveaWebPay Username DE', 'MODULE_PAYMENT_SWPINVOICE_USERNAME_DE', 'germanytest', 'Username for SveaWebPay Invoice Germany', '6', '0', now())");
+    tep_db_query($common . ") values ('SveaWebPay Password DE', 'MODULE_PAYMENT_SWPINVOICE_PASSWORD_DE', 'germanytest', 'Password for SveaWebPay Invoice Germany', '6', '0', now())");
+    tep_db_query($common . ") values ('SveaWebPay Client no SV', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_SV', '79021', '', '6', '0', now())");
+    tep_db_query($common . ") values ('SveaWebPay Client no NO', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_NO', '33308', '', '6', '0', now())");
+    tep_db_query($common . ") values ('SveaWebPay Client no FI', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_FI', '26136', '', '6', '0', now())");
+    tep_db_query($common . ") values ('SveaWebPay Client no DK', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_DK', '62008', '', '6', '0', now())");
     tep_db_query($common . ") values ('SveaWebPay Client no NL', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_NL', '85997', '', '6', '0', now())");
-//    tep_db_query($common . ") values ('SveaWebPay Client no DE', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_DE', '0', '', '6', '0', now())");
+    tep_db_query($common . ") values ('SveaWebPay Client no DE', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_DE', '14997', '', '6', '0', now())");
     tep_db_query($common . ", set_function) values ('Transaction Mode', 'MODULE_PAYMENT_SWPINVOICE_MODE', 'Test', 'Transaction mode used for processing orders. Production should be used for a live working cart. Test for testing.', '6', '0', now(), 'tep_cfg_select_option(array(\'Production\', \'Test\'), ')");
 //    tep_db_query($common . ") values ('Handling Fee', 'MODULE_PAYMENT_SWPINVOICE_HANDLING_FEE', '', 'This handling fee will be applied to all orders using this payment method.  The figure can either be set to a specific amount eg <b>5.00</b>, or set to a percentage of the order total, by ensuring the last character is a \'%\' eg <b>5.00%</b>.', '6', '0', now())");
     tep_db_query($common . ") values ('Accepted Currencies', 'MODULE_PAYMENT_SWPINVOICE_ALLOWED_CURRENCIES','SEK,NOK,DKK,EUR', 'The accepted currencies, separated by commas.  These <b>MUST</b> exist within your currencies table, along with the correct exchange rates.','6','0',now())");
@@ -755,21 +755,21 @@ class sveawebpay_invoice extends SveaOsCommerce {
                   'MODULE_PAYMENT_SWPINVOICE_USERNAME_SV',
                   'MODULE_PAYMENT_SWPINVOICE_PASSWORD_SV',
                   'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_SV',
-//                  'MODULE_PAYMENT_SWPINVOICE_USERNAME_NO',
-//                  'MODULE_PAYMENT_SWPINVOICE_PASSWORD_NO',
-//                  'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_NO',
-//                  'MODULE_PAYMENT_SWPINVOICE_USERNAME_FI',
-//                  'MODULE_PAYMENT_SWPINVOICE_PASSWORD_FI',
-//                  'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_FI',
-//                  'MODULE_PAYMENT_SWPINVOICE_USERNAME_DK',
-//                  'MODULE_PAYMENT_SWPINVOICE_PASSWORD_DK',
-//                  'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_DK',
+                  'MODULE_PAYMENT_SWPINVOICE_USERNAME_NO',
+                  'MODULE_PAYMENT_SWPINVOICE_PASSWORD_NO',
+                  'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_NO',
+                  'MODULE_PAYMENT_SWPINVOICE_USERNAME_FI',
+                  'MODULE_PAYMENT_SWPINVOICE_PASSWORD_FI',
+                  'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_FI',
+                  'MODULE_PAYMENT_SWPINVOICE_USERNAME_DK',
+                  'MODULE_PAYMENT_SWPINVOICE_PASSWORD_DK',
+                  'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_DK',
                   'MODULE_PAYMENT_SWPINVOICE_USERNAME_NL',
                   'MODULE_PAYMENT_SWPINVOICE_PASSWORD_NL',
                   'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_NL',
-//                  'MODULE_PAYMENT_SWPINVOICE_USERNAME_DE',
-//                  'MODULE_PAYMENT_SWPINVOICE_PASSWORD_DE',
-//                  'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_DE',
+                  'MODULE_PAYMENT_SWPINVOICE_USERNAME_DE',
+                  'MODULE_PAYMENT_SWPINVOICE_PASSWORD_DE',
+                  'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_DE',
                   'MODULE_PAYMENT_SWPINVOICE_MODE',
 //                  'MODULE_PAYMENT_SWPINVOICE_HANDLING_FEE',
                   'MODULE_PAYMENT_SWPINVOICE_ALLOWED_CURRENCIES',
