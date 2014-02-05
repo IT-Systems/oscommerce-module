@@ -675,6 +675,9 @@ class SveaOsCommerce {
     {    
        global $order_total_modules;
         
+//        print_r($order_total_modules);
+//        print_r($order_total_modules->process()); die;
+       
         $order_totals = array();
         foreach( $order_total_modules->modules as $n => $module_filename )
         {
@@ -726,30 +729,21 @@ class SveaOsCommerce {
 
                 // if shipping fee, create WebPayItem::shippingFee object and add to order
                 case 'ot_shipping':
-                  
-//                    print_r( MODULE_SHIPPING_INSTALLED ); die;
-//                    print_r($order); die;                    
-//                    print_r($cart); die;                    
-//                    print_r($GLOBALS); die;
-//                    print_r($order_totals); die;
+                                                    
+                    // get shipping tax rate from session
+                    $shipping_module_name = substr($_SESSION['shipping']['id'], 0, strrpos($_SESSION['shipping']['id'], '_'));
+                    $shipping_tax_class = constant( 'MODULE_SHIPPING_'.strtoupper($shipping_module_name)."_TAX_CLASS");
+                    $shipping_tax_rate = tep_get_tax_rate( $shipping_tax_class );
                     
-                    // makes use of zencart $order-info[] shipping information to populate object
-                    // shop shows prices including tax, take this into accord when calculating tax
-                    if (DISPLAY_PRICE_WITH_TAX == 'false') {
-                        $amountExVat = $order_total['value'];
-                        $amountIncVat = $order_total['value'];
-                    }
-                    else {
-                        $amountExVat = $GLOBALS['shipping']['cost'];
-                        $amountIncVat = $order_total['value'];
-                    }
+                    // get shipping cost ex vat from globals
+                    $shipping_cost_ex_vat = $GLOBALS['shipping']['cost'];
 
                     // add WebPayItem::shippingFee to swp_order object
                     $svea_order->addFee(
                             WebPayItem::shippingFee()
                                     ->setDescription($order->info['shipping_method'])
-                                    ->setAmountExVat( $amountExVat )
-                                    ->setAmountIncVat( $amountIncVat )
+                                    ->setAmountExVat( $shipping_cost_ex_vat )
+                                    ->setVatPercent($shipping_tax_rate)
                     );
                     break;
 
