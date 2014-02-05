@@ -449,224 +449,77 @@ class sveawebpay_invoice extends SveaOsCommerce {
             // add customer to order
             $swp_order->addCustomerDetails($swp_customer);
         }
-//
-//        // store our order object in session, to be retrieved in before_process()
-//        $_SESSION["swp_order"] = serialize($swp_order);
+
+        // store our order object in session, to be retrieved in before_process()
+        $_SESSION["swp_order"] = serialize($swp_order);
 
           
-print_r( $swp_order ); die;
+//print_r( $swp_order ); die;
         
         // we're done here
         return false;
     }
   
-  
-  
-//
-//  OLD osCommerce function
-//  
-//  function process_button() {
-//    require('ext/modules/payment/svea/svea.php');
-//
-//    global $order, $language;
+// from ZC
+    /**
+     * before_process is called from modules/checkout_process.
+     * It instantiates and populates a WebPay::createOrder object
+     * as well as sends the actual payment request
+     */
+    function before_process() {
+        global $order, $order_totals, $language, $billto, $sendto;
 
-//    // localization parameters
-//    $user_country = $order->billing['country']['iso_code_2'];
-//    $user_language = tep_db_fetch_array(tep_db_query("select code from " . TABLE_LANGUAGES . " where directory = '" . $language . "'"));
-//    $user_language = $user_language['code'];
-//
-//    // switch to default currency if the customers currency is not supported
-//    $currency = $order->info['currency'];
-//    if(!in_array($currency, $this->allowed_currencies))
-//      $currency = $this->default_currency;
-//
-//
-//    // we'll store the generated orderid in a session variable so we can check
-//    // it when returning from payment gateway for security reasons:
-//    // Set up SSN and company
-//    $_SESSION['swp_orderid'] = $hosted_params['OrderId'];
-//
-//
-//    /*** Set up The request Array ***/
-//
-//    // Order rows
-//    foreach($order->products as $productId => $product) {
-//
-//        $orderRows = Array(
-//              "Description" => $product['name'],
-//              "PricePerUnit" => $this->convert_to_currency(round($product['final_price'],2),$currency),
-//              "NrOfUnits" => $product['qty'],
-//              "Unit" => "st",
-//              "VatPercent" => $product['tax'],
-//              "DiscountPercent" => 0
-//            );
-//
-//        if (isset($clientInvoiceRows)){
-//
-//            $clientInvoiceRows[$productId] = $orderRows;
-//        }else{
-//            $clientInvoiceRows[] = $orderRows;
-//        }
-//    }
-//
-//
-//    // handle order totals
-//
-//    global $order_total_modules;
-//    // ugly hack to accomodate ms2.2
-//    foreach ($order_total_modules->modules as $phpfile) {
-//      $class = substr($phpfile, 0, strrpos($phpfile, '.'));
-//      $GLOBALS[$class]->output = array();
-//    }
-//    $order_totals = $order_total_modules->process();
-//
-//    foreach($order_totals as $ot_id => $order_total) {
-//      $current_row++;
-//      switch($order_total['code']) {
-//        case 'ot_subtotal':
-//        case 'ot_total':
-//        case 'ot_tax':
-//        case in_array($order_total['code'],$this->ignore_list):
-//          // do nothing for these
-//          $current_row--;
-//          break;
-//        case 'ot_shipping':
-//          $shipping_code = explode('_', $_SESSION['shipping']['id']);
-//          $shipping = $GLOBALS[$shipping_code[0]];
-//          if (isset($shipping->description))
-//            $shipping_description = $shipping->title . ' [' . $shipping->description . ']';
-//          else
-//            $shipping_description = $shipping->title;
-//
-//            $clientInvoiceRows[] = Array(
-//              "Description" => $shipping_description,
-//              "PricePerUnit" => $this->convert_to_currency($_SESSION['shipping']['cost'],$currency),
-//              "NrOfUnits" => 1,
-//              "VatPercent" => (string) tep_get_tax_rate($shipping->tax_class, $order->delivery['country']['id'], $order->delivery['zone_id']),
-//              "DiscountPercent" => 0
-//            );
-//          break;
-//        case 'ot_coupon':
-//
-//          $clientInvoiceRows[] = Array(
-//              "Description" => strip_tags($order_total['title']),
-//              "PricePerUnit" => -$this->convert_to_currency(strip_tags($order_total['value']),$currency),
-//              "NrOfUnits" => 1,
-//              "VatPercent" => 0,
-//              "DiscountPercent" => 0
-//            );
-//        break;
-//        // default case handles order totals like handling fee, but also
-//        // 'unknown' items from other plugins. Might cause problems.
-//        default:
-//          $order_total_obj = $GLOBALS[$order_total['code']];
-//          $tax_rate = (string) tep_get_tax_rate($order_total_obj->tax_class, $order->delivery['country']['id'], $order->delivery['zone_id']);
-//          // if displayed WITH tax, REDUCE the value since it includes tax
-//          if (DISPLAY_PRICE_WITH_TAX == 'true')
-//            $order_total['value'] = (strip_tags($order_total['value']) / ((100 + $tax_rate) / 100));
-//
-//            $clientInvoiceRows[] = Array(
-//              "Description" => strip_tags($order_total['title']),
-//              "PricePerUnit" => $this->convert_to_currency(strip_tags($order_total['value']),$currency),
-//              "NrOfUnits" => 1,
-//              "VatPercent" => $tax_rate,
-//              "DiscountPercent" => 0
-//            );
-//        break;
-//      }
-//      $i++;
-//    }
-//
-//    if (isset($this->handling_fee) && $this->handling_fee > 0) {
-//      $paymentfee_cost = $this->handling_fee;
-//      $invoiceCost     = $this->handling_fee * 0.8;
-//
-//      $clientInvoiceRows[] = Array(
-//              "Description" => 'Faktureringsavgift',
-//              "PricePerUnit" => $this->convert_to_currency($invoiceCost,$currency),
-//              "NrOfUnits" => 1,
-//              "VatPercent" => 25,
-//              "DiscountPercent" => 0
-//            );
-//    }
-//
-//    //IsCompany
-//    $company = ($_POST['sveaIsCompany'] == 'true') ? true: false;
-//
-//    //Get svea configuration for each country based on currency
-//    $sveaConf = getCountryConfigInvoice($order->info['currency']) ;
-//
-//    //The createOrder Data
-//    //Bugfix! SoapClient can't take empty strings! Anneli 131129
-//    $request = Array(
-//        "Auth" => Array(
-//          "Username" => $sveaConf['username'],              //req
-//          "Password" => $sveaConf['password'],              //req
-//          "ClientNumber" => $sveaConf['clientno']           //req
-//         ),
-//        "Order" => Array(
-//              "ClientOrderNr" => ($new_order_field['orders_id'] + 1).'-'.time(),    //optional, tom sträng ok
-//          "CountryCode" => $sveaConf['countryCode'],                                //optional, tom sträng ok
-//          "SecurityNumber" => isset($_POST['sveaPnr']) ? $_POST['sveaPnr'] : 0,     //req, 
-//          "IsCompany" => $company,                                                  //req, men tom sträng är ok, syns i anrop som "false"
-//          "OrderDate" => date(c),                                                   //req, tom sträng är inte ok => Server was unable to read request. ---> There is an error in XML document (2, 426). ---> The string '' is not a valid AllXsd value.
-//          "AddressSelector" => isset($_POST['adressSelector_fakt']) ? $_POST['adressSelector_fakt'] : 0,      // optional, tom sträng ok
-//          "PreApprovedCustomerId" => 0
-//        ),
-//
-//        "InvoiceRows" => array('ClientInvoiceRowInfo' => $clientInvoiceRows)        // req
-//    ); 
-//
-//     $_SESSION['swp_fakt_request'] = $request;
-//
-//     if ($this->handling_fee > 0){
-//        echo '
-//        <script type="text/javascript">
-//            $(".contentContainer .contentText:eq(1) table:eq(1) > tbody").append("<tr><td>'.FORM_TEXT_INVOICE_FEE.' '.$this->handling_fee.' '.$order->info['currency'].'</td></tr>");
-//        </script>
-//        ';
-//     }
-//
-//
-//  }
-//
-//     //Error Responses
-//    function responseCodes($err,$errormessage = NULL){
-//        switch ($err){
-//            case "CusomterCreditRejected" :
-//                return ERROR_CODE_1;
-//                break;
-//            case "CustomerOverCreditLimit" :
-//                return ERROR_CODE_2;
-//                break;
-//            case "CustomerAbuseBlock" :
-//                return ERROR_CODE_3;
-//                break;
-//            case "OrderExpired" :
-//                return ERROR_CODE_4;
-//                break;
-//            case "ClientOverCreditLimit" :
-//                return ERROR_CODE_5;
-//                break;
-//            case "OrderOverSveaLimit" :
-//                return ERROR_CODE_6;
-//                break;
-//            case "OrderOverClientLimit" :
-//                return ERROR_CODE_7;
-//                break;
-//            case "CustomerSveaRejected" :
-//                return ERROR_CODE_8;
-//                break;
-//            case "CustomerCreditNoSuchEntity" :
-//                return ERROR_CODE_9;
-//                break;
-//            default :
-//                return ERROR_CODE_DEFAULT." : ".$errormessage;
-//                break;
-//
-//        }
-//    }
-//
+        // retrieve order object set in process_button()
+        $swp_order = unserialize($_SESSION["swp_order"]);
+
+//        print_r( $swp_order->useInvoicePayment()->prepareRequest() );
+//        
+        // send payment request to svea, receive response       
+        $swp_response = $swp_order->useInvoicePayment()->doRequest();
+
+        // payment request failed; handle this by redirecting w/result code as error message
+        if ($swp_response->accepted === false) {
+            $_SESSION['SWP_ERROR'] = $this->responseCodes($swp_response->resultcode,$swp_response->errormessage);
+            $payment_error_return = 'payment_error=sveawebpay_invoice';
+            zen_redirect(zen_href_link(FILENAME_CHECKOUT_PAYMENT, $payment_error_return)); // error handled in selection() above
+        }
+
+        //
+        // payment request succeded, store response in session
+        if ($swp_response->accepted == true) {
+
+            if (isset($_SESSION['SWP_ERROR'])) {
+                unset($_SESSION['SWP_ERROR']);
+            }
+
+            // set zencart billing address to invoice address from payment request response
+
+            // is private individual?
+            if( $swp_response->customerIdentity->customerType == "Individual") {
+                $order->billing['firstname'] = $swp_response->customerIdentity->fullName; // workaround for zen_address_format not showing 'name' in order information view/
+                $order->billing['lastname'] = "";
+                $order->billing['company'] = "";
+            }
+            else {
+                $order->billing['company'] = $swp_response->customerIdentity->fullName;
+            }
+            $order->billing['street_address'] =
+                    $swp_response->customerIdentity->street . " " . $swp_response->customerIdentity->houseNumber;
+            $order->billing['suburb'] =  $swp_response->customerIdentity->coAddress;
+            $order->billing['city'] = $swp_response->customerIdentity->locality;
+            $order->billing['postcode'] = $swp_response->customerIdentity->zipCode;
+            $order->billing['state'] = '';  // "state" is not applicable in SWP countries
+
+            $order->billing['country']['title'] =                                           // country name only needed for address
+                    $this->getCountryName( $swp_response->customerIdentity->countryCode );
+
+            // save the response object
+            $_SESSION["swp_response"] = serialize($swp_response);
+        }
+    }
+    
+    
+//  OLD osC    
 //  function before_process() {
 //
 //    global $order, $order_totals, $language, $billto, $sendto;
@@ -842,18 +695,18 @@ print_r( $swp_order ); die;
   function install() {
     $common = "insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added";
     tep_db_query($common . ", set_function) values ('Enable SveaWebPay Invoice Module', 'MODULE_PAYMENT_SWPINVOICE_STATUS', 'True', 'Do you want to accept SveaWebPay payments?', '6', '0', now(), 'tep_cfg_select_option(array(\'True\', \'False\'), ')");
-//    tep_db_query($common . ") values ('SveaWebPay Username SV', 'MODULE_PAYMENT_SWPINVOICE_USERNAME_SV', 'Testinstallation', 'Username for SveaWebPay Invoice Sweden', '6', '0', now())");
-//    tep_db_query($common . ") values ('SveaWebPay Password SV', 'MODULE_PAYMENT_SWPINVOICE_PASSWORD_SV', 'Testinstallation', 'Password for SveaWebPay Invoice Sweden', '6', '0', now())");
-//    tep_db_query($common . ") values ('SveaWebPay Username NO', 'MODULE_PAYMENT_SWPINVOICE_USERNAME_NO', 'webpay_test_no', 'Username for SveaWebPay Invoice Norway', '6', '0', now())");
-//    tep_db_query($common . ") values ('SveaWebPay Password NO', 'MODULE_PAYMENT_SWPINVOICE_PASSWORD_NO', 'dvn349hvs9+29hvs', 'Password for SveaWebPay Invoice Norway', '6', '0', now())");
-//    tep_db_query($common . ") values ('SveaWebPay Username FI', 'MODULE_PAYMENT_SWPINVOICE_USERNAME_FI', 'finlandtest', 'Username for SveaWebPay Invoice Finland', '6', '0', now())");
-//    tep_db_query($common . ") values ('SveaWebPay Password FI', 'MODULE_PAYMENT_SWPINVOICE_PASSWORD_FI', 'finlandtest', 'Password for SveaWebPay Invoice Finland', '6', '0', now())");
-//    tep_db_query($common . ") values ('SveaWebPay Username DK', 'MODULE_PAYMENT_SWPINVOICE_USERNAME_DK', 'danmarktest', 'Username for SveaWebPay Invoice Denmark', '6', '0', now())");
-//    tep_db_query($common . ") values ('SveaWebPay Password DK', 'MODULE_PAYMENT_SWPINVOICE_PASSWORD_DK', 'danmarktest', 'Password for SveaWebPay Invoice Denmark', '6', '0', now())");
-//    tep_db_query($common . ") values ('SveaWebPay Client no SV', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_SV', '75021', '', '6', '0', now())");
-//    tep_db_query($common . ") values ('SveaWebPay Client no NO', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_NO', '32666', '', '6', '0', now())");
-//    tep_db_query($common . ") values ('SveaWebPay Client no FI', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_FI', '29995', '', '6', '0', now())");
-//    tep_db_query($common . ") values ('SveaWebPay Client no DK', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_DK', '60006', '', '6', '0', now())");
+    tep_db_query($common . ") values ('SveaWebPay Username SV', 'MODULE_PAYMENT_SWPINVOICE_USERNAME_SV', 'sverigetest', 'Username for SveaWebPay Invoice Sweden', '6', '0', now())");
+    tep_db_query($common . ") values ('SveaWebPay Password SV', 'MODULE_PAYMENT_SWPINVOICE_PASSWORD_SV', 'sverigetest', 'Password for SveaWebPay Invoice Sweden', '6', '0', now())");
+//    tep_db_query($common . ") values ('SveaWebPay Username NO', 'MODULE_PAYMENT_SWPINVOICE_USERNAME_NO', 'xxx', 'Username for SveaWebPay Invoice Norway', '6', '0', now())");
+//    tep_db_query($common . ") values ('SveaWebPay Password NO', 'MODULE_PAYMENT_SWPINVOICE_PASSWORD_NO', 'xxx', 'Password for SveaWebPay Invoice Norway', '6', '0', now())");
+//    tep_db_query($common . ") values ('SveaWebPay Username FI', 'MODULE_PAYMENT_SWPINVOICE_USERNAME_FI', 'xxx', 'Username for SveaWebPay Invoice Finland', '6', '0', now())");
+//    tep_db_query($common . ") values ('SveaWebPay Password FI', 'MODULE_PAYMENT_SWPINVOICE_PASSWORD_FI', 'xxx', 'Password for SveaWebPay Invoice Finland', '6', '0', now())");
+//    tep_db_query($common . ") values ('SveaWebPay Username DK', 'MODULE_PAYMENT_SWPINVOICE_USERNAME_DK', 'xxx', 'Username for SveaWebPay Invoice Denmark', '6', '0', now())");
+//    tep_db_query($common . ") values ('SveaWebPay Password DK', 'MODULE_PAYMENT_SWPINVOICE_PASSWORD_DK', 'xx', 'Password for SveaWebPay Invoice Denmark', '6', '0', now())");
+    tep_db_query($common . ") values ('SveaWebPay Client no SV', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_SV', '79021', '', '6', '0', now())");
+//    tep_db_query($common . ") values ('SveaWebPay Client no NO', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_NO', '0', '', '6', '0', now())");
+//    tep_db_query($common . ") values ('SveaWebPay Client no FI', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_FI', '0', '', '6', '0', now())");
+//    tep_db_query($common . ") values ('SveaWebPay Client no DK', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_DK', '0', '', '6', '0', now())");
     tep_db_query($common . ", set_function) values ('Transaction Mode', 'MODULE_PAYMENT_SWPINVOICE_MODE', 'Test', 'Transaction mode used for processing orders. Production should be used for a live working cart. Test for testing.', '6', '0', now(), 'tep_cfg_select_option(array(\'Production\', \'Test\'), ')");
 //    tep_db_query($common . ") values ('Handling Fee', 'MODULE_PAYMENT_SWPINVOICE_HANDLING_FEE', '', 'This handling fee will be applied to all orders using this payment method.  The figure can either be set to a specific amount eg <b>5.00</b>, or set to a percentage of the order total, by ensuring the last character is a \'%\' eg <b>5.00%</b>.', '6', '0', now())");
     tep_db_query($common . ") values ('Accepted Currencies', 'MODULE_PAYMENT_SWPINVOICE_ALLOWED_CURRENCIES','SEK,NOK,DKK,EUR', 'The accepted currencies, separated by commas.  These <b>MUST</b> exist within your currencies table, along with the correct exchange rates.','6','0',now())");
@@ -873,9 +726,9 @@ print_r( $swp_order ); die;
   // must perfectly match keys inserted in install function
   function keys() {
     return array( 'MODULE_PAYMENT_SWPINVOICE_STATUS',
-//                  'MODULE_PAYMENT_SWPINVOICE_USERNAME_SV',
-//                  'MODULE_PAYMENT_SWPINVOICE_PASSWORD_SV',
-//                  'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_SV',
+                  'MODULE_PAYMENT_SWPINVOICE_USERNAME_SV',
+                  'MODULE_PAYMENT_SWPINVOICE_PASSWORD_SV',
+                  'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_SV',
 //                  'MODULE_PAYMENT_SWPINVOICE_USERNAME_NO',
 //                  'MODULE_PAYMENT_SWPINVOICE_PASSWORD_NO',
 //                  'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_NO',

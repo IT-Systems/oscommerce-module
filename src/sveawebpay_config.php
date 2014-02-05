@@ -8,18 +8,12 @@ class OsCommerceSveaConfigBase {
      * get a zencart configuration value from zencart db
      */
     protected function getOsCommerceConfigValue( $key ) { 
-        global $db;
-
-        // see install() below for config table schema:
-        // "insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added";
-        // $db->Execute($common . ") values ('SveaWebPay Client no SV', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_SV', '75021', '', '6', '0', now())");
         
-        $sql = "select configuration_value from " . TABLE_CONFIGURATION . " where configuration_key = :key:";
-        $sql = $db->bindVars($sql, ':key:', $key, 'string');  
+        $result = tep_db_query("select configuration_value from " . TABLE_CONFIGURATION . " where configuration_key = '".$key."'");
+        $fields = $result->fetch_array();
 
-        $result = $db->Execute($sql);                
-        if ($result->RecordCount() > 0) {
-          $value = $result->fields['configuration_value'];
+        if (tep_db_num_rows($result) > 0) {
+          $value = $fields['configuration_value'];
         } else {
           $value = 'swp_error_record_not_found';
         }
