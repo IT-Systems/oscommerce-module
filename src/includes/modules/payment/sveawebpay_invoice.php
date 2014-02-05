@@ -515,6 +515,8 @@ class sveawebpay_invoice extends SveaOsCommerce {
 
             // save the response object
             $_SESSION["swp_response"] = serialize($swp_response);
+            
+//print_r( $swp_response ); die;           
         }
     }
     
@@ -525,36 +527,6 @@ class sveawebpay_invoice extends SveaOsCommerce {
 //    global $order, $order_totals, $language, $billto, $sendto;
 //
 //
-//    //Put all the data in request tag
-//    $data['request'] = $_SESSION['swp_fakt_request'];
-//   	$svea_server = (MODULE_PAYMENT_SWPINVOICE_MODE == 'Test') ? 'https://webservices.sveaekonomi.se/webpay_test/SveaWebPay.asmx?WSDL' : 'https://webservices.sveaekonomi.se/webpay/SveaWebPay.asmx?WSDL';
-//
-//    //Call Soap
-//    $client = new SoapClient( $svea_server );
-//  
-////    $data = NULL;                                   // trigger SoapFault
-////    $data['request']['Order']['OrderDate'] = "";    // trigger SoapFault
-////    unset($data['request']['whatever']);    
-////    print_r( $data ); 
-////    die();
-//
-// 
-//    $response = $errormessage = "foo";
-//    
-//     //Make soap call to below method using above data
-//    try {
-//        $svea_req = $client->CreateOrder( $data );
-//        $response = $svea_req->CreateOrderResult->RejectionCode;
-//        $errormessage = $svea_req->CreateOrderResult->ErrorMessage;
-//    }
-//    catch( SoapFault $soapfault ) {
-//        $response =  $soapfault->faultcode;
-//        $errormessage = $soapfault->getMessage();
-//    }
-//
-////    print_r($response);
-////    print_r($errormessage);
-////    die(); 
 //
 //    /*****
 //    Responsehandling
@@ -630,7 +602,63 @@ class sveawebpay_invoice extends SveaOsCommerce {
 //    }
 //
 //  }
+
+// from ZC
+    // if payment accepted, set addresses based on response, insert order into database
+    function after_process() {
+        global $insert_id, $order, $db;
+
+        $new_order_id = $insert_id;  // $insert_id contains the new order orders_id
+        
+        // retrieve response object from before_process()
+        $createOrderResponse = unserialize($_SESSION["swp_response"]);
+
+//        // store create order object along with response sveaOrderId in db
+//        $sql_data_array = array(
+//            'orders_id' => $new_order_id,
+//            'sveaorderid' => $createOrderResponse->sveaOrderId,
+//            'createorder_object' => $_SESSION["swp_order"]      // session data is already serialized
+//        );
+//        zen_db_perform("svea_order", $sql_data_array);
+//        
+//        // if autodeliver order status matches the new order status, deliver the order
+//        if( $this->getCurrentOrderStatus( $new_order_id ) == MODULE_PAYMENT_SWPINVOICE_AUTODELIVER ) 
+//        {
+//            $deliverResponse = $this->doDeliverOrderInvoice($new_order_id);
+//            if( $deliverResponse->accepted == true )
+//            {                    
+//                $comment = 'Order AutoDelivered. (SveaOrderId: ' .$this->getSveaOrderId( $new_order_id ). ')';                
+//                //$this->insertOrdersStatus( $new_order_id, SVEA_ORDERSTATUS_DELIVERED_ID, $comment );
+//                $sql_data_array = array(
+//                    'orders_id' => $new_order_id,
+//                    'orders_status_id' => SVEA_ORDERSTATUS_DELIVERED_ID,              
+//                    'date_added' => 'now()',
+//                    'customer_notified' => 0,  // 0 for "no email" (open lock symbol) in order status history
+//                    'comments' => $comment
+//                );
+//                zen_db_perform(TABLE_ORDERS_STATUS_HISTORY, $sql_data_array);
 //
+//                $db->Execute(   "update " . TABLE_ORDERS . " " .
+//                                "set orders_status = " . SVEA_ORDERSTATUS_DELIVERED_ID . " " .
+//                                "where orders_id = " . $new_order_id 
+//                );
+//            }
+//            else 
+//            {
+//                $comment =  'WARNING: AutoDeliver failed, status not changed. ' .
+//                            'Error: ' . $deliverResponse->errormessage . ' (SveaOrderId: ' .$this->getSveaOrderId( $new_order_id ). ')';
+//                $this->insertOrdersStatus( $new_order_id, $this->getCurrentOrderStatus( $new_order_id ), $comment );
+//            }          
+//        }
+         
+        // clean up our session variables set during checkout   //$SESSION[swp_*
+        unset($_SESSION['swp_order']);
+        unset($_SESSION['swp_response']);
+
+        return false;
+    }
+    
+//// OLD osC    
 //  // if payment accepted, insert order into database
 //  function after_process() {
 //    global $insert_id, $order;
@@ -651,7 +679,6 @@ class sveawebpay_invoice extends SveaOsCommerce {
 //            case 'EUR':
 //                $currency = 'â‚¬';
 //            break;
-//
 //    }
 //
 //    $handlingFee   = $this->convert_to_currency($this->handling_fee,$order->info['currency']);
