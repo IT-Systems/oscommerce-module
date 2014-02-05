@@ -1,7 +1,7 @@
 <?php
 
 require('includes/application_top.php');
-require('ext/modules/payment/svea/svea.php');
+//require('ext/modules/payment/svea/svea.php');
 require(DIR_WS_CLASSES . 'order.php');
 
 if (isset($_POST['paymentOptions'])){
