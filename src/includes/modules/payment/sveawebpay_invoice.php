@@ -481,9 +481,9 @@ class sveawebpay_invoice extends SveaOsCommerce {
         if ($swp_response->accepted === false) {
             $_SESSION['SWP_ERROR'] = $this->responseCodes($swp_response->resultcode,$swp_response->errormessage);
             $payment_error_return = 'payment_error=sveawebpay_invoice';
-            zen_redirect(zen_href_link(FILENAME_CHECKOUT_PAYMENT, $payment_error_return)); // error handled in selection() above
+            tep_redirect(tep_href_link(FILENAME_CHECKOUT_PAYMENT, $payment_error_return)); // error handled in selection() above
         }
-
+     
         //
         // payment request succeded, store response in session
         if ($swp_response->accepted == true) {
@@ -695,19 +695,12 @@ class sveawebpay_invoice extends SveaOsCommerce {
 //    return false;
 //  }
 //
-//  // sets error message to the session error value
-//  function get_error() {
-//    $error_text['title'] = ERROR_MESSAGE_PAYMENT_FAILED;
-//
-//    if($_SESSION['SWP_ERROR'])
-//      $error_text['error'] = $_SESSION['SWP_ERROR'];
-//    else
-//      $error_text['error'] = "Unexpected error during payment"; // if session variable was not found, normally this shouldn't happen
-//
-//    return $error_text;
-//
-//  }
 
+    // sets error message to the GET error value
+    function get_error() {
+        return array('title' => ERROR_MESSAGE_PAYMENT_FAILED, 'error' => stripslashes(urldecode($_GET['swperror'])));
+    }
+    
   // standard check if installed function
   function check() {
     global $db;
@@ -776,6 +769,77 @@ class sveawebpay_invoice extends SveaOsCommerce {
 //                  'MODULE_PAYMENT_SWPINVOICE_SORT_ORDER'
     );
   }
+
+    // Localize Error Responses
+    function responseCodes($err,$msg = NULL) {
+        switch ($err) {
+
+            // EU error codes
+            case "20000" :
+                return ERROR_CODE_20000;
+                break;
+            case "20001" :
+                return ERROR_CODE_20001;
+                break;
+            case "20002" :
+                return ERROR_CODE_20002;
+                break;
+            case "20003" :
+                return ERROR_CODE_20003;
+                break;
+            case "20004" :
+                return ERROR_CODE_20004;
+                break;
+            case "20005" :
+                return ERROR_CODE_20005;
+                break;
+            case "20006" :
+                return ERROR_CODE_20006;
+                break;
+            case "20013" :
+                return ERROR_CODE_20013;
+                break;
+
+            case "24000" :
+                return ERROR_CODE_24000;
+                break;
+
+            case "30000" :
+                return ERROR_CODE_30000;
+                break;
+            case "30001" :
+                return ERROR_CODE_30001;
+                break;
+            case "30002" :
+                return ERROR_CODE_30002;
+                break;
+            case "30003" :
+                return ERROR_CODE_30003;
+                break;
+
+            case "40000" :
+                return ERROR_CODE_40000;
+                break;
+            case "40001" :
+                return ERROR_CODE_40001;
+                break;
+            case "40002" :
+                return ERROR_CODE_40002;
+                break;
+            case "40004" :
+                return ERROR_CODE_40004;
+                break;
+
+            case "50000" :
+                return ERROR_CODE_50000;
+                break;
+
+            default :
+                return ERROR_CODE_DEFAULT . " " . $err . " - " . $msg;     // $err here is the response->resultcode
+                break;
+        }
+    } 
+
 //
 //  function convert_to_currency($value, $currency) {
 //    global $currencies;
