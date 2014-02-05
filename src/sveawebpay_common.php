@@ -675,19 +675,23 @@ class SveaOsCommerce {
     {    
        global $order_total_modules;
         
-       $order_totals = array();
-       foreach( $order_total_modules->modules as $n => $module_filename )
-       {
-           $module = substr($module_filename, 0, strrpos($module_filename, '.'));
+        $order_totals = array();
+        foreach( $order_total_modules->modules as $n => $module_filename )
+        {
+            $module = substr($module_filename, 0, strrpos($module_filename, '.'));
 
-           $order_totals[] = array(
-               'code' => $GLOBALS[$module]->code, 
-               'title' => $GLOBALS[$module]->output[0]['title'],
-               'text' => $GLOBALS[$module]->output[0]['text'],
-               'value' => $GLOBALS[$module]->output[0]['value'],
-               'sort_order' => $GLOBALS[$module]->sort_order,
-           ); 
+            for( $i=0; $i<count($GLOBALS[$module]->output); $i++)
+            {
+                $order_totals[] = array(
+                    'code' => $GLOBALS[$module]->code, 
+                    'title' => $GLOBALS[$module]->output[$i]['title'],
+                    'text' => $GLOBALS[$module]->output[$i]['text'],
+                    'value' => $GLOBALS[$module]->output[$i]['value'],
+                    'sort_order' => $GLOBALS[$module]->sort_order,
+                );
+            }
        }
+       
        return $order_totals ;
     }    
     
@@ -723,11 +727,17 @@ class SveaOsCommerce {
                 // if shipping fee, create WebPayItem::shippingFee object and add to order
                 case 'ot_shipping':
                   
+//                    print_r( MODULE_SHIPPING_INSTALLED ); die;
+//                    print_r($order); die;                    
+//                    print_r($cart); die;                    
+//                    print_r($GLOBALS); die;
+//                    print_r($order_totals); die;
+                    
                     // makes use of zencart $order-info[] shipping information to populate object
                     // shop shows prices including tax, take this into accord when calculating tax
                     if (DISPLAY_PRICE_WITH_TAX == 'false') {
                         $amountExVat = $order_total['value'];
-                        $amountIncVat = $order_total['value']//; TODO fix this, as it doesn't pick up the tax if shop is set to display prices without tax!
+                        $amountIncVat = $order_total['value'];
                     }
                     else {
                         $amountExVat = $GLOBALS['shipping']['cost'];
