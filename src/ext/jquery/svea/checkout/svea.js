@@ -33,7 +33,7 @@ jQuery(document).ready(function (){
             case 'sveawebpay_invoice':
 
                 // get customerCountry
-                var customerCountry = jQuery('#pmt-sveawebpay_invoice').attr("sveaCustomerCountry");
+                var customerCountry = jQuery('#bodyContent').attr("sveaCustomerCountry");
 
                 // hide getAddress button
                 if( customerCountry == "NO" ) {       // hide getAddress button for NO (default)
@@ -53,7 +53,7 @@ jQuery(document).ready(function (){
                     getAddresses(   jQuery('#sveaSSN').val(),
                                     "invoice",
                                     jQuery('#sveaInvoiceField input[type="radio"]:checked').val(),
-                                    jQuery('#pmt-sveawebpay_invoice').attr("sveaCustomerCountry"),
+                                    jQuery('#bodyContent').attr("sveaCustomerCountry"),
                                     "sveaAddressSelector"
                     );
                 });
@@ -77,7 +77,7 @@ jQuery(document).ready(function (){
             case 'sveawebpay_partpay':
 
                 // get customerCountry
-                var customerCountry = jQuery('#pmt-sveawebpay_partpay').attr("sveaCustomerCountry");
+                var customerCountry = jQuery('#bodyContent').attr("sveaCustomerCountry");
 
                 // hide addresses
                 hideBillingAndInvoiceAddress( customerCountry );
@@ -92,7 +92,7 @@ jQuery(document).ready(function (){
                     getAddresses(   jQuery('#sveaSSNPP').val(),
                                     "paymentplan",
                                     "false", // partpay not available to companies
-                                    jQuery('#pmt-sveawebpay_partpay').attr("sveaCustomerCountry"),
+                                    jQuery('#bodyContent').attr("sveaCustomerCountry"),
                                     "sveaAddressSelectorPP"
                     );
                 });                
@@ -119,7 +119,7 @@ jQuery(document).ready(function (){
             case 'sveawebpay_internetbank':
 
                 // get customerCountry
-                var customerCountry = jQuery('#pmt-sveawebpay_internetbank').attr("sveaCustomerCountry");
+                var customerCountry = jQuery('#bodyContent').attr("sveaCustomerCountry");
 
                 // show input fields
                 jQuery('#sveaInternetbankField').show();
@@ -151,7 +151,7 @@ jQuery(document).ready(function (){
         jQuery('#sveaBirthDate_div').show();
         jQuery('#sveaVatNo_div').hide();
                 
-        if( jQuery('#pmt-sveawebpay_invoice').attr("sveaCustomerCountry") == "NO" ) {       // hide getAddress button
+        if( jQuery('#bodyContent').attr("sveaCustomerCountry") == "NO" ) {       // hide getAddress button
             jQuery('#sveaSubmitGetAddress').hide();
         }
     });
@@ -161,7 +161,7 @@ jQuery(document).ready(function (){
         jQuery('#sveaBirthDate_div').hide();
         jQuery('#sveaVatNo_div').show();
                 
-        if( jQuery('#pmt-sveawebpay_invoice').attr("sveaCustomerCountry") == "NO" ) {       // show getAddress button
+        if( jQuery('#bodyContent').attr("sveaCustomerCountry") == "NO" ) {       // show getAddress button
             jQuery('#sveaSubmitGetAddress').show();
         }
         

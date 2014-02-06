@@ -199,6 +199,15 @@ class sveawebpay_invoice extends SveaOsCommerce {
         
         // TODO add handling fee here
         
+//        print_r($order->billing['country']['iso_code_2']); die;
+        
+        if(     $order->billing['country']['iso_code_2'] == "SE" ||
+                $order->billing['country']['iso_code_2'] == "DK" ||
+                $order->billing['country']['iso_code_2'] == "NO" )      // but don't show button/do getAddress unless customer is company!
+        {
+             $sveaSubmitAddress = '<button id="sveaSubmitGetAddress" type="button">'.FORM_TEXT_GET_ADDRESS.'</button>';
+        }
+
         $sveaError = '<br /><span id="sveaSSN_error_invoice" style="color:red"></span>';
 
         // create and add the field to be shown by our js when we select SveaInvoice payment method
@@ -218,18 +227,12 @@ class sveawebpay_invoice extends SveaOsCommerce {
         $fields[] = array('title' => '', 'field' => '<br />' . $sveaField . $sveaError);
 
         // TODO check this -- $_SESSION["swp_order_info_pre_coupon"]  = serialize($order->info);  // store order info needed to reconstruct amount pre coupon later
-                
-        if(     $order->billing['country']['iso_code_2'] == "SE" ||
-                $order->billing['country']['iso_code_2'] == "DK" ||
-                $order->billing['country']['iso_code_2'] == "NO" )      // but don't show button/do getAddress unless customer is company!
-        {
-             $sveaSubmitAddress = '<button id="sveaSubmitGetAddress" type="button">'.FORM_TEXT_GET_ADDRESS.'</button>';
-        }
 
         return array( 'id'      => $this->code,
                       'module'  => $this->title,
                       'fields'  => $fields
         );
+        
     }
 
     /**
