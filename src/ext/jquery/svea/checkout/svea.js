@@ -265,6 +265,9 @@ function getBankPaymentOptions( countryCode ) {
     });
 }
 
+
+// OLD osC
+//
 ////jQuery(document).ready(function (){
 //    
 //    //Function to get which payment method selected
