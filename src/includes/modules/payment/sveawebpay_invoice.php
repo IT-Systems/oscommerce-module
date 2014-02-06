@@ -199,6 +199,15 @@ class sveawebpay_invoice extends SveaOsCommerce {
         
         // TODO add handling fee here
         
+//        print_r($order->billing['country']['iso_code_2']); die;
+        
+        if(     $order->billing['country']['iso_code_2'] == "SE" ||
+                $order->billing['country']['iso_code_2'] == "DK" ||
+                $order->billing['country']['iso_code_2'] == "NO" )      // but don't show button/do getAddress unless customer is company!
+        {
+             $sveaSubmitAddress = '<button id="sveaSubmitGetAddress" type="button">'.FORM_TEXT_GET_ADDRESS.'</button>';
+        }
+
         $sveaError = '<br /><span id="sveaSSN_error_invoice" style="color:red"></span>';
 
         // create and add the field to be shown by our js when we select SveaInvoice payment method
@@ -218,32 +227,67 @@ class sveawebpay_invoice extends SveaOsCommerce {
         $fields[] = array('title' => '', 'field' => '<br />' . $sveaField . $sveaError);
 
         // TODO check this -- $_SESSION["swp_order_info_pre_coupon"]  = serialize($order->info);  // store order info needed to reconstruct amount pre coupon later
-                
-        if(     $order->billing['country']['iso_code_2'] == "SE" ||
-                $order->billing['country']['iso_code_2'] == "DK" ||
-                $order->billing['country']['iso_code_2'] == "NO" )      // but don't show button/do getAddress unless customer is company!
-        {
-             $sveaSubmitAddress = '<button id="sveaSubmitGetAddress" type="button">'.FORM_TEXT_GET_ADDRESS.'</button>';
-        }
 
         return array( 'id'      => $this->code,
                       'module'  => $this->title,
                       'fields'  => $fields
         );
+        
     }
 
     /**
      * called at start of checkout_confirmation.php
      * @return boolean
      */
-  function pre_confirmation_check() {
-//      print_r( $_POST );      
-    return false;
-  }
+    function pre_confirmation_check() 
+    {
+        global $order;
 
-  function confirmation() {
-    return false;
-  }
+        // check if we've performed a getAddress lookup
+        if( isset( $_SESSION['sveaGetAddressesResponse'] ) )
+        {
+            $getAddressesResponse = unserialize($_SESSION['sveaGetAddressesResponse']);
+            //unset($_SESSION['sveaGetAddressesResponse']);
+
+            // set zencart billing address to invoice address from getAddresses response
+            foreach($getAddressesResponse->customerIdentity as $asAddress ) // all GetAddressIdentity objects
+            {
+                
+                if( $asAddress->addressSelector == $_POST['sveaAddressSelector'] ) // write the selected GetAddressIdentity
+                {
+                    if( $_POST['sveaIsCompany'] == 'false' ) // is individual?
+                    {    
+                        $order->billing['firstname'] = $asAddress->firstName;
+                        $order->billing['lastname'] = $asAddress->lastName;
+                        $order->billing['company'] = "";
+                    }
+                    elseif( $_POST['sveaIsCompany'] == 'true' ) // is company?
+                    {       
+                        $order->billing['company'] = $asAddress->fullName;
+                        $order->billing['firstname'] = $asAddress->firstName;
+                        $order->billing['lastname'] = $asAddress->lastName;
+                    }
+
+                    $order->billing['street_address'] = $asAddress->street;
+                    $order->billing['suburb'] =  $asAddress->coAddress;
+                    $order->billing['city'] = $asAddress->locality;
+                    $order->billing['postcode'] = $asAddress->zipCode;
+
+                    $order->billing['street_address'] = $asAddress->street;
+                    $order->billing['suburb'] =  $asAddress->coAddress;
+                    $order->billing['city'] = $asAddress->locality;
+                    $order->billing['postcode'] = $asAddress->zipCode;
+                           
+                    $order->billing['country']['title'] = $this->getCountryName( $getAddressesResponse->country );  // other fields not set
+                }
+            }
+        }    
+        return false;
+    }
+
+    function confirmation() {
+      return false;
+    }
   
   
     /** process_button() is called from tpl_checkout_confirmation.php in
@@ -314,10 +358,10 @@ class sveawebpay_invoice extends SveaOsCommerce {
          
             $swp_order->addOrderRow(
                     WebPayItem::orderRow()
-                            ->setQuantity($product['qty'])          //Required
-                            ->setAmountExVat($amount_ex_vat)          //Optional, see info above
-                            ->setVatPercent(intval($product['tax']))  //Optional, see info above
-                            ->setDescription($product['name'])        //Optional
+                            ->setQuantity(intval($product['qty']))
+                            ->setAmountExVat($amount_ex_vat)      
+                            ->setVatPercent(intval($product['tax']))
+                            ->setDescription($product['name'])
            );
         }
 
