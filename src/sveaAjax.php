@@ -1,10 +1,13 @@
 <?php
 
 require('includes/application_top.php'); // include osCommerce tep_ functions et al
+
+require(DIR_FS_CATALOG . 'ext/modules/payment/svea/Includes.php');      // php integration package files
+require_once(DIR_FS_CATALOG . 'sveawebpay_config.php');                 // sveaConfig implementation
+
 //
 // OLD osC
 //
-////require('ext/modules/payment/svea/svea.php');
 ////require(DIR_WS_CLASSES . 'order.php');
 
 //if (isset($_POST['paymentOptions'])){
@@ -241,11 +244,81 @@ require('includes/application_top.php'); // include osCommerce tep_ functions et
 //endif;
 
 /**
+ *  perform getAddresses() via php integration package, return dropdown html widget
+ */
+if( isset($_POST['SveaAjaxGetAddresses']) ) {
+
+    $ssn = isset( $_POST['sveaSSN'] ) ? $_POST['sveaSSN'] : "swp_not_set";
+    $country = isset( $_POST['sveaCountryCode'] ) ? $_POST['sveaCountryCode'] : "swp_not_set";
+    $isCompany = isset( $_POST['sveaIsCompany'] ) ? $_POST['sveaIsCompany'] : "swp_not_set";
+    $paymentType = isset( $_POST['paymentType'] ) ? $_POST['paymentType'] : "swp_not_set";
+
+    sveaAjaxGetAddresses($ssn, $country, $isCompany, $paymentType );
+    exit();
+}
+
+function sveaAjaxGetAddresses( $ssn, $country, $isCompany, $paymentType ) {
+
+    $sveaConfig = (MODULE_PAYMENT_SWPINVOICE_MODE === 'Test' ||
+                   MODULE_PAYMENT_SWPPARTPAY_MODE === 'Test' ) ? new OsCommerceSveaConfigTest() : new OsCommerceSveaConfigProd();
+
+    $request = WebPay::getAddresses( $sveaConfig );
+    // private individual
+    if(  $isCompany === 'true' ) {
+        $request = $request->setCompany( $ssn );
+    }
+    if( $isCompany === 'false' ) {
+        $request = $request->setIndividual( $ssn );
+    }
+    // paymenttype
+    switch( strtoupper($paymentType) ) {
+        case "INVOICE":
+            $request = $request->setOrderTypeInvoice();
+            break;
+        case "PAYMENTPLAN":
+            $request = $request->setOrderTypePaymentPlan();
+            break;
+    }
+    $response = $request->setCountryCode( $country )->doRequest();
+
+    // error?
+    if( $response->accepted == false) {
+        echo( sprintf('<option id="address_0" value="swp_not_set">%s</option>', $response->errormessage) ); 
+    }
+    // if not, show addresses and store response in session
+    else {
+        // $getAddressResponse has type Svea\getAddressIdentity
+        foreach( $response->customerIdentity as $key => $getAddressIdentity ) {
+
+            $addressSelector = $getAddressIdentity->addressSelector;
+            $fullName = $getAddressIdentity->fullName;  // also used for company name
+            $street = $getAddressIdentity->street;
+            $coAddress = $getAddressIdentity->coAddress;
+            $zipCode = $getAddressIdentity->zipCode;
+            $locality = $getAddressIdentity->locality;
+
+            //Send back to user
+            echo(   '<option id="address_' . $key .
+                        '" value="' . $addressSelector .
+                        '">' . $fullName .
+                        ', ' . $street .
+                        ', ' . $coAddress .
+                        ', ' . $zipCode .
+                        ' ' . $locality .
+                    '</option>'
+            );
+        }
+        $_SESSION['sveaGetAddressesResponse'] = serialize( $response );     // TODO make use of this...
+    }
+}
+
+/**
  *  get iso 3166 customerCountry from zencart customer settings
  */
 if( isset($_POST['SveaAjaxGetCustomerCountry']) ) {
     $country = tep_get_countries_with_iso_codes( $_SESSION['customer_country_id'] );
     echo $country['countries_iso_code_2'];
 }
+
 
 ?>

@@ -40,8 +40,8 @@ jQuery(document).ready(function (){
                     jQuery('#sveaSubmitGetAddress').hide();
                 }
 
-                // hide addresses
-                hideBillingAndInvoiceAddress( customerCountry );
+//                // hide addresses
+//                hideBillingAndInvoiceAddress( customerCountry );
 
                 // show input fields
                 jQuery('#sveaInternetbankField').hide();
@@ -79,8 +79,8 @@ jQuery(document).ready(function (){
                 // get customerCountry
                 var customerCountry = jQuery('#bodyContent').attr("sveaCustomerCountry");
 
-                // hide addresses
-                hideBillingAndInvoiceAddress( customerCountry );
+//                // hide addresses
+//                hideBillingAndInvoiceAddress( customerCountry );
 
                 // show input fields
                 jQuery('#sveaInternetbankField').hide();
@@ -134,8 +134,8 @@ jQuery(document).ready(function (){
             //If other payment methods are selected, hide all svea related
             default:
 
-                // show billing address if hidden
-                showBillingAndInvoiceAddress();
+//                // show billing address if hidden
+//                showBillingAndInvoiceAddress();
 
                 // hide svea payment methods
                 jQuery('#sveaInternetbankField').hide();
@@ -170,24 +170,24 @@ jQuery(document).ready(function (){
     } // isReady
 });
 
-// hide billing, invoice address fields in getAddress countries
-function hideBillingAndInvoiceAddress( country ) {
-    if( (country === 'SE') ||
-        (country === 'NO') ||
-        (country === 'DK') )
-    {
-        jQuery('#checkoutPaymentHeadingAddress').hide();
-        jQuery('#checkoutBillto').hide();
-        jQuery('#checkoutPayment .floatingBox').hide();
-    }
-}
+//// hide billing, invoice address fields in getAddress countries
+//function hideBillingAndInvoiceAddress( country ) {
+//    if( (country === 'SE') ||
+//        (country === 'NO') ||
+//        (country === 'DK') )
+//    {
+//        jQuery('#checkoutPaymentHeadingAddress').hide();
+//        jQuery('#checkoutBillto').hide();
+//        jQuery('#checkoutPayment .floatingBox').hide();
+//    }
+//}
 
-// show billing address if currently hidden
-function showBillingAndInvoiceAddress() {
-    jQuery('#checkoutPaymentHeadingAddress').show();
-    jQuery('#checkoutBillto').show();
-    jQuery('#checkoutPayment .floatingBox').show();
-}
+//// show billing address if currently hidden
+//function showBillingAndInvoiceAddress() {
+//    jQuery('#checkoutPaymentHeadingAddress').show();
+//    jQuery('#checkoutBillto').show();
+//    jQuery('#checkoutPayment .floatingBox').show();
+//}
 
 //
 // new getAddresses() that uses the integration package
