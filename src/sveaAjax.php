@@ -14,41 +14,41 @@ if( isset($_POST['SveaAjaxGetCustomerCountry']) ) {
     $country = tep_get_countries_with_iso_codes( $_SESSION['customer_country_id'] );
     echo $country['countries_iso_code_2'];
 }
-//
-///**
-// * perform getPaymentPlanParams, paymentPlanPricePerMonth, return dropdown widget
-// */
-//if( isset($_POST['SveaAjaxGetPartPaymentOptions']) ) {
-//
-//    $price = isset( $_SESSION['sveaAjaxOrderTotal'] ) ? $_SESSION['sveaAjaxOrderTotal'] : "swp_not_set";        // from payment method
-//    $country = isset( $_SESSION['sveaAjaxCountryCode'] ) ? $_SESSION['sveaAjaxCountryCode'] : "swp_not_set";    // from svea.js
-//
-//    sveaAjaxGetPartPaymentOptions( $price, $country );
-//    exit();
-//}
-//
-//function sveaAjaxGetPartPaymentOptions( $price, $country ) {
-//
-//    $sveaConfig = (MODULE_PAYMENT_SWPPARTPAY_MODE === 'Test' ) ? new ZenCartSveaConfigTest() : new ZenCartSveaConfigProd();
-//
-//    $plansResponse = WebPay::getPaymentPlanParams( $sveaConfig )->setCountryCode($country)->doRequest();
-//
-//    // error?
-//    if( $plansResponse->accepted == false) {
-//        echo( sprintf('<div><input type="radio" id="address_0" value="swp_not_set">%s</div>', $plansResponse->errormessage) );
-//    }
-//    // if not, show addresses and store response in session
-//    else {
-//       $priceResponse = WebPay::paymentPlanPricePerMonth( $price, $plansResponse );
-//        $counter = 0;
-//        foreach( $priceResponse->values as $cc) {
-//            $checked = $counter === 0 ? "checked" : "";
-//            echo sprintf( '<div><input type="radio" name="sveaPaymentOptionsPP" value="%s" '.$checked.'>%s (%.2f)</div>', $cc['campaignCode'], $cc['description'], $cc['pricePerMonth'] );
-//            $counter ++;
-//        }
-//    }
-//}
-//
+
+/**
+ * perform getPaymentPlanParams, paymentPlanPricePerMonth, return dropdown widget
+ */
+if( isset($_POST['SveaAjaxGetPartPaymentOptions']) ) {
+
+    $price = isset( $_SESSION['sveaAjaxOrderTotal'] ) ? $_SESSION['sveaAjaxOrderTotal'] : "swp_not_set";        // from payment method
+    $country = isset( $_SESSION['sveaAjaxCountryCode'] ) ? $_SESSION['sveaAjaxCountryCode'] : "swp_not_set";    // from svea.js
+
+    sveaAjaxGetPartPaymentOptions( $price, $country );
+    exit();
+}
+
+function sveaAjaxGetPartPaymentOptions( $price, $country ) {
+
+    $sveaConfig = (MODULE_PAYMENT_SWPPARTPAY_MODE === 'Test' ) ? new OsCommerceSveaConfigTest() : new OsCommerceSveaConfigProd();
+
+    $plansResponse = WebPay::getPaymentPlanParams( $sveaConfig )->setCountryCode($country)->doRequest();
+
+    // error?
+    if( $plansResponse->accepted == false) {
+        echo( sprintf('<div><input type="radio" id="address_0" value="swp_not_set">%s</div>', $plansResponse->errormessage) );
+    }
+    // if not, show addresses and store response in session
+    else {
+        $priceResponse = WebPay::paymentPlanPricePerMonth( $price, $plansResponse );
+        $counter = 0;
+        foreach( $priceResponse->values as $cc) {
+            $checked = $counter === 0 ? "checked" : "";
+            echo sprintf( '<div><input type="radio" name="sveaPaymentOptionsPP" value="%s" '.$checked.'>%s (%.2f)</div>', $cc['campaignCode'], $cc['description'], $cc['pricePerMonth'] );
+            $counter ++;
+        }
+    }
+}
+
 ///**
 // * Present the banks for the user in a friendly fashion, so that we can go directly there instead of landing on paypage
 // */

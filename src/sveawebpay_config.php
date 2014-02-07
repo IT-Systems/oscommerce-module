@@ -11,7 +11,7 @@ class OsCommerceSveaConfigBase {
         
         $result = tep_db_query("select configuration_value from " . TABLE_CONFIGURATION . " where configuration_key = '".$key."'");
         $fields = $result->fetch_array();
-
+      
         if (tep_db_num_rows($result) > 0) {
           $value = $fields['configuration_value'];
         } else {
@@ -31,9 +31,9 @@ class OsCommerceSveaConfigBase {
         $country = strtoupper($country);
 
         switch( $country ) {    
-        case "SE": // for compatibility w/module 3.0 db entries fix
-            $country = "SV";
-            break;
+        case "SE": 
+//            $country = "SV"; // for compatibility w/module 3.0 db entries fix
+//            break;
 
         case "NO":
         case "DK":
