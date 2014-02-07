@@ -88,10 +88,10 @@ class sveawebpay_invoice extends SveaOsCommerce {
 
         $fields = array();
 
-        // image
+        // add svea invoice image file
         if ($this->display_images)
-            $fields[] = array('title' => '<img src=images/SveaWebPay-Faktura-100px.png />', 'field' => '');
-
+             $fields[] = array('title' => '<img src=images/Svea/SVEAINVOICEEU_'.$order->customer['country']['iso_code_2'].'.png />', 'field' => '');
+                
         // TODO error handling
 
         // insert svea js

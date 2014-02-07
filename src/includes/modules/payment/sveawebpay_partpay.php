@@ -97,12 +97,12 @@ class sveawebpay_partpay extends SveaOsCommerce {
 
         $fields = array();
 
-        // image
+        // add svea invoice image file
         $fields[] = array(
             'title' => '<img src=images/Svea/SVEASPLITEU_'.$order->customer['country']['iso_code_2'].'.png />', 
             'field' => ''
         );
-
+       
         // catch and display error messages raised when i.e. payment request from before_process() below turns out not accepted
         if (isset($_REQUEST['payment_error']) && $_REQUEST['payment_error'] == 'sveawebpay_partpay') {
             $fields[] = array('title' => '<span style="color:red">' . $_SESSION['SWP_ERROR'] . '</span>', 'field' => '');
