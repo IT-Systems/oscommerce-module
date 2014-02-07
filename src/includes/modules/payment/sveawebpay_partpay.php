@@ -389,7 +389,7 @@ class sveawebpay_partpay extends SveaOsCommerce {
 
             $swp_order->addOrderRow(
                     WebPayItem::orderRow()
-                            ->setQuantity($product['qty'])
+                            ->setQuantity(intval($product['qty']))
                             ->setAmountExVat($amount_ex_vat)
                             ->setVatPercent(intval($product['tax']))
                             ->setDescription($product['name'])
