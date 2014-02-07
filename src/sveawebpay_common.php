@@ -6,28 +6,28 @@
  * @author Kristian Grossman-Madsen
  */
 class SveaOsCommerce {  
-//    
-//  /**
-//   *
-//   * @global type $currencies
-//   * @param float $value amount to convert
-//   * @param string $currency as three-letter $iso3166 country code
-//   * @param boolean $no_number_format if true, don't convert the to i.e. Swedish decimal indicator (",")
-//   *    Having a non-standard decimal may cause i.e. number conversion with floatval() to truncate fractions.
-//   * @return type
-//   */
-//    function convertToCurrency($value, $currency, $no_number_format = true) {
-//        global $currencies;
-//
-//        // item price is ALWAYS given in internal price from the products DB, so just multiply by currency rate from currency table
-//        $rounded_value = zen_round($value * $currencies->currencies[$currency]['value'], $currencies->currencies[$currency]['decimal_places']);
-//
-//        return $no_number_format ? $rounded_value : number_format(  $rounded_value,
-//                                                                    $currencies->currencies[$currency]['decimal_places'],
-//                                                                    $currencies->currencies[$currency]['decimal_point'],
-//                                                                    $currencies->currencies[$currency]['thousands_point']);
-//    }
-//   
+    
+  /**
+   *
+   * @global type $currencies
+   * @param float $value amount to convert
+   * @param string $currency as three-letter $iso3166 country code
+   * @param boolean $no_number_format if true, don't convert the to i.e. Swedish decimal indicator (",")
+   *    Having a non-standard decimal may cause i.e. number conversion with floatval() to truncate fractions.
+   * @return type
+   */
+    function convertToCurrency($value, $currency, $no_number_format = true) {
+        global $currencies;
+
+        // item price is ALWAYS given in internal price from the products DB, so just multiply by currency rate from currency table
+        $rounded_value = tep_round($value * $currencies->currencies[$currency]['value'], $currencies->currencies[$currency]['decimal_places']);
+
+        return $no_number_format ? $rounded_value : number_format(  $rounded_value,
+                                                                    $currencies->currencies[$currency]['decimal_places'],
+                                                                    $currencies->currencies[$currency]['decimal_point'],
+                                                                    $currencies->currencies[$currency]['thousands_point']);
+    }
+   
     /**
      *  switch to default currency if the customers currency is not supported
      * 
@@ -744,24 +744,24 @@ class SveaOsCommerce {
                     );
                     break;
 
-//                // Svea handling (i.e. invoice) fee applies, create WebPayItem::invoiceFee object and add to order
-//                case 'sveawebpay_handling_fee' :
-//
-//                    // we need both the fee and the tax rate, but $order_total['value'] only contains the compounded amount 
-//                    // we bypass it and go to the configured cost and tax rate for the country.                     
-//                    $fee_cost = constant("MODULE_ORDER_TOTAL_SWPHANDLING_HANDLING_FEE_".$order->delivery['country']['iso_code_2']);
-//                    $tax_class = constant("MODULE_ORDER_TOTAL_SWPHANDLING_TAX_CLASS_".$order->delivery['country']['iso_code_2']);
-//                    $tax_rate = zen_get_tax_rate($tax_class, $order->delivery['country']['id'], $order->delivery['zone_id']);
-//               
-//                    // add WebPayItem::invoiceFee to swp_order object
-//                    $svea_order->addFee(
-//                            WebPayItem::invoiceFee()
-//                                    ->setName($order_total['title'])
-//                                    ->setDescription($order_total['text']." (".$order->delivery['country']['iso_code_2'].")")
-//                                    ->setAmountExVat($fee_cost)
-//                                    ->setVatPercent($tax_rate)
-//                    );                  
-//                    break;
+                // Svea handling (i.e. invoice) fee applies, create WebPayItem::invoiceFee object and add to order
+                case 'sveawebpay_handling_fee' :
+
+                    // we need both the fee and the tax rate, but $order_total['value'] only contains the compounded amount 
+                    // we bypass it and go to the configured cost and tax rate for the country.                     
+                    $fee_cost = constant("MODULE_ORDER_TOTAL_SWPHANDLING_HANDLING_FEE_".$order->delivery['country']['iso_code_2']);
+                    $tax_class = constant("MODULE_ORDER_TOTAL_SWPHANDLING_TAX_CLASS_".$order->delivery['country']['iso_code_2']);
+                    $tax_rate = tep_get_tax_rate($tax_class, $order->delivery['country']['id'], $order->delivery['zone_id']);
+               
+                    // add WebPayItem::invoiceFee to swp_order object
+                    $svea_order->addFee(
+                            WebPayItem::invoiceFee()
+                                    ->setName($order_total['title'])
+                                    ->setDescription($order_total['text']." (".$order->delivery['country']['iso_code_2'].")")
+                                    ->setAmountExVat($fee_cost)
+                                    ->setVatPercent($tax_rate)
+                    );                  
+                    break;
 
                 // default case attempts to handle 'unknown' items from other plugins, treating negatives as discount rows, positives as fees
                 default:
