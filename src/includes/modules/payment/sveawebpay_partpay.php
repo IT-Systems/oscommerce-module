@@ -284,12 +284,12 @@ class sveawebpay_partpay extends SveaOsCommerce {
         {
             $getAddressesResponse = unserialize($_SESSION['sveaGetAddressesResponse']);
             unset($_SESSION['sveaGetAddressesResponse']);
-
+         
             // set zencart billing address to invoice address from getAddresses response
             foreach($getAddressesResponse->customerIdentity as $asAddress ) // all GetAddressIdentity objects
             {
                 
-                if( $asAddress->addressSelector == $_POST['sveaAddressSelector'] ) // write the selected GetAddressIdentity
+                if( $asAddress->addressSelector == $_POST['sveaAddressSelectorPP'] ) // write the selected GetAddressIdentity
                 {
                     if( $_POST['sveaIsCompany'] == 'false' ) // is individual?
                     {    
