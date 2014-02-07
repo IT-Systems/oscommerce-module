@@ -6,28 +6,28 @@
  * @author Kristian Grossman-Madsen
  */
 class SveaOsCommerce {  
-//    
-//  /**
-//   *
-//   * @global type $currencies
-//   * @param float $value amount to convert
-//   * @param string $currency as three-letter $iso3166 country code
-//   * @param boolean $no_number_format if true, don't convert the to i.e. Swedish decimal indicator (",")
-//   *    Having a non-standard decimal may cause i.e. number conversion with floatval() to truncate fractions.
-//   * @return type
-//   */
-//    function convertToCurrency($value, $currency, $no_number_format = true) {
-//        global $currencies;
-//
-//        // item price is ALWAYS given in internal price from the products DB, so just multiply by currency rate from currency table
-//        $rounded_value = zen_round($value * $currencies->currencies[$currency]['value'], $currencies->currencies[$currency]['decimal_places']);
-//
-//        return $no_number_format ? $rounded_value : number_format(  $rounded_value,
-//                                                                    $currencies->currencies[$currency]['decimal_places'],
-//                                                                    $currencies->currencies[$currency]['decimal_point'],
-//                                                                    $currencies->currencies[$currency]['thousands_point']);
-//    }
-//   
+    
+  /**
+   *
+   * @global type $currencies
+   * @param float $value amount to convert
+   * @param string $currency as three-letter $iso3166 country code
+   * @param boolean $no_number_format if true, don't convert the to i.e. Swedish decimal indicator (",")
+   *    Having a non-standard decimal may cause i.e. number conversion with floatval() to truncate fractions.
+   * @return type
+   */
+    function convertToCurrency($value, $currency, $no_number_format = true) {
+        global $currencies;
+
+        // item price is ALWAYS given in internal price from the products DB, so just multiply by currency rate from currency table
+        $rounded_value = tep_round($value * $currencies->currencies[$currency]['value'], $currencies->currencies[$currency]['decimal_places']);
+
+        return $no_number_format ? $rounded_value : number_format(  $rounded_value,
+                                                                    $currencies->currencies[$currency]['decimal_places'],
+                                                                    $currencies->currencies[$currency]['decimal_point'],
+                                                                    $currencies->currencies[$currency]['thousands_point']);
+    }
+   
     /**
      *  switch to default currency if the customers currency is not supported
      * 
