@@ -354,7 +354,7 @@ class sveawebpay_invoice extends SveaOsCommerce {
         // for each item in cart, create WebPayItem::orderRow objects and add to order
         foreach ($order->products as $productId => $product) {
 
-            $amount_ex_vat = floatval( /*$this->convertToCurrency(*/round($product['final_price'], 2)/*, $currency)*/ );
+            $amount_ex_vat = floatval( $this->convertToCurrency(round($product['final_price'], 2), $currency) );
          
             $swp_order->addOrderRow(
                     WebPayItem::orderRow()
@@ -504,7 +504,6 @@ class sveawebpay_invoice extends SveaOsCommerce {
         return false;
     }
   
-// from ZC
     /**
      * before_process is called from modules/checkout_process.
      * It instantiates and populates a WebPay::createOrder object
@@ -518,6 +517,8 @@ class sveawebpay_invoice extends SveaOsCommerce {
 
 //        print_r( $swp_order->useInvoicePayment()->prepareRequest() ); die;
 //        
+        
+        // TODO 
         // send payment request to svea, receive response       
         $swp_response = $swp_order->useInvoicePayment()->doRequest();
 
@@ -528,7 +529,6 @@ class sveawebpay_invoice extends SveaOsCommerce {
             tep_redirect(tep_href_link(FILENAME_CHECKOUT_PAYMENT, $payment_error_return)); // error handled in selection() above
         }
      
-        //
         // payment request succeded, store response in session
         if ($swp_response->accepted == true) {
 
@@ -560,7 +560,7 @@ class sveawebpay_invoice extends SveaOsCommerce {
             // save the response object
             $_SESSION["swp_response"] = serialize($swp_response);
             
-//print_r( $swp_response ); die;           
+//print_r( $swp_response ); die;
         }
     }
     
@@ -742,7 +742,9 @@ class sveawebpay_invoice extends SveaOsCommerce {
 
     // sets error message to the GET error value
     function get_error() {
-        return array('title' => ERROR_MESSAGE_PAYMENT_FAILED, 'error' => stripslashes(urldecode($_GET['swperror'])));
+        return array('title' => ERROR_MESSAGE_PAYMENT_FAILED, 
+            'error' => stripslashes(urldecode($_GET['swperror']))
+        );
     }
     
   // standard check if installed function
@@ -759,8 +761,8 @@ class sveawebpay_invoice extends SveaOsCommerce {
   function install() {
     $common = "insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added";
     tep_db_query($common . ", set_function) values ('Enable SveaWebPay Invoice Module', 'MODULE_PAYMENT_SWPINVOICE_STATUS', 'True', 'Do you want to accept SveaWebPay payments?', '6', '0', now(), 'tep_cfg_select_option(array(\'True\', \'False\'), ')");
-    tep_db_query($common . ") values ('SveaWebPay Username SV', 'MODULE_PAYMENT_SWPINVOICE_USERNAME_SV', 'sverigetest', 'Username for SveaWebPay Invoice Sweden', '6', '0', now())");
-    tep_db_query($common . ") values ('SveaWebPay Password SV', 'MODULE_PAYMENT_SWPINVOICE_PASSWORD_SV', 'sverigetest', 'Password for SveaWebPay Invoice Sweden', '6', '0', now())");
+    tep_db_query($common . ") values ('SveaWebPay Username SE', 'MODULE_PAYMENT_SWPINVOICE_USERNAME_SE', 'sverigetest', 'Username for SveaWebPay Invoice Sweden', '6', '0', now())");
+    tep_db_query($common . ") values ('SveaWebPay Password SE', 'MODULE_PAYMENT_SWPINVOICE_PASSWORD_SE', 'sverigetest', 'Password for SveaWebPay Invoice Sweden', '6', '0', now())");
     tep_db_query($common . ") values ('SveaWebPay Username NO', 'MODULE_PAYMENT_SWPINVOICE_USERNAME_NO', 'norgetest2', 'Username for SveaWebPay Invoice Norway', '6', '0', now())");
     tep_db_query($common . ") values ('SveaWebPay Password NO', 'MODULE_PAYMENT_SWPINVOICE_PASSWORD_NO', 'norgetest2', 'Password for SveaWebPay Invoice Norway', '6', '0', now())");
     tep_db_query($common . ") values ('SveaWebPay Username FI', 'MODULE_PAYMENT_SWPINVOICE_USERNAME_FI', 'finlandtest2', 'Username for SveaWebPay Invoice Finland', '6', '0', now())");
@@ -771,7 +773,7 @@ class sveawebpay_invoice extends SveaOsCommerce {
     tep_db_query($common . ") values ('SveaWebPay Password NL', 'MODULE_PAYMENT_SWPINVOICE_PASSWORD_NL', 'hollandtest', 'Password for SveaWebPay Invoice Netherlands', '6', '0', now())");
     tep_db_query($common . ") values ('SveaWebPay Username DE', 'MODULE_PAYMENT_SWPINVOICE_USERNAME_DE', 'germanytest', 'Username for SveaWebPay Invoice Germany', '6', '0', now())");
     tep_db_query($common . ") values ('SveaWebPay Password DE', 'MODULE_PAYMENT_SWPINVOICE_PASSWORD_DE', 'germanytest', 'Password for SveaWebPay Invoice Germany', '6', '0', now())");
-    tep_db_query($common . ") values ('SveaWebPay Client no SV', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_SV', '79021', '', '6', '0', now())");
+    tep_db_query($common . ") values ('SveaWebPay Client no SE', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_SE', '79021', '', '6', '0', now())");
     tep_db_query($common . ") values ('SveaWebPay Client no NO', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_NO', '33308', '', '6', '0', now())");
     tep_db_query($common . ") values ('SveaWebPay Client no FI', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_FI', '26136', '', '6', '0', now())");
     tep_db_query($common . ") values ('SveaWebPay Client no DK', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_DK', '62008', '', '6', '0', now())");
@@ -796,9 +798,9 @@ class sveawebpay_invoice extends SveaOsCommerce {
   // must perfectly match keys inserted in install function
   function keys() {
     return array( 'MODULE_PAYMENT_SWPINVOICE_STATUS',
-                  'MODULE_PAYMENT_SWPINVOICE_USERNAME_SV',
-                  'MODULE_PAYMENT_SWPINVOICE_PASSWORD_SV',
-                  'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_SV',
+                  'MODULE_PAYMENT_SWPINVOICE_USERNAME_SE',
+                  'MODULE_PAYMENT_SWPINVOICE_PASSWORD_SE',
+                  'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_SE',
                   'MODULE_PAYMENT_SWPINVOICE_USERNAME_NO',
                   'MODULE_PAYMENT_SWPINVOICE_PASSWORD_NO',
                   'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_NO',
