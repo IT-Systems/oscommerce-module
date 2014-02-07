@@ -88,10 +88,10 @@ class sveawebpay_invoice extends SveaOsCommerce {
 
         $fields = array();
 
-        // image
+        // add svea invoice image file
         if ($this->display_images)
-            $fields[] = array('title' => '<img src=images/SveaWebPay-Faktura-100px.png />', 'field' => '');
-
+             $fields[] = array('title' => '<img src=images/Svea/SVEAINVOICEEU_'.$order->customer['country']['iso_code_2'].'.png />', 'field' => '');
+                
         // TODO error handling
 
         // insert svea js
@@ -247,7 +247,7 @@ class sveawebpay_invoice extends SveaOsCommerce {
         if( isset( $_SESSION['sveaGetAddressesResponse'] ) )
         {
             $getAddressesResponse = unserialize($_SESSION['sveaGetAddressesResponse']);
-            //unset($_SESSION['sveaGetAddressesResponse']);
+            unset($_SESSION['sveaGetAddressesResponse']);
 
             // set zencart billing address to invoice address from getAddresses response
             foreach($getAddressesResponse->customerIdentity as $asAddress ) // all GetAddressIdentity objects

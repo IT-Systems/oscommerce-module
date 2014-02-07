@@ -97,12 +97,12 @@ class sveawebpay_partpay extends SveaOsCommerce {
 
         $fields = array();
 
-        // image
+        // add svea invoice image file
         $fields[] = array(
             'title' => '<img src=images/Svea/SVEASPLITEU_'.$order->customer['country']['iso_code_2'].'.png />', 
             'field' => ''
         );
-
+       
         // catch and display error messages raised when i.e. payment request from before_process() below turns out not accepted
         if (isset($_REQUEST['payment_error']) && $_REQUEST['payment_error'] == 'sveawebpay_partpay') {
             $fields[] = array('title' => '<span style="color:red">' . $_SESSION['SWP_ERROR'] . '</span>', 'field' => '');
@@ -283,13 +283,13 @@ class sveawebpay_partpay extends SveaOsCommerce {
         if( isset( $_SESSION['sveaGetAddressesResponse'] ) )
         {
             $getAddressesResponse = unserialize($_SESSION['sveaGetAddressesResponse']);
-            //unset($_SESSION['sveaGetAddressesResponse']);
-
+            unset($_SESSION['sveaGetAddressesResponse']);
+         
             // set zencart billing address to invoice address from getAddresses response
             foreach($getAddressesResponse->customerIdentity as $asAddress ) // all GetAddressIdentity objects
             {
                 
-                if( $asAddress->addressSelector == $_POST['sveaAddressSelector'] ) // write the selected GetAddressIdentity
+                if( $asAddress->addressSelector == $_POST['sveaAddressSelectorPP'] ) // write the selected GetAddressIdentity
                 {
                     if( $_POST['sveaIsCompany'] == 'false' ) // is individual?
                     {    
@@ -389,7 +389,7 @@ class sveawebpay_partpay extends SveaOsCommerce {
 
             $swp_order->addOrderRow(
                     WebPayItem::orderRow()
-                            ->setQuantity($product['qty'])
+                            ->setQuantity(intval($product['qty']))
                             ->setAmountExVat($amount_ex_vat)
                             ->setVatPercent(intval($product['tax']))
                             ->setDescription($product['name'])
