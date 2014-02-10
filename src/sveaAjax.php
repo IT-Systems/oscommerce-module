@@ -49,36 +49,36 @@ function sveaAjaxGetPartPaymentOptions( $price, $country ) {
     }
 }
 
-///**
-// * Present the banks for the user in a friendly fashion, so that we can go directly there instead of landing on paypage
-// */
-//if( isset($_POST['SveaAjaxGetBankPaymentOptions']) ) {
-//    $country = isset( $_SESSION['sveaAjaxCountryCode'] ) ? $_SESSION['sveaAjaxCountryCode'] : "swp_not_set";
-//
-//    sveaAjaxGetBankPaymentOptions( $country );
-//    exit();
-//}
-//
-//function sveaAjaxGetBankPaymentOptions( $country ) {
-//
-//    $sveaConfig = (MODULE_PAYMENT_SWPINTERNETBANK_MODE === 'Test') ? new ZenCartSveaConfigTest() : new ZenCartSveaConfigProd();
-//
-//    $banksResponse = WebPay::getPaymentMethods( $sveaConfig )->setContryCode( $country )->doRequest();
-//
-//    if( sizeof( $banksResponse ) == 0 ) {
-//        return "Error: NO APPLICABLE BANKS FOR THIS PAYMENT METHOD";
-//    }
-//    else {
-//        $logosPath = "images/logos/";
-//        $counter = 0;
-//        foreach( $banksResponse as $bank) {
-//            if( preg_match( "/^DB/", substr( $bank,0,2 ) ) === 1 ) { // bank payment methods all start with "DB"
-//                echo sprintf( '<input type="radio" name="BankPaymentOptions" id="%s" value="%s" %s/>', $bank, $bank, $counter++==0 ? "checked=true" : "" ); //selects 1st bank
-//                echo sprintf( '<label for="%s"> <img src="%s%s.png" alt="bank %s" /> </label>', $bank, $logosPath, $bank, $bank);
-//            }
-//        }
-//    }
-//}
+/**
+ * Present the banks for the user in a friendly fashion, so that we can go directly there instead of landing on paypage
+ */
+if( isset($_POST['SveaAjaxGetBankPaymentOptions']) ) {
+    $country = isset( $_SESSION['sveaAjaxCountryCode'] ) ? $_SESSION['sveaAjaxCountryCode'] : "swp_not_set";
+
+    sveaAjaxGetBankPaymentOptions( $country );
+    exit();
+}
+
+function sveaAjaxGetBankPaymentOptions( $country ) {
+
+    $sveaConfig = (MODULE_PAYMENT_SWPINTERNETBANK_MODE === 'Test') ? new OsCommerceSveaConfigTest() : new OsCommerceSveaConfigProd();
+
+    $banksResponse = WebPay::getPaymentMethods( $sveaConfig )->setContryCode( $country )->doRequest();
+
+    if( sizeof( $banksResponse ) == 0 ) {
+        return "Error: NO APPLICABLE BANKS FOR THIS PAYMENT METHOD";
+    }
+    else {
+        $logosPath = "images/Svea/";
+        $counter = 0;
+        foreach( $banksResponse as $bank) {
+            if( preg_match( "/^DB/", substr( $bank,0,2 ) ) === 1 ) { // bank payment methods all start with "DB"
+                echo sprintf( '<input type="radio" name="BankPaymentOptions" id="%s" value="%s" %s/>', $bank, $bank, $counter++==0 ? "checked=true" : "" ); //selects 1st bank
+                echo sprintf( '<label for="%s"> <img src="%s%s.png" alt="bank %s" /> </label>', $bank, $logosPath, $bank, $bank);
+            }
+        }
+    }
+}
 
 /**
  *  perform getAddresses() via php integration package, return dropdown html widget
