@@ -72,56 +72,56 @@ class sveawebpay_creditcard {
 //                $this->enabled = false;
 //        }
 //    }
-//
-//    function javascript_validation() {
-//        return false;
-//    }
-//
-//    // sets information displayed when choosing between payment options
-//    function selection() {
-//        global $order, $currencies;
-//
-//        $fields = array();
-//
-//
-//        if ($order->customer['country']['iso_code_2'] == "SE") {
-//            $fields[] = array('title' => '<img src=images/Svea/SVEACARD_SE.png />', 'field' => '<img src=images/Svea/KORTCERT.png /><img src=images/Svea/AMEX.png /><img src=images/Svea/DINERS.png />');
-//        } else {
-//            $fields[] = array('title' => '<img src=images/Svea/SVEACARD.png />', 'field' => '<img src=images/Svea/KORTCERT.png /><img src=images/Svea/AMEX.png /><img src=images/Svea/DINERS.png />');
-//        }
-//
-//        if (isset($_REQUEST['payment_error']) && $_REQUEST['payment_error'] == 'sveawebpay_creditcard') { // is set in before_process() on failed payment
-//            $fields[] = array('title' => '<span style="color:red">' . $_SESSION['SWP_ERROR'] . '</span>', 'field' => '');
-//        }
-//
-//        // handling fee
-//        if (isset($this->handling_fee) && $this->handling_fee > 0) {
-//            $paymentfee_cost = $this->handling_fee;
-//            if (substr($paymentfee_cost, -1) == '%')
-//                $fields[] = array('title' => sprintf(MODULE_PAYMENT_SWPCREDITCARD_HANDLING_APPLIES, $paymentfee_cost), 'field' => '');
-//            else {
-//                $tax_class = MODULE_ORDER_TOTAL_SWPHANDLING_TAX_CLASS;
-//                if (DISPLAY_PRICE_WITH_TAX == "true" && $tax_class > 0)
-//                    $paymentfee_tax = $paymentfee_cost * zen_get_tax_rate($tax_class, $order->delivery['country']['id'], $order->delivery['zone_id']) / 100;
-//                $fields[] = array('title' => sprintf(MODULE_PAYMENT_SWPCREDITCARD_HANDLING_APPLIES, $currencies->format($paymentfee_cost + $paymentfee_tax)), 'field' => '');
-//            }
-//        }
-//
-//        $_SESSION["swp_order_info_pre_coupon"] = serialize($order->info);  // store order info needed to reconstruct amount pre coupon later
-//
-//        return array('id' => $this->code,
-//            'module' => $this->title,
-//            'fields' => $fields);
-//    }
-//
-//    function pre_confirmation_check() {
-//        return false;
-//    }
-//
-//    function confirmation() {
-//        return false;
-//    }
-//
+
+    function javascript_validation() {
+        return false;
+    }
+
+    // sets information displayed when choosing between payment options
+    function selection() {
+        global $order, $currencies;
+
+        $fields = array();
+
+
+        if ($order->customer['country']['iso_code_2'] == "SE") {
+            $fields[] = array('title' => '<img src=images/Svea/SVEACARD_SE.png />', 'field' => '<img src=images/Svea/KORTCERT.png /><img src=images/Svea/AMEX.png /><img src=images/Svea/DINERS.png />');
+        } else {
+            $fields[] = array('title' => '<img src=images/Svea/SVEACARD.png />', 'field' => '<img src=images/Svea/KORTCERT.png /><img src=images/Svea/AMEX.png /><img src=images/Svea/DINERS.png />');
+        }
+
+        if (isset($_REQUEST['payment_error']) && $_REQUEST['payment_error'] == 'sveawebpay_creditcard') { // is set in before_process() on failed payment
+            $fields[] = array('title' => '<span style="color:red">' . $_SESSION['SWP_ERROR'] . '</span>', 'field' => '');
+        }
+
+        // handling fee
+        if (isset($this->handling_fee) && $this->handling_fee > 0) {
+            $paymentfee_cost = $this->handling_fee;
+            if (substr($paymentfee_cost, -1) == '%')
+                $fields[] = array('title' => sprintf(MODULE_PAYMENT_SWPCREDITCARD_HANDLING_APPLIES, $paymentfee_cost), 'field' => '');
+            else {
+                $tax_class = MODULE_ORDER_TOTAL_SWPHANDLING_TAX_CLASS;
+                if (DISPLAY_PRICE_WITH_TAX == "true" && $tax_class > 0)
+                    $paymentfee_tax = $paymentfee_cost * zen_get_tax_rate($tax_class, $order->delivery['country']['id'], $order->delivery['zone_id']) / 100;
+                $fields[] = array('title' => sprintf(MODULE_PAYMENT_SWPCREDITCARD_HANDLING_APPLIES, $currencies->format($paymentfee_cost + $paymentfee_tax)), 'field' => '');
+            }
+        }
+
+        $_SESSION["swp_order_info_pre_coupon"] = serialize($order->info);  // store order info needed to reconstruct amount pre coupon later
+
+        return array('id' => $this->code,
+            'module' => $this->title,
+            'fields' => $fields);
+    }
+
+    function pre_confirmation_check() {
+        return false;
+    }
+
+    function confirmation() {
+        return false;
+    }
+
 //    function process_button() {
 //
 //        global $db, $order, $order_totals, $language;
