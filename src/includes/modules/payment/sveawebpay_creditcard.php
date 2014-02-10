@@ -208,7 +208,7 @@ class sveawebpay_creditcard extends SveaOsCommerce
 
     function before_process() {
         global $order;
-
+        
         if ($_REQUEST['response']) {
 
 //print_r( $_REQUEST['response'] ); die;
@@ -228,7 +228,9 @@ class sveawebpay_creditcard extends SveaOsCommerce
 
             $swp_respObj = new SveaResponse($_REQUEST, $user_country, $sveaConfig); // returns HostedPaymentResponse
             $swp_response = $swp_respObj->response;
-
+//print_r( $swp_response ); die;
+            
+            
             // check for bad response
             if ($swp_response->resultcode == '0') {
                 die('Response failed authorization. AC not valid or Response is not recognized');
@@ -238,7 +240,7 @@ class sveawebpay_creditcard extends SveaOsCommerce
             else {
 
                 // handle failed payments
-                if (!$swp_response->accepted === true) {
+                if (!$swp_response->accepted === 1) {                   // TODO change to === 1 in zencart
 
                     switch ($swp_response->resultcode) {
                         case 100:
@@ -295,7 +297,7 @@ class sveawebpay_creditcard extends SveaOsCommerce
                 else {
 
                     // payment request succeded, store response in session
-                    if ($swp_response->accepted === true) {
+                    if ($swp_response->accepted === 1) {
 
                         if (isset($_SESSION['SWP_ERROR'])) {
                             unset($_SESSION['SWP_ERROR']);
@@ -312,29 +314,40 @@ class sveawebpay_creditcard extends SveaOsCommerce
 
     // if payment accepted, insert order into database
     function after_process() {
-//        global $insert_id, $order;
-//
-//        // retrieve response object from before_process()
-//        require_once(DIR_FS_CATALOG . 'svea/Includes.php');
-//        $swp_response = unserialize($_SESSION["swp_response"]);
-//
-//        // insert zencart order into database
-//        $sql_data_array = array('orders_id' => $insert_id,
-//            'orders_status_id' => $order->info['order_status'],
-//            'date_added' => 'now()',
-//            'customer_notified' => 0,
-//            'comments' => 'Accepted by Svea ' . date("Y-m-d G:i:s") . ' Security Number #: ' .
-//            isset($swp_response->sveaOrderId) ?
-//                    $swp_response->sveaOrderId : $swp_response->transactionId //if request to webservice, use sveaOrderId, if hosted use transactionId
-//        );
-//        zen_db_perform(TABLE_ORDERS_STATUS_HISTORY, $sql_data_array);
-//
-//        //
-//        // clean up our session variables set during checkout   //$SESSION[swp_*
-//        unset($_SESSION['swp_order']);
-//        unset($_SESSION['swp_response']);
-//
-//        return false;
+        global $insert_id, $order;
+
+        // retrieve response object from before_process()
+//        require_once(DIR_FS_CATALOG . 'svea/Includes.php');           //TODO can remove this in zencart as well?
+        $swp_response = unserialize($_SESSION["swp_response"]);
+
+//print_r ($_SESSION); die;
+//print_r( $swp_response ); die;
+//print_r( $order ); die;     
+//print_r( $insert_id );
+//print_r( "a");
+//print_r( $order->info['order_status'] ); die;
+//        
+        
+        // TODO check invoice/partpay behaviour = card below
+        
+        // insert order into database
+        $customer_notification = (SEND_EMAILS == 'true') ? '1' : '0';               //TODO where is SEND_EMAILS set?
+        $sql_data_array = array(
+                                'orders_id' => $insert_id,                          // TODO port to zc!
+                                'orders_status_id' => $order->info['order_status'], 
+                                'date_added' => 'now()', 
+                                'customer_notified' => $customer_notification,
+                                'comments' => 
+                                    'Accepted by Svea ' . date("Y-m-d G:i:s") . ' Security Number #: '. $swp_response->transactionId . // TODO port to zc
+                                    " ". $order->info['comments']
+        );
+        tep_db_perform(TABLE_ORDERS_STATUS_HISTORY, $sql_data_array);
+     
+        // clean up our session variables set during checkout   //$SESSION[swp_*
+        unset($_SESSION['swp_order']);
+        unset($_SESSION['swp_response']);
+
+        return false;
     }
 
     // sets error message to the GET error value
@@ -342,7 +355,6 @@ class sveawebpay_creditcard extends SveaOsCommerce
         return array('title' => ERROR_MESSAGE_PAYMENT_FAILED,
             'error' => stripslashes(urldecode($_GET['error'])));
     }
-
     
     // standard check if installed function
     function check() {
