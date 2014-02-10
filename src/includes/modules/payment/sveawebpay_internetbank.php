@@ -256,135 +256,136 @@ class sveawebpay_internetbank extends SveaOsCommerce {
 
     }
 
-//  function before_process() {
-//    global $order;
-//
-//    if ($_REQUEST['response']){
-//
-//        // Include Svea php integration package files
-//        require_once(DIR_FS_CATALOG . 'svea/Includes.php');
-//
-//        // localization parameters
-//        $user_country = $order->billing['country']['iso_code_2'];
-//
-//        // put response into responsehandler
-//        $sveaConfig = (MODULE_PAYMENT_SWPINTERNETBANK_MODE === 'Test') ? new ZenCartSveaConfigTest() : new ZenCartSveaConfigProd();
-//
-//        $swp_respObj = new SveaResponse( $_REQUEST, $user_country, $sveaConfig ); // returns HostedPaymentResponse
-//		$swp_response = $swp_respObj->response;
-//        // check for bad response
-//        if( $swp_response->resultcode === '0' ) {
-//            die('Response failed authorization. AC not valid or Response is not recognized');
-//        }
-//
-//        // response ok, check if payment accepted
-//        else {
-//             // handle failed payments
-//            if ( !$swp_response->accepted === true){
-//
-//                switch( $swp_response->resultcode ) { // will autoconvert from string, matching initial numeric part
-//                case 100:
-//                    $_SESSION['SWP_ERROR'] = ERROR_CODE_100;
-//                    break;
-//                case 105:
-//                    $_SESSION['SWP_ERROR'] = ERROR_CODE_105;
-//                    break;
-//                case 106:
-//                    $_SESSION['SWP_ERROR'] = ERROR_CODE_106;
-//                    break;
-//                case 107:
-//                    $_SESSION['SWP_ERROR'] = ERROR_CODE_107;
-//                    break;
-//                case 108:
-//                    $_SESSION['SWP_ERROR'] = ERROR_CODE_108;
-//                    break;
-//                case 109:
-//                    $_SESSION['SWP_ERROR'] = ERROR_CODE_109;
-//                    break;
-//                case 110:
-//                    $_SESSION['SWP_ERROR'] = ERROR_CODE_110;
-//                    break;
-//                case 113:
-//                    $_SESSION['SWP_ERROR'] = ERROR_CODE_113;
-//                    break;
-//                case 114:
-//                    $_SESSION['SWP_ERROR'] = ERROR_CODE_114;
-//                    break;
-//                case 121:
-//                    $_SESSION['SWP_ERROR'] = ERROR_CODE_121;
-//                    break;
-//                case 124:
-//                    $_SESSION['SWP_ERROR'] = ERROR_CODE_124;
-//                    break;
-//                case 143:
-//                    $_SESSION['SWP_ERROR'] = ERROR_CODE_143;
-//                    break;
-//                default:
-//                    $_SESSION['SWP_ERROR'] =
-//                          ERROR_CODE_DEFAULT . $swp_response->resultcode;
-//                    break;
-//                }
-//
-//                if (isset($_SESSION['payment_attempt'])) {  // prevents repeated payment attempts interpreted by zencart as slam attack
-//                    unset($_SESSION['payment_attempt']);
-//                }
-//
-//                $payment_error_return = 'payment_error=sveawebpay_internetbank'; // used in conjunction w/SWP_ERROR to avoid reason showing up in url
-//                tep_redirect( tep_href_link(FILENAME_CHECKOUT_PAYMENT, $payment_error_return) );
-//            }
-//
-//            // handle successful payments
-//            else{
-//
-//                // payment request succeded, store response in session
-//                if ($swp_response->accepted === true) {
-//
-//                    if (isset($_SESSION['SWP_ERROR'])) {
-//                        unset($_SESSION['SWP_ERROR']);
-//                    }
-//
-//                    // (with direct bank payments, shipping and billing addresses are unchanged from customer entries)
-//
-//                    // save the response object
-//                    $_SESSION["swp_response"] = serialize($swp_response);
-//                }
-//            }
-//        }
-//    }
-//  }
-//
-//  // if payment accepted, insert order into database
-//  function after_process() {
-//       global $insert_id, $order;
-//
-//       // retrieve response object from before_process()
-//       require_once(DIR_FS_CATALOG . 'svea/Includes.php');
-//       $swp_response = unserialize($_SESSION["swp_response"]);
-//
-//       // insert zencart order into database
-//       $sql_data_array = array('orders_id' => $insert_id,
-//           'orders_status_id' => $order->info['order_status'],
-//           'date_added' => 'now()',
-//           'customer_notified' => 0,
-//            'comments' => 'Accepted by Svea ' . date("Y-m-d G:i:s") . ' Security Number #: ' . 
-//                isset( $swp_response->sveaOrderId ) ? 
-//                $swp_response->sveaOrderId : $swp_response->transactionId //if request to webservice, use sveaOrderId, if hosted use transactionId
-//        );
-//       tep_db_perform(TABLE_ORDERS_STATUS_HISTORY, $sql_data_array);
-//
-//       //
-//       // clean up our session variables set during checkout   //$SESSION[swp_*
-//       unset($_SESSION['swp_order']);
-//       unset($_SESSION['swp_response']);
-//
-//       return false;
-//  }
-//
-//  // sets error message to the GET error value
-//  function get_error() {
-//    return array('title' => ERROR_MESSAGE_PAYMENT_FAILED,
-//                 'error' => stripslashes(urldecode($_GET['error'])));
-//  }
+    function before_process() {
+        global $order;
+
+        if ($_REQUEST['response']) {
+
+            // localization parameters
+            if (isset($order->billing['country']['iso_code_2'])) {
+                $user_country = $order->billing['country']['iso_code_2'];
+            }
+            // no billing address set, fallback to session country_id
+            else {
+                $country = tep_get_countries_with_iso_codes($_SESSION['customer_country_id']);
+                $user_country = $country['countries_iso_code_2'];
+            }
+
+            // Create and initialize order object, using either test or production configuration
+            $sveaConfig = (MODULE_PAYMENT_SWPCREDITCARD_MODE === 'Test') ? new OsCommerceSveaConfigTest() : new OsCommerceSveaConfigProd();
+
+            $swp_respObj = new SveaResponse($_REQUEST, $user_country, $sveaConfig); // returns HostedPaymentResponse
+            $swp_response = $swp_respObj->response;
+//print_r( $swp_response ); die;
+            // check for bad response
+            if ($swp_response->resultcode === '0') {
+                die('Response failed authorization. AC not valid or Response is not recognized');
+            }
+
+            // response ok, check if payment accepted
+            else {
+                // handle failed payments
+                if (!$swp_response->accepted === 1) {                   // TODO change to === 1 in zencart
+                    switch ($swp_response->resultcode) {
+                        case 100:
+                            $_SESSION['SWP_ERROR'] = ERROR_CODE_100;
+                            break;
+                        case 105:
+                            $_SESSION['SWP_ERROR'] = ERROR_CODE_105;
+                            break;
+                        case 106:
+                            $_SESSION['SWP_ERROR'] = ERROR_CODE_106;
+                            break;
+                        case 107:
+                            $_SESSION['SWP_ERROR'] = ERROR_CODE_107;
+                            break;
+                        case 108:
+                            $_SESSION['SWP_ERROR'] = ERROR_CODE_108;
+                            break;
+                        case 109:
+                            $_SESSION['SWP_ERROR'] = ERROR_CODE_109;
+                            break;
+                        case 110:
+                            $_SESSION['SWP_ERROR'] = ERROR_CODE_110;
+                            break;
+                        case 113:
+                            $_SESSION['SWP_ERROR'] = ERROR_CODE_113;
+                            break;
+                        case 114:
+                            $_SESSION['SWP_ERROR'] = ERROR_CODE_114;
+                            break;
+                        case 121:
+                            $_SESSION['SWP_ERROR'] = ERROR_CODE_121;
+                            break;
+                        case 124:
+                            $_SESSION['SWP_ERROR'] = ERROR_CODE_124;
+                            break;
+                        case 143:
+                            $_SESSION['SWP_ERROR'] = ERROR_CODE_143;
+                            break;
+                        default:
+                            $_SESSION['SWP_ERROR'] =
+                                    ERROR_CODE_DEFAULT . $swp_response->resultcode;
+                            break;
+                    }
+                    if (isset($_SESSION['payment_attempt'])) {  // prevents repeated payment attempts interpreted by zencart as slam attack
+                        unset($_SESSION['payment_attempt']);
+                    }
+                    $payment_error_return = 'payment_error=sveawebpay_creditcard'; // used in conjunction w/SWP_ERROR to avoid reason showing up in url
+                    tep_redirect(tep_href_link(FILENAME_CHECKOUT_PAYMENT, $payment_error_return));
+                }
+                // handle successful payments
+                else {
+
+                    // payment request succeded, store response in session
+                    if ($swp_response->accepted === 1) {
+
+                        if (isset($_SESSION['SWP_ERROR'])) {
+                            unset($_SESSION['SWP_ERROR']);
+                        }
+
+                        // (with creditcard payments, shipping and billing addresses are unchanged from customer entries)
+                        // save the response object
+                        $_SESSION["swp_response"] = serialize($swp_response);
+                    }
+                }
+            }
+        }
+    }
+
+    // if payment accepted, insert order into database
+    function after_process() {
+        global $insert_id, $order;
+
+        // retrieve response object from before_process()
+        $swp_response = unserialize($_SESSION["swp_response"]);
+        
+        // insert  order into database
+         $customer_notification = (SEND_EMAILS == 'true') ? '1' : '0';
+         $sql_data_array = array(
+                                 'orders_id' => $insert_id,
+                                 'orders_status_id' => $order->info['order_status'], 
+                                 'date_added' => 'now()', 
+                                 'customer_notified' => $customer_notification,
+                                 'comments' => 
+                                     'Accepted by Svea ' . date("Y-m-d G:i:s") . ' Security Number #: '. $swp_response->transactionId .
+                                     " ". $order->info['comments']
+         );
+         tep_db_perform(TABLE_ORDERS_STATUS_HISTORY, $sql_data_array);
+
+
+        // clean up our session variables set during checkout   //$SESSION[swp_*
+        unset($_SESSION['swp_order']);
+        unset($_SESSION['swp_response']);
+
+        return false;
+    }
+
+    // sets error message to the GET error value
+    function get_error() {
+      return array('title' => ERROR_MESSAGE_PAYMENT_FAILED,
+                   'error' => stripslashes(urldecode($_GET['error'])));
+    }
 
     // standard check if installed function
     function check() {
