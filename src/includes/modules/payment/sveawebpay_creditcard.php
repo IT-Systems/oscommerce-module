@@ -85,35 +85,28 @@ class sveawebpay_creditcard extends SveaOsCommerce
 
         $fields = array();
 
-
+        // show card logos
         if ($order->customer['country']['iso_code_2'] == "SE") {
-            $fields[] = array('title' => '<img src=images/Svea/SVEACARD_SE.png />', 'field' => '<img src=images/Svea/KORTCERT.png /><img src=images/Svea/AMEX.png /><img src=images/Svea/DINERS.png />');
-        } else {
-            $fields[] = array('title' => '<img src=images/Svea/SVEACARD.png />', 'field' => '<img src=images/Svea/KORTCERT.png /><img src=images/Svea/AMEX.png /><img src=images/Svea/DINERS.png />');
+            $fields[] = array('title' => '<img src=images/Svea/SVEACARD_SE.png />', 
+                'field' => '<img src=images/Svea/KORTCERT.png /><img src=images/Svea/AMEX.png /><img src=images/Svea/DINERS.png />');
+        } 
+        else {
+            $fields[] = array('title' => '<img src=images/Svea/SVEACARD.png />', 
+                'field' => '<img src=images/Svea/KORTCERT.png /><img src=images/Svea/AMEX.png /><img src=images/Svea/DINERS.png />');
         }
 
-        if (isset($_REQUEST['payment_error']) && $_REQUEST['payment_error'] == 'sveawebpay_creditcard') { // is set in before_process() on failed payment
+        // show error message from failed payment attempt
+        if (isset($_REQUEST['payment_error']) && $_REQUEST['payment_error'] == 'sveawebpay_creditcard') { // is set in before_process()
             $fields[] = array('title' => '<span style="color:red">' . $_SESSION['SWP_ERROR'] . '</span>', 'field' => '');
-        }
-
-        // handling fee
-        if (isset($this->handling_fee) && $this->handling_fee > 0) {
-            $paymentfee_cost = $this->handling_fee;
-            if (substr($paymentfee_cost, -1) == '%')
-                $fields[] = array('title' => sprintf(MODULE_PAYMENT_SWPCREDITCARD_HANDLING_APPLIES, $paymentfee_cost), 'field' => '');
-            else {
-                $tax_class = MODULE_ORDER_TOTAL_SWPHANDLING_TAX_CLASS;
-                if (DISPLAY_PRICE_WITH_TAX == "true" && $tax_class > 0)
-                    $paymentfee_tax = $paymentfee_cost * zen_get_tax_rate($tax_class, $order->delivery['country']['id'], $order->delivery['zone_id']) / 100;
-                $fields[] = array('title' => sprintf(MODULE_PAYMENT_SWPCREDITCARD_HANDLING_APPLIES, $currencies->format($paymentfee_cost + $paymentfee_tax)), 'field' => '');
-            }
         }
 
         $_SESSION["swp_order_info_pre_coupon"] = serialize($order->info);  // store order info needed to reconstruct amount pre coupon later
 
-        return array('id' => $this->code,
+        return array(
+            'id' => $this->code,
             'module' => $this->title,
-            'fields' => $fields);
+            'fields' => $fields
+        );
     }
 
     function pre_confirmation_check() {
@@ -132,10 +125,7 @@ class sveawebpay_creditcard extends SveaOsCommerce
         $new_order_rs = tep_db_query("select orders_id from ".TABLE_ORDERS." order by orders_id desc limit 1");
         $new_order_field = tep_db_fetch_array($new_order_rs);
         $client_order_number = ($new_order_field['orders_id'] + 1);
-
- 
-//print_r( $client_order_number); die;
-        
+      
         // localization parameters
         if( isset( $order->billing['country']['iso_code_2'] ) ) {
             $user_country = $order->billing['country']['iso_code_2']; 
@@ -145,18 +135,15 @@ class sveawebpay_creditcard extends SveaOsCommerce
             $country = zen_get_countries_with_iso_codes( $_SESSION['customer_country_id'] );
             $user_country =  $country['countries_iso_code_2'];
         }
-//print_r( $user_country ); die;
        
         $user_language = tep_db_fetch_array(tep_db_query("select code from " . TABLE_LANGUAGES . " where directory = '" . $language . "'"));
         $user_language = $user_language['code'];
-//print_r( $user_language );
       
         // switch to default currency if the customers currency is not supported
         $currency = $order->info['currency'];
         if (!in_array($currency, $this->allowed_currencies)) {
             $currency = $this->default_currency;
         }
-//print_r( $currency ); die;
 
         // Create and initialize order object, using either test or production configuration
         $sveaConfig = (MODULE_PAYMENT_SWPCREDITCARD_MODE === 'Test') ? new OsCommerceSveaConfigTest() : new OsCommerceSveaConfigProd();
@@ -167,10 +154,7 @@ class sveawebpay_creditcard extends SveaOsCommerce
             ->setClientOrderNumber($client_order_number.date('c')) // TODO remove date   
             ->setOrderDate(date('c'))                      
         ;
-//print_r( $swp_order ); die;
-
-//print_r( $order); die;
-
+        
         // for each item in cart, create WebPayItem::orderRow objects and add to order
         foreach ($order->products as $productId => $product) {
 
@@ -184,8 +168,7 @@ class sveawebpay_creditcard extends SveaOsCommerce
                             ->setDescription($product['name'])
            );
         }
-//print_r( $swp_order ); die;
-
+        
         // we use the same code as in invoice/payment plan for order totals, as coupons isn't integral to osCommerce
         
         // get order totals in parseable format
@@ -193,16 +176,15 @@ class sveawebpay_creditcard extends SveaOsCommerce
              
         // creates non-item order rows from Order Total entries
         $swp_order = $this->parseOrderTotals( $order_totals, $swp_order );
-//print_r( $swp_order );
 
+        // get form from order object
         $swp_form = $swp_order->usePaymentMethod(PaymentMethod::KORTCERT)
                 ->setCancelUrl(tep_href_link(FILENAME_CHECKOUT_PAYMENT, '', 'SSL', true))
                 ->setReturnUrl(tep_href_link(FILENAME_CHECKOUT_PROCESS, '', 'SSL'))
                 ->getPaymentForm();
-
-//print_r( $swp_form ); die;        
-        //return $process_button_string;
-        return $swp_form->htmlFormFieldsAsArray['input_merchantId'] .
+    
+        // return $process_button_string;
+        return  $swp_form->htmlFormFieldsAsArray['input_merchantId'] .
                 $swp_form->htmlFormFieldsAsArray['input_message'] .
                 $swp_form->htmlFormFieldsAsArray['input_mac'];
     }
@@ -211,8 +193,6 @@ class sveawebpay_creditcard extends SveaOsCommerce
         global $order;
         
         if ($_REQUEST['response']) {
-
-//print_r( $_REQUEST['response'] ); die;
               
             // localization parameters
             if (isset($order->billing['country']['iso_code_2'])) {
@@ -224,13 +204,11 @@ class sveawebpay_creditcard extends SveaOsCommerce
                 $user_country = $country['countries_iso_code_2'];
             }
 
-            // Create and initialize order object, using either test or production configuration
+            // put response into responsehandler
             $sveaConfig = (MODULE_PAYMENT_SWPCREDITCARD_MODE === 'Test') ? new OsCommerceSveaConfigTest() : new OsCommerceSveaConfigProd();
 
             $swp_respObj = new SveaResponse($_REQUEST, $user_country, $sveaConfig); // returns HostedPaymentResponse
-            $swp_response = $swp_respObj->response;
-//print_r( $swp_response ); die;
-            
+            $swp_response = $swp_respObj->response;           
             
             // check for bad response
             if ($swp_response->resultcode === 0) {
@@ -318,29 +296,21 @@ class sveawebpay_creditcard extends SveaOsCommerce
         global $insert_id, $order;
 
         // retrieve response object from before_process()
-//        require_once(DIR_FS_CATALOG . 'svea/Includes.php');           //TODO can remove this in zencart as well?
         $swp_response = unserialize($_SESSION["swp_response"]);
-
-//print_r ($_SESSION); die;
-//print_r( $swp_response ); die;
-//print_r( $order ); die;     
-//print_r( $insert_id );
-//print_r( "a");
-//print_r( $order->info['order_status'] ); die;
-//        
-        
+     
         // TODO check invoice/partpay behaviour = card below
         
         // insert order into database
-        $customer_notification = (SEND_EMAILS == 'true') ? '1' : '0';               //TODO where is SEND_EMAILS set?
+        $customer_notification = (SEND_EMAILS == 'true') ? '1' : '0';               
         $sql_data_array = array(
-                                'orders_id' => $insert_id,                          // TODO port to zc!
-                                'orders_status_id' => $order->info['order_status'], 
-                                'date_added' => 'now()', 
-                                'customer_notified' => $customer_notification,
-                                'comments' => 
-                                    'Accepted by Svea ' . date("Y-m-d G:i:s") . ' Security Number #: '. $swp_response->transactionId . // TODO port to zc
-                                    " ". $order->info['comments']
+            'orders_id' => $insert_id,                          
+            'orders_status_id' => $order->info['order_status'], 
+            'date_added' => 'now()', 
+            'customer_notified' => $customer_notification,
+            'comments' => 
+                'Accepted by Svea ' . date("Y-m-d G:i:s") . ' Security Number #: ' . 
+                $swp_response->transactionId .
+                " ". $order->info['comments']
         );
         tep_db_perform(TABLE_ORDERS_STATUS_HISTORY, $sql_data_array);
      
@@ -353,14 +323,16 @@ class sveawebpay_creditcard extends SveaOsCommerce
 
     // sets error message to the GET error value
     function get_error() {
-        return array('title' => ERROR_MESSAGE_PAYMENT_FAILED,
+        return array(
+            'title' => ERROR_MESSAGE_PAYMENT_FAILED,
             'error' => stripslashes(urldecode($_GET['error'])));
     }
     
     // standard check if installed function
     function check() {
         if (!isset($this->_check)) {
-            $check_rs = tep_db_query("select configuration_value from " . TABLE_CONFIGURATION . " where configuration_key = 'MODULE_PAYMENT_SWPCREDITCARD_STATUS'");
+            $check_rs = tep_db_query("select configuration_value from " . TABLE_CONFIGURATION .
+                    " where configuration_key = 'MODULE_PAYMENT_SWPCREDITCARD_STATUS'");
             $this->_check = (tep_db_num_rows($check_rs) > 0);
         }
         return $this->_check;
