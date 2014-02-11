@@ -8,8 +8,7 @@ require_once(DIR_FS_CATALOG . 'ext/modules/payment/svea/Includes.php');         
 require_once(DIR_FS_CATALOG . 'sveawebpay_config.php');     // sveaConfig implementation
 require_once(DIR_FS_CATALOG . 'sveawebpay_common.php');     // osCommerce module common functions
 
-class sveawebpay_creditcard extends SveaOsCommerce
-{
+class sveawebpay_creditcard extends SveaOsCommerce {
     function sveawebpay_creditcard()  {
         global $order;
 
@@ -99,8 +98,6 @@ class sveawebpay_creditcard extends SveaOsCommerce
         if (isset($_REQUEST['payment_error']) && $_REQUEST['payment_error'] == 'sveawebpay_creditcard') { // is set in before_process()
             $fields[] = array('title' => '<span style="color:red">' . $_SESSION['SWP_ERROR'] . '</span>', 'field' => '');
         }
-
-        $_SESSION["swp_order_info_pre_coupon"] = serialize($order->info);  // store order info needed to reconstruct amount pre coupon later
 
         return array(
             'id' => $this->code,
@@ -221,7 +218,7 @@ class sveawebpay_creditcard extends SveaOsCommerce
                 // handle failed payments
                 if ( $swp_response->accepted === 0 ) {
 
-                    switch ($swp_response->resultcode) {
+                    switch ($swp_response->resultcode) { // will autoconvert from string, matching initial numeric part
                         case 100:
                             $_SESSION['SWP_ERROR'] = ERROR_CODE_100;
                             break;
@@ -308,8 +305,7 @@ class sveawebpay_creditcard extends SveaOsCommerce
             'date_added' => 'now()', 
             'customer_notified' => $customer_notification,
             'comments' => 
-                'Accepted by Svea ' . date("Y-m-d G:i:s") . ' Security Number #: ' . 
-                $swp_response->transactionId .
+                'Accepted by Svea ' . date("Y-m-d G:i:s") . ' Security Number #: ' . $swp_response->transactionId .
                 " ". $order->info['comments']
         );
         tep_db_perform(TABLE_ORDERS_STATUS_HISTORY, $sql_data_array);
