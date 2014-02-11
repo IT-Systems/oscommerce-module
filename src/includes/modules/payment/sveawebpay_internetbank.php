@@ -9,15 +9,15 @@ require_once(DIR_FS_CATALOG . 'sveawebpay_config.php');     // sveaConfig implem
 require_once(DIR_FS_CATALOG . 'sveawebpay_common.php');     // osCommerce module common functions
 
 class sveawebpay_internetbank extends SveaOsCommerce {
-
     function sveawebpay_internetbank() {
         global $order;
 
         $this->code = 'sveawebpay_internetbank';
         $this->version = "5";
-
-        // TODO should use MODULE_PAYMENT_SWPINTERNETBANK_MODE instead?! -- backport to zencart!
-        $this->form_action_url = (MODULE_PAYMENT_SWPINTERNETBANK_STATUS == 'True') ? 'https://test.sveaekonomi.se/webpay/payment' : 'https://webpay.sveaekonomi.se/webpay/payment';
+   
+        // used by card, directbank when posting form in checkout_confirmation.php
+        $this->form_action_url = (MODULE_PAYMENT_SWPINTERNETBANK_MODE == 'Test') ? Svea\SveaConfig::SWP_TEST_URL : Svea\SveaConfig::SWP_PROD_URL;     
+  
         $this->title = MODULE_PAYMENT_SWPINTERNETBANK_TEXT_TITLE;
         $this->description = MODULE_PAYMENT_SWPINTERNETBANK_TEXT_DESCRIPTION;
         $this->enabled = ((MODULE_PAYMENT_SWPINTERNETBANK_STATUS == 'True') ? true : false);
@@ -89,12 +89,13 @@ class sveawebpay_internetbank extends SveaOsCommerce {
 
     $fields = array();
 
-    // image
-        if($order->customer['country']['iso_code_2'] == "SE"){
-             $fields[] = array('title' => '<img src=images/Svea/SVEADIRECTBANK_SE.png />', 'field' => '');
-        }  else {
-            $fields[] = array('title' => '<img src=images/Svea/SVEADIRECTBANK.png />', 'field' => '');
-        }
+    // show bank logo
+    if($order->customer['country']['iso_code_2'] == "SE"){
+         $fields[] = array('title' => '<img src=images/Svea/SVEADIRECTBANK_SE.png />', 'field' => '');
+    }  
+    else {
+        $fields[] = array('title' => '<img src=images/Svea/SVEADIRECTBANK.png />', 'field' => '');
+    }
 
     if (isset($_REQUEST['payment_error']) && $_REQUEST['payment_error'] == 'sveawebpay_internetbank') { // is set in before_process() on failed payment
         $fields[] = array('title' => '<span style="color:red">' . $_SESSION['SWP_ERROR'] . '</span>', 'field' => '');
@@ -104,8 +105,7 @@ class sveawebpay_internetbank extends SveaOsCommerce {
     $sveaJs =   '<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>' .
                 '<script type="text/javascript" src="' . $this->web_root . 'ext/jquery/svea/checkout/svea.js"></script>';
     $fields[] = array('title' => '', 'field' => $sveaJs);
-
-    
+   
     // customer country is taken from customer settings
     $customer_country = $order->customer['country']['iso_code_2'];
 
@@ -119,11 +119,6 @@ class sveawebpay_internetbank extends SveaOsCommerce {
 
     $fields[] = array('title' => '', 'field' => '<br />' . $sveaField);
 
-    // TODO remove zc internetbank_handling_applies reference...
-
-    // TODO needed in osCommerce (no coupons)?
-//    $_SESSION["swp_order_info_pre_coupon"]  = serialize($order->info);  // store order info needed to reconstruct amount pre coupon later
-//
     return array( 'id'      => $this->code,
                   'module'  => $this->title,
                   'fields'  => $fields);
@@ -141,62 +136,53 @@ class sveawebpay_internetbank extends SveaOsCommerce {
 
     global $db, $order, $order_totals, $language;
 
-        // calculate the order number
-        $new_order_rs = tep_db_query("select orders_id from ".TABLE_ORDERS." order by orders_id desc limit 1");
-        $new_order_field = tep_db_fetch_array($new_order_rs);
-        $client_order_number = ($new_order_field['orders_id'] + 1);
+    // calculate the order number
+    $new_order_rs = tep_db_query("select orders_id from ".TABLE_ORDERS." order by orders_id desc limit 1");
+    $new_order_field = tep_db_fetch_array($new_order_rs);
+    $client_order_number = ($new_order_field['orders_id'] + 1);
 
+    // localization parameters
+    if( isset( $order->billing['country']['iso_code_2'] ) ) {
+        $user_country = $order->billing['country']['iso_code_2']; 
+    }
+    // no billing address set, fallback to session country_id
+    else {
+        $country = zen_get_countries_with_iso_codes( $_SESSION['customer_country_id'] );
+        $user_country =  $country['countries_iso_code_2'];
+    }
 
-//print_r( $client_order_number); die;
-        
-        // localization parameters
-        if( isset( $order->billing['country']['iso_code_2'] ) ) {
-            $user_country = $order->billing['country']['iso_code_2']; 
-        }
-        // no billing address set, fallback to session country_id
-        else {
-            $country = zen_get_countries_with_iso_codes( $_SESSION['customer_country_id'] );
-            $user_country =  $country['countries_iso_code_2'];
-        }
-//print_r( $user_country ); die;
-        $user_language = tep_db_fetch_array(tep_db_query("select code from " . TABLE_LANGUAGES . " where directory = '" . $language . "'"));
-        $user_language = $user_language['code'];
-//print_r( $user_language );
+    $user_language = tep_db_fetch_array(tep_db_query("select code from " . TABLE_LANGUAGES . " where directory = '" . $language . "'"));
+    $user_language = $user_language['code'];
       
-        // switch to default currency if the customers currency is not supported
-        $currency = $order->info['currency'];
-        if (!in_array($currency, $this->allowed_currencies)) {
-            $currency = $this->default_currency;
-        }
-//print_r( $currency ); die;
+    // switch to default currency if the customers currency is not supported
+    $currency = $order->info['currency'];
+    if (!in_array($currency, $this->allowed_currencies)) {
+        $currency = $this->default_currency;
+    }
 
-        // Create and initialize order object, using either test or production configuration
-        $sveaConfig = (MODULE_PAYMENT_SWPINTERNETBANK_MODE === 'Test') ? new OsCommerceSveaConfigTest() : new OsCommerceSveaConfigProd();
+    // Create and initialize order object, using either test or production configuration
+    $sveaConfig = (MODULE_PAYMENT_SWPINTERNETBANK_MODE === 'Test') ? new OsCommerceSveaConfigTest() : new OsCommerceSveaConfigProd();
 
-        $swp_order = WebPay::createOrder( $sveaConfig )
-            ->setCountryCode( $user_country )
-            ->setCurrency($currency)                       
-            ->setClientOrderNumber($client_order_number.date('c')) // TODO remove date   
-            ->setOrderDate(date('c'))                      
-        ;
-//print_r( $swp_order ); die;
+    $swp_order = WebPay::createOrder( $sveaConfig )
+        ->setCountryCode( $user_country )
+        ->setCurrency($currency)                       
+        ->setClientOrderNumber($client_order_number.date('c')) // TODO remove date   
+        ->setOrderDate(date('c'))                      
+    ;
 
-//print_r( $order); die;
+    // for each item in cart, create WebPayItem::orderRow objects and add to order
+    foreach ($order->products as $productId => $product) {
 
-        // for each item in cart, create WebPayItem::orderRow objects and add to order
-        foreach ($order->products as $productId => $product) {
-
-            $amount_ex_vat = floatval( $this->convertToCurrency(round($product['final_price'], 2), $currency) );
-         
-            $swp_order->addOrderRow(
-                    WebPayItem::orderRow()
-                            ->setQuantity(intval($product['qty']))
-                            ->setAmountExVat($amount_ex_vat)      
-                            ->setVatPercent(intval($product['tax']))
-                            ->setDescription($product['name'])
-           );
-        }
-//print_r( $swp_order ); die;
+        // convert_to_currency
+        $amount_ex_vat = floatval( $this->convertToCurrency(round($product['final_price'], 2), $currency) );
+        $swp_order->addOrderRow(
+                WebPayItem::orderRow()
+                        ->setQuantity(intval($product['qty']))
+                        ->setAmountExVat($amount_ex_vat)      
+                        ->setVatPercent(intval($product['tax']))
+                        ->setDescription($product['name'])
+       );
+    }
 
         // we use the same code as in invoice/payment plan for order totals, as coupons isn't integral to osCommerce
         
@@ -205,9 +191,7 @@ class sveawebpay_internetbank extends SveaOsCommerce {
              
         // creates non-item order rows from Order Total entries
         $swp_order = $this->parseOrderTotals( $order_totals, $swp_order );
-//print_r( $swp_order );
 
-        // set up direct bank via paypage
         // localization parameters
         if( isset( $order->billing['country']['iso_code_2'] ) ) {
             $user_country = $order->billing['country']['iso_code_2']; 
@@ -243,9 +227,6 @@ class sveawebpay_internetbank extends SveaOsCommerce {
             break;
         }
 
-//print_r( tep_href_link(FILENAME_CHECKOUT_PAYMENT, '', 'SSL', true) ); die;
-         
-        
         // go directly to selected bank
         $swp_form = $swp_order->usePaymentMethod( $_REQUEST['BankPaymentOptions'] )
             ->setCancelUrl( tep_href_link(FILENAME_CHECKOUT_PAYMENT, '', 'SSL', true) )
@@ -287,9 +268,10 @@ class sveawebpay_internetbank extends SveaOsCommerce {
 
             // response ok, check if payment accepted
             else {
+                
                 // handle failed payments
-                if ( $swp_response->accepted === 0) {                   // TODO change to === 1 in zencart
-                    switch ($swp_response->resultcode) {
+                if ( $swp_response->accepted === 0) {
+                    switch ($swp_response->resultcode) { // will autoconvert from string, matching initial numeric part
                         case 100:
                             $_SESSION['SWP_ERROR'] = ERROR_CODE_100;
                             break;
@@ -335,10 +317,7 @@ class sveawebpay_internetbank extends SveaOsCommerce {
                         unset($_SESSION['payment_attempt']);
                     }
                     $payment_error_return = 'payment_error=sveawebpay_internetbank'; // used in conjunction w/SWP_ERROR to avoid reason showing up in url
-                    
-//print_r( tep_href_link(FILENAME_CHECKOUT_PAYMENT, '', 'SSL', true) );
-//print_r( " ");
-//print_r( tep_href_link(FILENAME_CHECKOUT_PAYMENT, $payment_error_return) ); die;
+
                     tep_redirect(tep_href_link(FILENAME_CHECKOUT_PAYMENT, $payment_error_return));
                 }
                 // handle successful payments
@@ -370,13 +349,13 @@ class sveawebpay_internetbank extends SveaOsCommerce {
         // insert  order into database
          $customer_notification = (SEND_EMAILS == 'true') ? '1' : '0';
          $sql_data_array = array(
-                                 'orders_id' => $insert_id,
-                                 'orders_status_id' => $order->info['order_status'], 
-                                 'date_added' => 'now()', 
-                                 'customer_notified' => $customer_notification,
-                                 'comments' => 
-                                     'Accepted by Svea ' . date("Y-m-d G:i:s") . ' Security Number #: '. $swp_response->transactionId .
-                                     " ". $order->info['comments']
+            'orders_id' => $insert_id,
+            'orders_status_id' => $order->info['order_status'], 
+            'date_added' => 'now()', 
+            'customer_notified' => $customer_notification,
+            'comments' => 
+                'Accepted by Svea ' . date("Y-m-d G:i:s") . ' Security Number #: '. $swp_response->transactionId .
+                " ". $order->info['comments']
          );
          tep_db_perform(TABLE_ORDERS_STATUS_HISTORY, $sql_data_array);
 
@@ -390,8 +369,9 @@ class sveawebpay_internetbank extends SveaOsCommerce {
 
     // sets error message to the GET error value
     function get_error() {
-      return array('title' => ERROR_MESSAGE_PAYMENT_FAILED,
-                   'error' => stripslashes(urldecode($_GET['error'])));
+      return array(
+        'title' => ERROR_MESSAGE_PAYMENT_FAILED,
+        'error' => stripslashes(urldecode($_GET['error'])));
     }
 
     // standard check if installed function
