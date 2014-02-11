@@ -16,7 +16,7 @@ class sveawebpay_internetbank extends SveaOsCommerce {
         $this->code = 'sveawebpay_internetbank';
         $this->version = "5";
 
-        // TODO should use MODULE_PAYMENT_SWPCREDITCARD_MODE instead?! -- backport to zencart!
+        // TODO should use MODULE_PAYMENT_SWPINTERNETBANK_MODE instead?! -- backport to zencart!
         $this->form_action_url = (MODULE_PAYMENT_SWPINTERNETBANK_STATUS == 'True') ? 'https://test.sveaekonomi.se/webpay/payment' : 'https://webpay.sveaekonomi.se/webpay/payment';
         $this->title = MODULE_PAYMENT_SWPINTERNETBANK_TEXT_TITLE;
         $this->description = MODULE_PAYMENT_SWPINTERNETBANK_TEXT_DESCRIPTION;
@@ -171,7 +171,7 @@ class sveawebpay_internetbank extends SveaOsCommerce {
 //print_r( $currency ); die;
 
         // Create and initialize order object, using either test or production configuration
-        $sveaConfig = (MODULE_PAYMENT_SWPCREDITCARD_MODE === 'Test') ? new OsCommerceSveaConfigTest() : new OsCommerceSveaConfigProd();
+        $sveaConfig = (MODULE_PAYMENT_SWPINTERNETBANK_MODE === 'Test') ? new OsCommerceSveaConfigTest() : new OsCommerceSveaConfigProd();
 
         $swp_order = WebPay::createOrder( $sveaConfig )
             ->setCountryCode( $user_country )
@@ -243,6 +243,9 @@ class sveawebpay_internetbank extends SveaOsCommerce {
             break;
         }
 
+//print_r( tep_href_link(FILENAME_CHECKOUT_PAYMENT, '', 'SSL', true) ); die;
+         
+        
         // go directly to selected bank
         $swp_form = $swp_order->usePaymentMethod( $_REQUEST['BankPaymentOptions'] )
             ->setCancelUrl( tep_href_link(FILENAME_CHECKOUT_PAYMENT, '', 'SSL', true) )
@@ -272,20 +275,20 @@ class sveawebpay_internetbank extends SveaOsCommerce {
             }
 
             // Create and initialize order object, using either test or production configuration
-            $sveaConfig = (MODULE_PAYMENT_SWPCREDITCARD_MODE === 'Test') ? new OsCommerceSveaConfigTest() : new OsCommerceSveaConfigProd();
+            $sveaConfig = (MODULE_PAYMENT_SWPINTERNETBANK_MODE === 'Test') ? new OsCommerceSveaConfigTest() : new OsCommerceSveaConfigProd();
 
             $swp_respObj = new SveaResponse($_REQUEST, $user_country, $sveaConfig); // returns HostedPaymentResponse
             $swp_response = $swp_respObj->response;
-//print_r( $swp_response ); die;
+
             // check for bad response
-            if ($swp_response->resultcode === '0') {
+            if ($swp_response->resultcode === 0) {
                 die('Response failed authorization. AC not valid or Response is not recognized');
             }
 
             // response ok, check if payment accepted
             else {
                 // handle failed payments
-                if (!$swp_response->accepted === 1) {                   // TODO change to === 1 in zencart
+                if ( $swp_response->accepted === 0) {                   // TODO change to === 1 in zencart
                     switch ($swp_response->resultcode) {
                         case 100:
                             $_SESSION['SWP_ERROR'] = ERROR_CODE_100;
@@ -331,14 +334,18 @@ class sveawebpay_internetbank extends SveaOsCommerce {
                     if (isset($_SESSION['payment_attempt'])) {  // prevents repeated payment attempts interpreted by zencart as slam attack
                         unset($_SESSION['payment_attempt']);
                     }
-                    $payment_error_return = 'payment_error=sveawebpay_creditcard'; // used in conjunction w/SWP_ERROR to avoid reason showing up in url
+                    $payment_error_return = 'payment_error=sveawebpay_internetbank'; // used in conjunction w/SWP_ERROR to avoid reason showing up in url
+                    
+//print_r( tep_href_link(FILENAME_CHECKOUT_PAYMENT, '', 'SSL', true) );
+//print_r( " ");
+//print_r( tep_href_link(FILENAME_CHECKOUT_PAYMENT, $payment_error_return) ); die;
                     tep_redirect(tep_href_link(FILENAME_CHECKOUT_PAYMENT, $payment_error_return));
                 }
                 // handle successful payments
                 else {
 
                     // payment request succeded, store response in session
-                    if ($swp_response->accepted === 1) {
+                    if( $swp_response->accepted === 1 ) {
 
                         if (isset($_SESSION['SWP_ERROR'])) {
                             unset($_SESSION['SWP_ERROR']);

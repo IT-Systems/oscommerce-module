@@ -232,7 +232,7 @@ class sveawebpay_creditcard extends SveaOsCommerce
             
             
             // check for bad response
-            if ($swp_response->resultcode == '0') {
+            if ($swp_response->resultcode === 0) {
                 die('Response failed authorization. AC not valid or Response is not recognized');
             }
 
@@ -240,7 +240,7 @@ class sveawebpay_creditcard extends SveaOsCommerce
             else {
 
                 // handle failed payments
-                if (!$swp_response->accepted === 1) {                   // TODO change to === 1 in zencart
+                if ( $swp_response->accepted === 0 ) {
 
                     switch ($swp_response->resultcode) {
                         case 100:
