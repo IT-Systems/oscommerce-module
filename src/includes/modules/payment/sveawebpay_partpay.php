@@ -243,16 +243,23 @@ class sveawebpay_partpay extends SveaOsCommerce {
             $maxValue = 50000;
                 break;
         }
-        if(($minValue != '' && $order->info['total'] < $minValue) || ($maxValue != '' && $order->info['total'] > $maxValue)){
+        
+        // no campaign for this amount?
+        if(($minValue != '' && $order->info['total'] < $minValue) || ($maxValue != '' && $order->info['total'] > $maxValue))
+        {
             $fields[] = array('title' => '<div id="sveaPartPayField" style="display:none">'.DD_NO_CAMPAIGN_ON_AMOUNT.'</div>', 'field' => '');
-        }  else {
-         $sveaInitialFee =
-                '<br /><div>' . sprintf( FORM_TEXT_PARTPAY_FEE).'</div>';
-         if($order->billing['country']['iso_code_2'] == "SE" || $order->billing['country']['iso_code_2'] == "DK"){
-               $sveaSubmitPaymentOptions = '<button id="sveaSubmitPaymentOptions" type="button">'.FORM_TEXT_GET_PAYPLAN.'</button><br />';
-         }
+        }
+        else
+        {
+            // inform customer of initial fee here
+            $sveaInitialFee = '<br /><div>' . sprintf( FORM_TEXT_PARTPAY_FEE).'</div>';
+            
+            if($order->billing['country']['iso_code_2'] == "SE" || $order->billing['country']['iso_code_2'] == "DK"){
+                  $sveaSubmitPaymentOptions = '<button id="sveaSubmitPaymentOptions" type="button">'.FORM_TEXT_GET_PAYPLAN.'</button><br />';
+            }
              // create and add the field to be shown by our js when we select Payment Plan payment method
-        $sveaField =    '<div id="sveaPartPayField" style="display:none">' .
+            $sveaField =    
+                        '<div id="sveaPartPayField" style="display:none">' .
                             $sveaSSNPP .              //  SE, DK, NO
                             $sveaSSNFIPP .            //  FI, no getAddresses
                             $sveaSubmitPaymentOptions.
@@ -263,7 +270,8 @@ class sveawebpay_partpay extends SveaOsCommerce {
                             $sveaPaymentOptionsPP .
                             // FI, NL, DE also uses customer address data from zencart
                         '</div>'.
-                        $sveaInitialFee;
+                        $sveaInitialFee
+            ;
             $fields[] = array('title' => '', 'field' => '<br />' . $sveaField . $sveaError);
         }
 
@@ -487,7 +495,6 @@ class sveawebpay_partpay extends SveaOsCommerce {
 
         //
         // send payment request to svea, receive response
-//        $sveaConfig = (MODULE_PAYMENT_SWPPARTPAY_MODE === 'Test') ? new ZenCartSveaConfigTest() : new ZenCartSveaConfigProd();     
         try {
             $swp_response = $swp_order->usePaymentPlanPayment($_SESSION['sveaPaymentOptionsPP'])->doRequest();
         }

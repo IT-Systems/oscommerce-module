@@ -53,7 +53,7 @@ define('FORM_TEXT_SS_NO','Social Security No (YYYYMMDD-XXXX):');
 define('FORM_TEXT_INITIALS','Initials');                                
 define('FORM_TEXT_BIRTHDATE','Date of Birth');              
 define('FORM_TEXT_VATNO','Vat Number'); 
-define('FORM_TEXT_PARTPAY_FEE','initial fee will be added ');
+define('FORM_TEXT_PARTPAY_FEE','Initial fee will be added.');
 define('FORM_TEXT_GET_PAYPLAN','Get address:');
 
 define('ERROR_CODE_DEFAULT','Svea Error: ');

@@ -92,7 +92,10 @@ class sveawebpay_invoice extends SveaOsCommerce {
         if ($this->display_images)
              $fields[] = array('title' => '<img src=images/Svea/SVEAINVOICEEU_'.$order->customer['country']['iso_code_2'].'.png />', 'field' => '');
                 
-        // TODO error handling
+        // catch and display error messages raised when i.e. payment request from before_process() below turns out not accepted
+        if (isset($_REQUEST['payment_error']) && $_REQUEST['payment_error'] == 'sveawebpay_invoice') {
+            $fields[] = array('title' => '<span style="color:red">' . $_SESSION['SWP_ERROR'] . '</span>', 'field' => '');
+        }
 
         // insert svea js
         $sveaJs =   '<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>' .
@@ -197,8 +200,10 @@ class sveawebpay_invoice extends SveaOsCommerce {
                                 '</div><br />';
         }
         
-        // TODO add handling fee here
-        
+        // inform customer of invoice fee here
+        $invoiceFee = constant( "MODULE_ORDER_TOTAL_SWPHANDLING_HANDLING_FEE_".$customer_country );
+        $sveaInvoiceFee = '<br /><div>' . sprintf( MODULE_PAYMENT_SWPINVOICE_HANDLING_APPLIES, $invoiceFee) .'</div>';
+
 //        print_r($order->billing['country']['iso_code_2']); die;
         
         if(     $order->billing['country']['iso_code_2'] == "SE" ||
@@ -220,7 +225,7 @@ class sveawebpay_invoice extends SveaOsCommerce {
                             $sveaInitialsDiv .      //  NL
                             $sveaBirthDateDiv .     //  NL, DE
                             $sveaVatNoDiv .         // NL, DE
-                            $sveaHandlingFee .
+                            $sveaInvoiceFee .
                             // FI, NL, DE also uses customer address data from osCommerce
                         '</div>';
 
@@ -520,7 +525,13 @@ class sveawebpay_invoice extends SveaOsCommerce {
         
         // TODO 
         // send payment request to svea, receive response       
-        $swp_response = $swp_order->useInvoicePayment()->doRequest();
+        try {
+            $swp_response = $swp_order->useInvoicePayment()->doRequest();
+        }
+        catch (Exception $e){  
+            // hack together a fake response object containing the error & errormessage
+            $swp_response = (object) array( "accepted" => false, "resultcode" => 1000, "errormessage" => $e->getMessage() ); //new "error" 1000
+        }
 
         // payment request failed; handle this by redirecting w/result code as error message
         if ($swp_response->accepted === false) {
