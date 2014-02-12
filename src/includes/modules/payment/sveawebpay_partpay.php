@@ -20,58 +20,59 @@ class sveawebpay_partpay extends SveaOsCommerce {
     $this->title = MODULE_PAYMENT_SWPPARTPAY_TEXT_TITLE;
     $this->description = MODULE_PAYMENT_SWPPARTPAY_TEXT_DESCRIPTION;
     $this->enabled = ((MODULE_PAYMENT_SWPPARTPAY_STATUS == 'True') ? true : false);
-//    $this->sort_order = MODULE_PAYMENT_SWPINVOICE_SORT_ORDER;
-//    //$this->sveawebpay_url = MODULE_PAYMENT_SWPINVOICE_URL;
+//    $this->sort_order = MODULE_PAYMENT_SWPPARTPAY_SORT_ORDER;
+//    //$this->sveawebpay_url = MODULE_PAYMENT_SWPPARTPAY_URL;
     $this->default_currency = MODULE_PAYMENT_SWPPARTPAY_DEFAULT_CURRENCY;
     $this->allowed_currencies = explode(',', MODULE_PAYMENT_SWPPARTPAY_ALLOWED_CURRENCIES);
     $this->display_images = ((MODULE_PAYMENT_SWPPARTPAY_IMAGES == 'True') ? true : false);
     $this->ignore_list = explode(',', MODULE_PAYMENT_SWPPARTPAY_IGNORE);
-//    if ((int)MODULE_PAYMENT_SWPINVOICE_ORDER_STATUS_ID > 0)
-//      $this->order_status = MODULE_PAYMENT_SWPINVOICE_ORDER_STATUS_ID;
-//    if (is_object($order)) $this->update_status();
+//    if ((int)MODULE_PAYMENT_SWPPARTPAY_ORDER_STATUS_ID > 0)
+//      $this->order_status = MODULE_PAYMENT_SWPPARTPAY_ORDER_STATUS_ID;
+    if (is_object($order)) $this->update_status();
   }
 
-//    function update_status() {
-//        global $db, $order, $currencies, $messageStack;
-//
-//        // update internal currency
-//        $this->default_currency = MODULE_PAYMENT_SWPPARTPAY_DEFAULT_CURRENCY;
-//        $this->allowed_currencies = explode(',', MODULE_PAYMENT_SWPPARTPAY_ALLOWED_CURRENCIES);
-//
-//        // do not use this module if any of the allowed currencies are not set in osCommerce
-//        foreach ($this->allowed_currencies as $currency) {
-//            if (!is_array($currencies->currencies[strtoupper($currency)])) {
-//                $this->enabled = false;
-//                $messageStack->add('header', ERROR_ALLOWED_CURRENCIES_NOT_DEFINED, 'error');
-//            }
-//        }
-//
-//        // do not use this module if the default currency is not among the allowed
-//        if (!in_array($this->default_currency, $this->allowed_currencies)) {
-//            $this->enabled = false;
-//            $messageStack->add('header', ERROR_DEFAULT_CURRENCY_NOT_ALLOWED, 'error');
-//        }
-//
-//        // do not use this module if the geograhical zone is set and we are not in it
-//        if (($this->enabled == true) && ((int) MODULE_PAYMENT_SWPPARTPAY_ZONE > 0)) {
-//            $check_flag = false;
-//            $check_query = $db->Execute("select zone_id from " . TABLE_ZONES_TO_GEO_ZONES . " where geo_zone_id = '" . MODULE_PAYMENT_SWPPARTPAY_ZONE . "' and zone_country_id = '" . $order->billing['country']['id'] . "' order by zone_id");
-//
-//            while (!$check_query->EOF) {
-//                if ($check_query->fields['zone_id'] < 1) {
-//                    $check_flag = true;
-//                    break;
-//                } elseif ($check_query->fields['zone_id'] == $order->billing['zone_id']) {
-//                    $check_flag = true;
-//                    break;
-//                }
-//                $check_query->MoveNext();
-//            }
-//
-//            if ($check_flag == false)
-//                $this->enabled = false;
-//        }
-//    }
+    function update_status() {
+        global $db, $order, $currencies, $messageStack;
+
+        // update internal currency
+        $this->default_currency = MODULE_PAYMENT_SWPPARTPAY_DEFAULT_CURRENCY;
+        $this->allowed_currencies = explode(',', MODULE_PAYMENT_SWPPARTPAY_ALLOWED_CURRENCIES);
+
+        // do not use this module if any of the allowed currencies are not set in osCommerce
+        foreach ($this->allowed_currencies as $currency) {
+            if (!is_array($currencies->currencies[strtoupper($currency)])) {
+                $this->enabled = false;
+                $messageStack->add('header', ERROR_ALLOWED_CURRENCIES_NOT_DEFINED, 'error');
+            }
+        }
+
+        // do not use this module if the default currency is not among the allowed
+        if (!in_array($this->default_currency, $this->allowed_currencies)) {
+            $this->enabled = false;
+            $messageStack->add('header', ERROR_DEFAULT_CURRENCY_NOT_ALLOWED, 'error');
+        }
+
+        // do not use this module if the geograhical zone is set and we are not in it
+        if (($this->enabled == true) && ((int) MODULE_PAYMENT_SWPPARTPAY_ZONE > 0)) {
+            $check_flag = false;
+            $check_query = tep_db_query("select zone_id from " . TABLE_ZONES_TO_GEO_ZONES . 
+                " where geo_zone_id = '" . MODULE_PAYMENT_SWPPARTPAY_ZONE . "' and zone_country_id = '" . 
+                $order->billing['country']['id'] . "' order by zone_id");
+
+            while( $row = mysqli_fetch_assoc( $check_query ) ) {                
+                if ($row['zone_id'] < 1) {
+                    $check_flag = true;
+                    break;
+                } elseif ($row['zone_id'] == $order->billing['zone_id']) {
+                    $check_flag = true;
+                    break;
+                }
+            }
+
+            if ($check_flag == false)
+                $this->enabled = false;
+        }
+    }
 
     function javascript_validation() {
         return false;
