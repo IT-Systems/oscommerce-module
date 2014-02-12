@@ -26,8 +26,8 @@ class sveawebpay_creditcard extends SveaOsCommerce {
         $this->allowed_currencies = explode(',', MODULE_PAYMENT_SWPCREDITCARD_ALLOWED_CURRENCIES);
         $this->display_images = ((MODULE_PAYMENT_SWPCREDITCARD_IMAGES == 'True') ? true : false);
         $this->ignore_list = explode(',', MODULE_PAYMENT_SWPCREDITCARD_IGNORE);
-//        if ((int) MODULE_PAYMENT_SWPCREDITCARD_ORDER_STATUS_ID > 0)
-//            $this->order_status = MODULE_PAYMENT_SWPCREDITCARD_ORDER_STATUS_ID;
+        if ((int) MODULE_PAYMENT_SWPCREDITCARD_ORDER_STATUS_ID > 0)
+            $this->order_status = MODULE_PAYMENT_SWPCREDITCARD_ORDER_STATUS_ID;
         if (is_object($order))
             $this->update_status();
     }
@@ -347,7 +347,7 @@ class sveawebpay_creditcard extends SveaOsCommerce {
         tep_db_query($common . ", set_function) values ('Transaction Mode', 'MODULE_PAYMENT_SWPCREDITCARD_MODE', 'Test', 'Transaction mode used for processing orders. Production should be used for a live working cart. Test for testing.', '6', '0', now(), 'tep_cfg_select_option(array(\'Production\', \'Test\'), ')");
         tep_db_query($common . ") values ('Accepted Currencies', 'MODULE_PAYMENT_SWPCREDITCARD_ALLOWED_CURRENCIES','SEK,NOK,DKK,EUR', 'The accepted currencies, separated by commas.  These <b>MUST</b> exist within your currencies table, along with the correct exchange rates.','6','0',now())");
         tep_db_query($common . ", set_function) values ('Default Currency', 'MODULE_PAYMENT_SWPCREDITCARD_DEFAULT_CURRENCY', 'SEK', 'Default currency used, if the customer uses an unsupported currency it will be converted to this. This should also be in the supported currencies list.', '6', '0', now(), 'tep_cfg_select_option(array(\'SEK\',\'NOK\',\'DKK\',\'EUR\'), ')");
-//        tep_db_query($common . ", set_function, use_function) values ('Set Order Status', 'MODULE_PAYMENT_SWPCREDITCARD_ORDER_STATUS_ID', '0', 'Set the status of orders made with this payment module to this value', '6', '0', now(), 'zen_cfg_pull_down_order_statuses(', 'zen_get_order_status_name')");
+        tep_db_query($common . ", set_function, use_function) values ('Set Order Status', 'MODULE_PAYMENT_SWPCREDITCARD_ORDER_STATUS_ID', '0', 'Set the status of orders made with this payment module to this value', '6', '0', now(), 'tep_cfg_pull_down_order_statuses(', 'tep_get_order_status_name')");
         tep_db_query($common . ", set_function) values ('Display SveaWebPay Images', 'MODULE_PAYMENT_SWPCREDITCARD_IMAGES', 'True', 'Do you want to display SveaWebPay images when choosing between payment options?', '6', '0', now(), 'tep_cfg_select_option(array(\'True\', \'False\'), ')");
         tep_db_query($common . ") values ('Ignore OT list', 'MODULE_PAYMENT_SWPCREDITCARD_IGNORE','ot_pretotal', 'Ignore the following order total codes, separated by commas.','6','0',now())");
         tep_db_query($common . ", set_function, use_function) values ('Payment Zone', 'MODULE_PAYMENT_SWPCREDITCARD_ZONE', '0', 'If a zone is selected, only enable this payment method for that zone.', '6', '2', now(), 'tep_cfg_pull_down_zone_classes(', 'tep_get_zone_class_title')");
@@ -370,7 +370,7 @@ class sveawebpay_creditcard extends SveaOsCommerce {
             'MODULE_PAYMENT_SWPCREDITCARD_MODE',
             'MODULE_PAYMENT_SWPCREDITCARD_ALLOWED_CURRENCIES',
             'MODULE_PAYMENT_SWPCREDITCARD_DEFAULT_CURRENCY',
-//            'MODULE_PAYMENT_SWPCREDITCARD_ORDER_STATUS_ID',
+            'MODULE_PAYMENT_SWPCREDITCARD_ORDER_STATUS_ID',
             'MODULE_PAYMENT_SWPCREDITCARD_IMAGES',
             'MODULE_PAYMENT_SWPCREDITCARD_IGNORE',
             'MODULE_PAYMENT_SWPCREDITCARD_ZONE',
