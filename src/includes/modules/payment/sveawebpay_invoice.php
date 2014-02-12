@@ -19,16 +19,15 @@ class sveawebpay_invoice extends SveaOsCommerce {
     $this->title = MODULE_PAYMENT_SWPINVOICE_TEXT_TITLE;
     $this->description = MODULE_PAYMENT_SWPINVOICE_TEXT_DESCRIPTION;
     $this->enabled = ((MODULE_PAYMENT_SWPINVOICE_STATUS == 'True') ? true : false);
-//    $this->sort_order = MODULE_PAYMENT_SWPINVOICE_SORT_ORDER;
+    $this->sort_order = MODULE_PAYMENT_SWPINVOICE_SORT_ORDER;
 //    //$this->sveawebpay_url = MODULE_PAYMENT_SWPINVOICE_URL;
 //    $this->clientno_fakt = MODULE_PAYMENT_SWPINVOICE_CLIENTNO;
-//    $this->handling_fee = MODULE_PAYMENT_SWPINVOICE_HANDLING_FEE;
     $this->default_currency = MODULE_PAYMENT_SWPINVOICE_DEFAULT_CURRENCY;
     $this->allowed_currencies = explode(',', MODULE_PAYMENT_SWPINVOICE_ALLOWED_CURRENCIES);
     $this->display_images = ((MODULE_PAYMENT_SWPINVOICE_IMAGES == 'True') ? true : false);
     $this->ignore_list = explode(',', MODULE_PAYMENT_SWPINVOICE_IGNORE);
-//    if ((int)MODULE_PAYMENT_SWPINVOICE_ORDER_STATUS_ID > 0)
-//      $this->order_status = MODULE_PAYMENT_SWPINVOICE_ORDER_STATUS_ID;
+    if ((int)MODULE_PAYMENT_SWPINVOICE_ORDER_STATUS_ID > 0)
+        $this->order_status = MODULE_PAYMENT_SWPINVOICE_ORDER_STATUS_ID;
     if (is_object($order)) $this->update_status();
   }
 
@@ -792,14 +791,13 @@ class sveawebpay_invoice extends SveaOsCommerce {
     tep_db_query($common . ") values ('SveaWebPay Client no NL', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_NL', '85997', '', '6', '0', now())");
     tep_db_query($common . ") values ('SveaWebPay Client no DE', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_DE', '14997', '', '6', '0', now())");
     tep_db_query($common . ", set_function) values ('Transaction Mode', 'MODULE_PAYMENT_SWPINVOICE_MODE', 'Test', 'Transaction mode used for processing orders. Production should be used for a live working cart. Test for testing.', '6', '0', now(), 'tep_cfg_select_option(array(\'Production\', \'Test\'), ')");
-//    tep_db_query($common . ") values ('Handling Fee', 'MODULE_PAYMENT_SWPINVOICE_HANDLING_FEE', '', 'This handling fee will be applied to all orders using this payment method.  The figure can either be set to a specific amount eg <b>5.00</b>, or set to a percentage of the order total, by ensuring the last character is a \'%\' eg <b>5.00%</b>.', '6', '0', now())");
     tep_db_query($common . ") values ('Accepted Currencies', 'MODULE_PAYMENT_SWPINVOICE_ALLOWED_CURRENCIES','SEK,NOK,DKK,EUR', 'The accepted currencies, separated by commas.  These <b>MUST</b> exist within your currencies table, along with the correct exchange rates.','6','0',now())");
     tep_db_query($common . ", set_function) values ('Default Currency', 'MODULE_PAYMENT_SWPINVOICE_DEFAULT_CURRENCY', 'SEK', 'Default currency used, if the customer uses an unsupported currency it will be converted to this. This should also be in the supported currencies list.', '6', '0', now(), 'tep_cfg_select_option(array(\'SEK\',\'NOK\',\'DKK\',\'EUR\'), ')");
-//    tep_db_query($common . ", set_function, use_function) values ('Set Order Status', 'MODULE_PAYMENT_SWPINVOICE_ORDER_STATUS_ID', '0', 'Set the status of orders made with this payment module to this value', '6', '0', now(), 'tep_cfg_pull_down_order_statuses(', 'tep_get_order_status_name')");
+    tep_db_query($common . ", set_function, use_function) values ('Set Order Status', 'MODULE_PAYMENT_SWPINVOICE_ORDER_STATUS_ID', '0', 'Set the status of orders made with this payment module to this value', '6', '0', now(), 'tep_cfg_pull_down_order_statuses(', 'tep_get_order_status_name')");
     tep_db_query($common . ", set_function) values ('Display SveaWebPay Images', 'MODULE_PAYMENT_SWPINVOICE_IMAGES', 'True', 'Do you want to display SveaWebPay images when choosing between payment options?', '6', '0', now(), 'tep_cfg_select_option(array(\'True\', \'False\'), ')");
     tep_db_query($common . ") values ('Ignore OT list', 'MODULE_PAYMENT_SWPINVOICE_IGNORE','ot_pretotal', 'Ignore the following order total codes, separated by commas.','6','0',now())");
     tep_db_query($common . ", set_function, use_function) values ('Payment Zone', 'MODULE_PAYMENT_SWPINVOICE_ZONE', '0', 'If a zone is selected, only enable this payment method for that zone.', '6', '2', now(), 'tep_cfg_pull_down_zone_classes(', 'tep_get_zone_class_title')");
-//    tep_db_query($common . ") values ('Sort order of display.', 'MODULE_PAYMENT_SWPINVOICE_SORT_ORDER', '0', 'Sort order of display. Lowest is displayed first.', '6', '0', now())");
+    tep_db_query($common . ") values ('Sort order of display.', 'MODULE_PAYMENT_SWPINVOICE_SORT_ORDER', '0', 'Sort order of display. Lowest is displayed first.', '6', '0', now())");
   }
 
   // standard uninstall function
@@ -829,14 +827,13 @@ class sveawebpay_invoice extends SveaOsCommerce {
                   'MODULE_PAYMENT_SWPINVOICE_PASSWORD_DE',
                   'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_DE',
                   'MODULE_PAYMENT_SWPINVOICE_MODE',
-//                  'MODULE_PAYMENT_SWPINVOICE_HANDLING_FEE',
                   'MODULE_PAYMENT_SWPINVOICE_ALLOWED_CURRENCIES',
                   'MODULE_PAYMENT_SWPINVOICE_DEFAULT_CURRENCY',
-//                  'MODULE_PAYMENT_SWPINVOICE_ORDER_STATUS_ID',
+                  'MODULE_PAYMENT_SWPINVOICE_ORDER_STATUS_ID',
                   'MODULE_PAYMENT_SWPINVOICE_IMAGES',
                   'MODULE_PAYMENT_SWPINVOICE_IGNORE',
                   'MODULE_PAYMENT_SWPINVOICE_ZONE',
-//                  'MODULE_PAYMENT_SWPINVOICE_SORT_ORDER'
+                  'MODULE_PAYMENT_SWPINVOICE_SORT_ORDER'
     );
   }
 
