@@ -36,6 +36,23 @@ class SveaOsCommerce {
     function getCurrency( $customerCurrency ) {
         return in_array($customerCurrency, $this->allowed_currencies) ? $customerCurrency : $this->default_currency;
     }
+    
+    /**
+     * get the customer country from 1) user billing address, if given, or 2) from shop country id in session
+     * @return 
+     */
+    function getCountry() {    
+        // try billing address country first
+        if( isset( $order->billing['country']['iso_code_2'] ) ) {
+            $user_country = $order->billing['country']['iso_code_2']; 
+        }
+        // no billing address set, fallback to session country_id
+        else {
+            $country = tep_get_countries_with_iso_codes( $_SESSION['customer_country_id'] );
+            $user_country =  $country['countries_iso_code_2'];
+        }
+        return $user_country;
+    }
         
     /**
      * Given iso 3166 country code, returns English country name.

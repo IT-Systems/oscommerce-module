@@ -326,14 +326,7 @@ class sveawebpay_invoice extends SveaOsCommerce {
 //print_r( $client_order_number); die;
         
         // localization parameters
-        if( isset( $order->billing['country']['iso_code_2'] ) ) {
-            $user_country = $order->billing['country']['iso_code_2']; 
-        }
-        // no billing address set, fallback to session country_id
-        else {
-            $country = zen_get_countries_with_iso_codes( $_SESSION['customer_country_id'] );
-            $user_country =  $country['countries_iso_code_2'];
-        }
+        $user_country = $this->getCountry();
 //print_r( $user_country ); die;
        
     $user_language = tep_db_fetch_array(tep_db_query("select code from " . TABLE_LANGUAGES . " where directory = '" . $language . "'"));
