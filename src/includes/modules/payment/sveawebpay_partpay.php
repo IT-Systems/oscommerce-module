@@ -367,12 +367,8 @@ class sveawebpay_partpay extends SveaOsCommerce {
 
         // localization parameters
         $user_country = $this->getCountry();
-
-        $user_language = tep_db_fetch_array(tep_db_query("select code from " . TABLE_LANGUAGES . " where directory = '" . $language . "'"));
-        $user_language = $user_language['code'];
-
-         // switch to default currency if the customers currency is not supported
-        $currency = $this->getCurrency($order->info['currency']);
+        $user_language = $this->getLanguage();
+        $currency = $this->getCurrency();
 
         // Create and initialize order object, using either test or production configuration
         $sveaConfig = (MODULE_PAYMENT_SWPPARTPAY_MODE === 'Test') ? new OsCommerceSveaConfigTest() : new OsCommerceSveaConfigProd();
@@ -384,26 +380,12 @@ class sveawebpay_partpay extends SveaOsCommerce {
             ->setOrderDate(date('c'))                      //Required for synchronous payments
         ;
 
-        // for each item in cart, create WebPayItem::orderRow objects and add to order
-        foreach ($order->products as $productId => $product) {
-
-            $amount_ex_vat = $this->convertToCurrency(round($product['final_price'], 2), $currency);
-
-            $swp_order->addOrderRow(
-                    WebPayItem::orderRow()
-                            ->setQuantity(intval($product['qty']))
-                            ->setAmountExVat($amount_ex_vat)
-                            ->setVatPercent(intval($product['tax']))
-                            ->setDescription($product['name'])
-            );
-        }
-
-        // get order totals in parseable format
-        $order_totals = $this->getOrderTotals();        
+        // create product order rows from each item in cart
+        $swp_order = $this->parseOrderProducts( $order->products, $swp_order, $this->getCurrency() );
         
         // creates non-item order rows from Order Total entries
-        $swp_order = $this->parseOrderTotals( $order_totals, $swp_order );
-        
+        $swp_order = $this->parseOrderTotals( $this->getOrderTotals(), $swp_order );
+ 
         // customer is always private individual with partpay
 
         // create individual customer object

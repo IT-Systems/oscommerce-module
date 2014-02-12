@@ -39,8 +39,8 @@ class sveawebpay_invoice extends SveaOsCommerce {
         $this->allowed_currencies = explode(',', MODULE_PAYMENT_SWPINVOICE_ALLOWED_CURRENCIES);
 
         // do not use this module if any of the allowed currencies are not set in osCommerce
-        foreach ($this->allowed_currencies as $currency) {
-            if (!is_array($currencies->currencies[strtoupper($currency)])) {
+        foreach( $this->allowed_currencies as $currency ) {
+            if( !is_array($currencies->currencies[strtoupper($currency)]) ) {
                 $this->enabled = false;
                 $messageStack->add('header', ERROR_ALLOWED_CURRENCIES_NOT_DEFINED, 'error');
             }
@@ -322,52 +322,29 @@ class sveawebpay_invoice extends SveaOsCommerce {
         $new_order_rs = tep_db_query("select orders_id from ".TABLE_ORDERS." order by orders_id desc limit 1");
         $new_order_field = tep_db_fetch_array($new_order_rs);
         $client_order_number = ($new_order_field['orders_id'] + 1);
-
-//print_r( $client_order_number); die;
         
         // localization parameters
         $user_country = $this->getCountry();
-//print_r( $user_country ); die;
-       
-    $user_language = tep_db_fetch_array(tep_db_query("select code from " . TABLE_LANGUAGES . " where directory = '" . $language . "'"));
-    $user_language = $user_language['code'];
-//print_r( $user_language );
-      
-        $currency = $this->getCurrency($order->info['currency']);
-//print_r( $currency ); die;
+        $user_language = $this->getLanguage();
         
         // Create and initialize order object, using either test or production configuration
         $sveaConfig = (MODULE_PAYMENT_SWPINVOICE_MODE === 'Test') ? new OsCommerceSveaConfigTest() : new OsCommerceSveaConfigProd();
 
         $swp_order = WebPay::createOrder( $sveaConfig )
             ->setCountryCode( $user_country )
-            ->setCurrency($currency)                       //Required for card & direct payment and PayPage payment.
-            ->setClientOrderNumber($client_order_number)   //Required for card & direct payment, PaymentMethod payment and PayPage payments
-            ->setOrderDate(date('c'))                      //Required for synchronous payments
+            ->setCurrency($currency)                       
+            ->setClientOrderNumber($client_order_number)  
+            ->setOrderDate(date('c'))                  
         ;
 //print_r( $swp_order ); die;
 
 //print_r( $order); die;
 
-        // for each item in cart, create WebPayItem::orderRow objects and add to order
-        foreach ($order->products as $productId => $product) {
-
-            $amount_ex_vat = floatval( $this->convertToCurrency(round($product['final_price'], 2), $currency) );
-         
-            $swp_order->addOrderRow(
-                    WebPayItem::orderRow()
-                            ->setQuantity(intval($product['qty']))
-                            ->setAmountExVat($amount_ex_vat)      
-                            ->setVatPercent(intval($product['tax']))
-                            ->setDescription($product['name'])
-           );
-        }
-
-        // get order totals in parseable format
-        $order_totals = $this->getOrderTotals();
-    
+        // create product order rows from each item in cart
+        $swp_order = $this->parseOrderProducts( $order->products, $swp_order, $this->getCurrency() );
+        
         // creates non-item order rows from Order Total entries
-        $swp_order = $this->parseOrderTotals( $order_totals, $swp_order );
+        $swp_order = $this->parseOrderTotals( $this->getOrderTotals(), $swp_order );
 
         // Check if customer is company
         if( $post_sveaIsCompany === 'true')

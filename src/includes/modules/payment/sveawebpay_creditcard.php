@@ -125,17 +125,9 @@ class sveawebpay_creditcard extends SveaOsCommerce {
         $client_order_number = ($new_order_field['orders_id'] + 1);
       
         // localization parameters
-        // localization parameters
         $user_country = $this->getCountry();
-       
-        $user_language = tep_db_fetch_array(tep_db_query("select code from " . TABLE_LANGUAGES . " where directory = '" . $language . "'"));
-        $user_language = $user_language['code'];
-      
-        // switch to default currency if the customers currency is not supported
-        $currency = $order->info['currency'];
-        if (!in_array($currency, $this->allowed_currencies)) {
-            $currency = $this->default_currency;
-        }
+        $user_language = $this->getLanguage();
+        $currency = $this->getCurrency();
 
         // Create and initialize order object, using either test or production configuration
         $sveaConfig = (MODULE_PAYMENT_SWPCREDITCARD_MODE === 'Test') ? new OsCommerceSveaConfigTest() : new OsCommerceSveaConfigProd();
@@ -147,27 +139,13 @@ class sveawebpay_creditcard extends SveaOsCommerce {
             ->setOrderDate(date('c'))                      
         ;
         
-        // for each item in cart, create WebPayItem::orderRow objects and add to order
-        foreach ($order->products as $productId => $product) {
-
-            $amount_ex_vat = floatval( $this->convertToCurrency(round($product['final_price'], 2), $currency) );
-         
-            $swp_order->addOrderRow(
-                    WebPayItem::orderRow()
-                            ->setQuantity(intval($product['qty']))
-                            ->setAmountExVat($amount_ex_vat)      
-                            ->setVatPercent(intval($product['tax']))
-                            ->setDescription($product['name'])
-           );
-        }
-        
         // we use the same code as in invoice/payment plan for order totals, as coupons isn't integral to osCommerce
         
-        // get order totals in parseable format
-        $order_totals = $this->getOrderTotals();
-             
+        // create product order rows from each item in cart
+        $swp_order = $this->parseOrderProducts( $order->products, $swp_order, $this->getCurrency() );
+        
         // creates non-item order rows from Order Total entries
-        $swp_order = $this->parseOrderTotals( $order_totals, $swp_order );
+        $swp_order = $this->parseOrderTotals( $this->getOrderTotals(), $swp_order );
 
         // get form from order object
         $swp_form = $swp_order->usePaymentMethod(PaymentMethod::KORTCERT)
