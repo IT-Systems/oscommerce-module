@@ -28,50 +28,52 @@ class sveawebpay_internetbank extends SveaOsCommerce {
         $this->ignore_list = explode(',', MODULE_PAYMENT_SWPINTERNETBANK_IGNORE);
 //    if ((int)MODULE_PAYMENT_SWPINTERNETBANK_ORDER_STATUS_ID > 0)
 //      $this->order_status = MODULE_PAYMENT_SWPINTERNETBANK_ORDER_STATUS_ID;
-//    if (is_object($order)) $this->update_status();
+        if (is_object($order)) $this->update_status();
     }
 
-//    function update_status() {
-//    global $db, $order, $currencies, $messageStack;
-//
-//    // update internal currency
-//    $this->default_currency = MODULE_PAYMENT_SWPINTERNETBANK_DEFAULT_CURRENCY;
-//    $this->allowed_currencies = explode(',', MODULE_PAYMENT_SWPINTERNETBANK_ALLOWED_CURRENCIES);
-//
-//    // do not use this module if any of the allowed currencies are not set in osCommerce
-//    foreach($this->allowed_currencies as $currency) {
-//      if(!is_array($currencies->currencies[strtoupper($currency)])) {
-//        $this->enabled = false;
-//        $messageStack->add('header', ERROR_ALLOWED_CURRENCIES_NOT_DEFINED, 'error');
-//      }
-//    }
-//
-//    // do not use this module if the default currency is not among the allowed
-//    if (!in_array($this->default_currency, $this->allowed_currencies)) {
-//      $this->enabled = false;
-//      $messageStack->add('header', ERROR_DEFAULT_CURRENCY_NOT_ALLOWED, 'error');
-//    }
-//
-//    // do not use this module if the geograhical zone is set and we are not in it
-//    if ( ($this->enabled == true) && ((int)MODULE_PAYMENT_SWPCREDITCARD_ZONE > 0) ) {
-//      $check_flag = false;
-//      $check_query = $db->Execute("select zone_id from " . TABLE_ZONES_TO_GEO_ZONES . " where geo_zone_id = '" . MODULE_PAYMENT_SWPCREDITCARD_ZONE . "' and zone_country_id = '" . $order->billing['country']['id'] . "' order by zone_id");
-//
-//      while (!$check_query->EOF) {
-//        if ($check_query->fields['zone_id'] < 1) {
-//          $check_flag = true;
-//          break;
-//        } elseif ($check_query->fields['zone_id'] == $order->billing['zone_id']) {
-//          $check_flag = true;
-//          break;
-//        }
-//        $check_query->MoveNext();
-//      }
-//
-//      if ($check_flag == false)
-//        $this->enabled = false;
-//    }
-//  }
+    function update_status() {
+        global $db, $order, $currencies, $messageStack;
+
+        // update internal currency
+        $this->default_currency = MODULE_PAYMENT_SWPINTERNETBANK_DEFAULT_CURRENCY;
+        $this->allowed_currencies = explode(',', MODULE_PAYMENT_SWPINTERNETBANK_ALLOWED_CURRENCIES);
+
+        // do not use this module if any of the allowed currencies are not set in osCommerce
+        foreach ($this->allowed_currencies as $currency) {
+            if (!is_array($currencies->currencies[strtoupper($currency)])) {
+                $this->enabled = false;
+                $messageStack->add('header', ERROR_ALLOWED_CURRENCIES_NOT_DEFINED, 'error');
+            }
+        }
+
+        // do not use this module if the default currency is not among the allowed
+        if (!in_array($this->default_currency, $this->allowed_currencies)) {
+            $this->enabled = false;
+            $messageStack->add('header', ERROR_DEFAULT_CURRENCY_NOT_ALLOWED, 'error');
+        }
+
+        // do not use this module if the geograhical zone is set and we are not in it
+        if (($this->enabled == true) && ((int) MODULE_PAYMENT_SWPINTERNETBANK_ZONE > 0)) {
+            $check_flag = false;
+            $check_query = tep_db_query("select zone_id from " . TABLE_ZONES_TO_GEO_ZONES . 
+                " where geo_zone_id = '" . MODULE_PAYMENT_SWPINTERNETBANK_ZONE . "' and zone_country_id = '" . 
+                $order->billing['country']['id'] . "' order by zone_id");
+
+            while( $row = mysqli_fetch_assoc( $check_query ) ) {                
+                if ($row['zone_id'] < 1) {
+                    $check_flag = true;
+                    break;
+                } elseif ($row['zone_id'] == $order->billing['zone_id']) {
+                    $check_flag = true;
+                    break;
+                }
+            }
+
+            if ($check_flag == false)
+                $this->enabled = false;
+        }
+    }
+
 
   function javascript_validation() {
     return false;
@@ -396,7 +398,7 @@ class sveawebpay_internetbank extends SveaOsCommerce {
         tep_db_query($common . ") values ('Accepted Currencies', 'MODULE_PAYMENT_SWPINTERNETBANK_ALLOWED_CURRENCIES','SEK,NOK,DKK,EUR', 'The accepted currencies, separated by commas.  These <b>MUST</b> exist within your currencies table, along with the correct exchange rates.','6','0',now())");
         tep_db_query($common . ", set_function) values ('Default Currency', 'MODULE_PAYMENT_SWPINTERNETBANK_DEFAULT_CURRENCY', 'SEK', 'Default currency used, if the customer uses an unsupported currency it will be converted to this. This should also be in the supported currencies list.', '6', '0', now(), 'tep_cfg_select_option(array(\'SEK\',\'NOK\',\'DKK\',\'EUR\'), ')");
 //    tep_db_query($common . ", set_function, use_function) values ('Set Order Status', 'MODULE_PAYMENT_SWPINTERNETBANK_ORDER_STATUS_ID', '0', 'Set the status of orders made with this payment module to this value', '6', '0', now(), 'tep_cfg_pull_down_order_statuses(', 'tep_get_order_status_name')");
-        tep_db_query($common . ", set_function) values ('Display SveaWebPay Images', 'MODULE_PAYMENT_SWPCREDITCARD_IMAGES', 'True', 'Do you want to display SveaWebPay images when choosing between payment options?', '6', '0', now(), 'tep_cfg_select_option(array(\'True\', \'False\'), ')");
+        tep_db_query($common . ", set_function) values ('Display SveaWebPay Images', 'MODULE_PAYMENT_SWPINTERNETBANK_IMAGES', 'True', 'Do you want to display SveaWebPay images when choosing between payment options?', '6', '0', now(), 'tep_cfg_select_option(array(\'True\', \'False\'), ')");
 
         tep_db_query($common . ") values ('Ignore OT list', 'MODULE_PAYMENT_SWPINTERNETBANK_IGNORE','ot_pretotal', 'Ignore the following order total codes, separated by commas.','6','0',now())");
         tep_db_query($common . ", set_function, use_function) values ('Payment Zone', 'MODULE_PAYMENT_SWPINTERNETBANK_ZONE', '0', 'If a zone is selected, only enable this payment method for that zone.', '6', '2', now(), 'tep_cfg_pull_down_zone_classes(', 'tep_get_zone_class_title')");
@@ -420,7 +422,7 @@ class sveawebpay_internetbank extends SveaOsCommerce {
             'MODULE_PAYMENT_SWPINTERNETBANK_ALLOWED_CURRENCIES',
             'MODULE_PAYMENT_SWPINTERNETBANK_DEFAULT_CURRENCY',
 //                  'MODULE_PAYMENT_SWPINTERNETBANK_ORDER_STATUS_ID',
-            'MODULE_PAYMENT_SWPCREDITCARD_IMAGES',
+            'MODULE_PAYMENT_SWPINTERNETBANK_IMAGES',
             'MODULE_PAYMENT_SWPINTERNETBANK_IGNORE',
             'MODULE_PAYMENT_SWPINTERNETBANK_ZONE',
             'MODULE_PAYMENT_SWPINTERNETBANK_SORT_ORDER');
