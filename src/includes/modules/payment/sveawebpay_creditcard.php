@@ -268,8 +268,6 @@ class sveawebpay_creditcard extends SveaOsCommerce {
         // retrieve response object from before_process()
         $swp_response = unserialize($_SESSION["swp_response"]);
      
-        // TODO check invoice/partpay behaviour = card below
-        
         // insert order into database
         $customer_notification = (SEND_EMAILS == 'true') ? '1' : '0';               
         $sql_data_array = array(

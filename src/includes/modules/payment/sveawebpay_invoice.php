@@ -490,10 +490,6 @@ class sveawebpay_invoice extends SveaOsCommerce {
         // retrieve order object set in process_button()
         $swp_order = unserialize($_SESSION["swp_order"]);
 
-//        print_r( $swp_order->useInvoicePayment()->prepareRequest() ); die;
-//        
-        
-        // TODO 
         // send payment request to svea, receive response       
         try {
             $swp_response = $swp_order->useInvoicePayment()->doRequest();
@@ -528,6 +524,7 @@ class sveawebpay_invoice extends SveaOsCommerce {
             else {
                 $order->billing['company'] = $swp_response->customerIdentity->fullName;
             }
+            
             $order->billing['street_address'] =
                     $swp_response->customerIdentity->street . " " . $swp_response->customerIdentity->houseNumber;
             $order->billing['suburb'] =  $swp_response->customerIdentity->coAddress;
@@ -540,59 +537,8 @@ class sveawebpay_invoice extends SveaOsCommerce {
 
             // save the response object
             $_SESSION["swp_response"] = serialize($swp_response);
-            
-//print_r( $swp_response ); die;
         }
     }
-    
-    
-//  OLD osC    
-//  function before_process() {
-//
-//    global $order, $order_totals, $language, $billto, $sendto;
-//
-//
-//
-//    /*****
-//    Responsehandling
-//    ******/
-//        
-//    // handle failed payments
-//    if ($response != 'Accepted') {
-//
-//      $_SESSION['SWP_ERROR'] = $this->responseCodes($response,$errormessage);        
-//      $payment_error_return = 'payment_error=' . $this->code;
-//      tep_redirect(tep_href_link(FILENAME_CHECKOUT_PAYMENT, $payment_error_return));
-//    }
-//
-//
-//    // handle successful payments
-//    if($response == 'Accepted'){
-//        unset($_SESSION['swp_fakt_request']);
-//        $order->info['securityNumber']     = $svea_req->CreateOrderResult->SecurityNumber;
-//
-//    }
-//
-//    if (isset($svea_req->CreateOrderResult->LegalName)) {
-//      $name = explode(',',$svea_req->CreateOrderResult->LegalName);
-//
-//      $order->billing['firstname']       = $name[1];
-//      $order->billing['lastname']        = $name[0];
-//      $order->billing['street_address']  = $svea_req->CreateOrderResult->AddressLine1;
-//      $order->billing['suburb']          = $svea_req->CreateOrderResult->AddressLine2;
-//      $order->billing['city']            = $svea_req->CreateOrderResult->Postarea;
-//      $order->billing['state']           = '';                    // "state" is not applicable in SWP countries
-//      $order->billing['postcode']        = $svea_req->CreateOrderResult->Postcode;
-//
-//      $order->delivery['firstname']      = $name[1];
-//      $order->delivery['lastname']       = $name[0];
-//      $order->delivery['street_address'] = $svea_req->CreateOrderResult->AddressLine1;
-//      $order->delivery['suburb']         = $svea_req->CreateOrderResult->AddressLine2;
-//      $order->delivery['city']           = $svea_req->CreateOrderResult->Postarea;
-//      $order->delivery['state']          = '';                    // "state" is not applicable in SWP countries
-//      $order->delivery['postcode']       = $svea_req->CreateOrderResult->Postcode;
-//    }
-//
 //    $table = array (
 //                'INVOICE'       => MODULE_PAYMENT_SWPINVOICE_TEXT_TITLE,
 //                'INVOICESE'     => MODULE_PAYMENT_SWPINVOICE_TEXT_TITLE);
@@ -628,7 +574,6 @@ class sveawebpay_invoice extends SveaOsCommerce {
 //
 //  }
 
-// from ZC
     // if payment accepted, set addresses based on response, insert order into database
     function after_process() {
         global $insert_id, $order, $db;
@@ -636,46 +581,21 @@ class sveawebpay_invoice extends SveaOsCommerce {
         $new_order_id = $insert_id;  // $insert_id contains the new order orders_id
         
         // retrieve response object from before_process()
-        $createOrderResponse = unserialize($_SESSION["swp_response"]);
+        $swp_response = unserialize($_SESSION["swp_response"]);
 
-//        // store create order object along with response sveaOrderId in db
-//        $sql_data_array = array(
-//            'orders_id' => $new_order_id,
-//            'sveaorderid' => $createOrderResponse->sveaOrderId,
-//            'createorder_object' => $_SESSION["swp_order"]      // session data is already serialized
-//        );
-//        zen_db_perform("svea_order", $sql_data_array);
-//        
-//        // if autodeliver order status matches the new order status, deliver the order
-//        if( $this->getCurrentOrderStatus( $new_order_id ) == MODULE_PAYMENT_SWPINVOICE_AUTODELIVER ) 
-//        {
-//            $deliverResponse = $this->doDeliverOrderInvoice($new_order_id);
-//            if( $deliverResponse->accepted == true )
-//            {                    
-//                $comment = 'Order AutoDelivered. (SveaOrderId: ' .$this->getSveaOrderId( $new_order_id ). ')';                
-//                //$this->insertOrdersStatus( $new_order_id, SVEA_ORDERSTATUS_DELIVERED_ID, $comment );
-//                $sql_data_array = array(
-//                    'orders_id' => $new_order_id,
-//                    'orders_status_id' => SVEA_ORDERSTATUS_DELIVERED_ID,              
-//                    'date_added' => 'now()',
-//                    'customer_notified' => 0,  // 0 for "no email" (open lock symbol) in order status history
-//                    'comments' => $comment
-//                );
-//                zen_db_perform(TABLE_ORDERS_STATUS_HISTORY, $sql_data_array);
-//
-//                $db->Execute(   "update " . TABLE_ORDERS . " " .
-//                                "set orders_status = " . SVEA_ORDERSTATUS_DELIVERED_ID . " " .
-//                                "where orders_id = " . $new_order_id 
-//                );
-//            }
-//            else 
-//            {
-//                $comment =  'WARNING: AutoDeliver failed, status not changed. ' .
-//                            'Error: ' . $deliverResponse->errormessage . ' (SveaOrderId: ' .$this->getSveaOrderId( $new_order_id ). ')';
-//                $this->insertOrdersStatus( $new_order_id, $this->getCurrentOrderStatus( $new_order_id ), $comment );
-//            }          
-//        }
-         
+        // insert order into database
+        $customer_notification = (SEND_EMAILS == 'true') ? '1' : '0';               
+        $sql_data_array = array(
+            'orders_id' => $new_order_id,                          
+            'orders_status_id' => $order->info['order_status'], 
+            'date_added' => 'now()', 
+            'customer_notified' => $customer_notification,
+            'comments' => 
+                'Accepted by Svea ' . date("Y-m-d G:i:s") . ' Security Number #: ' . $swp_response->clientOrderId .
+                " ". $order->info['comments']
+        );
+        tep_db_perform(TABLE_ORDERS_STATUS_HISTORY, $sql_data_array);
+                                                 
         // clean up our session variables set during checkout   //$SESSION[swp_*
         unset($_SESSION['swp_order']);
         unset($_SESSION['swp_response']);
@@ -876,17 +796,5 @@ class sveawebpay_invoice extends SveaOsCommerce {
                 break;
         }
     } 
-
-//
-//  function convert_to_currency($value, $currency) {
-//    global $currencies;
-//
-//    $length = strlen($value);
-//    $decimal_pos = strpos($value, ".");
-//    $decimal_places = ($length - $decimal_pos) -1;
-//    $decimal_symbol = $currencies->currencies[$currency]['decimal_point'];
-//    // item price is ALWAYS given in internal price from the products DB, so just multiply by currency rate from currency table
-//    return tep_round($value * $currencies->currencies[$currency]['value'], $decimal_places);
-//  }
 }
 ?>
