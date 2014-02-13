@@ -15,19 +15,18 @@ class sveawebpay_partpay extends SveaOsCommerce {
     global $order;
 
     $this->code = 'sveawebpay_partpay';
-    $this->version = 5;                     // 2014, uses php integration package
+    $this->version = 5;
 
     $this->title = MODULE_PAYMENT_SWPPARTPAY_TEXT_TITLE;
     $this->description = MODULE_PAYMENT_SWPPARTPAY_TEXT_DESCRIPTION;
     $this->enabled = ((MODULE_PAYMENT_SWPPARTPAY_STATUS == 'True') ? true : false);
-//    $this->sort_order = MODULE_PAYMENT_SWPPARTPAY_SORT_ORDER;
-//    //$this->sveawebpay_url = MODULE_PAYMENT_SWPPARTPAY_URL;
+    $this->sort_order = MODULE_PAYMENT_SWPPARTPAY_SORT_ORDER;
     $this->default_currency = MODULE_PAYMENT_SWPPARTPAY_DEFAULT_CURRENCY;
     $this->allowed_currencies = explode(',', MODULE_PAYMENT_SWPPARTPAY_ALLOWED_CURRENCIES);
     $this->display_images = ((MODULE_PAYMENT_SWPPARTPAY_IMAGES == 'True') ? true : false);
     $this->ignore_list = explode(',', MODULE_PAYMENT_SWPPARTPAY_IGNORE);
-//    if ((int)MODULE_PAYMENT_SWPPARTPAY_ORDER_STATUS_ID > 0)
-//      $this->order_status = MODULE_PAYMENT_SWPPARTPAY_ORDER_STATUS_ID;
+    if ((int)MODULE_PAYMENT_SWPPARTPAY_ORDER_STATUS_ID > 0)
+      $this->order_status = MODULE_PAYMENT_SWPPARTPAY_ORDER_STATUS_ID;
     if (is_object($order)) $this->update_status();
   }
 
@@ -343,7 +342,6 @@ class sveawebpay_partpay extends SveaOsCommerce {
      *  Here we prepare to populate the order object by creating the
      *  WebPayItem::orderRow objects that make up the order.
      */
-
     function process_button() {
 
         global $db, $order, $order_totals, $language;
@@ -366,20 +364,9 @@ class sveawebpay_partpay extends SveaOsCommerce {
         $client_order_number = ($new_order_field['orders_id'] + 1);
 
         // localization parameters
-        if( isset( $order->billing['country']['iso_code_2'] ) ) {
-            $user_country = $order->billing['country']['iso_code_2']; 
-        }
-        // no billing address set, fallback to session country_id
-        else {
-            $country = tep_get_countries_with_iso_codes( $_SESSION['customer_country_id'] );
-            $user_country =  $country['countries_iso_code_2'];
-        }
-
-        $user_language = tep_db_fetch_array(tep_db_query("select code from " . TABLE_LANGUAGES . " where directory = '" . $language . "'"));
-        $user_language = $user_language['code'];
-
-         // switch to default currency if the customers currency is not supported
-        $currency = $this->getCurrency($order->info['currency']);
+        $user_country = $this->getCountry();
+        $user_language = $this->getLanguage();
+        $currency = $this->getCurrency();
 
         // Create and initialize order object, using either test or production configuration
         $sveaConfig = (MODULE_PAYMENT_SWPPARTPAY_MODE === 'Test') ? new OsCommerceSveaConfigTest() : new OsCommerceSveaConfigProd();
@@ -391,26 +378,12 @@ class sveawebpay_partpay extends SveaOsCommerce {
             ->setOrderDate(date('c'))                      //Required for synchronous payments
         ;
 
-        // for each item in cart, create WebPayItem::orderRow objects and add to order
-        foreach ($order->products as $productId => $product) {
-
-            $amount_ex_vat = $this->convertToCurrency(round($product['final_price'], 2), $currency);
-
-            $swp_order->addOrderRow(
-                    WebPayItem::orderRow()
-                            ->setQuantity(intval($product['qty']))
-                            ->setAmountExVat($amount_ex_vat)
-                            ->setVatPercent(intval($product['tax']))
-                            ->setDescription($product['name'])
-            );
-        }
-
-        // get order totals in parseable format
-        $order_totals = $this->getOrderTotals();        
+        // create product order rows from each item in cart
+        $swp_order = $this->parseOrderProducts( $order->products, $swp_order, $this->getCurrency() );
         
         // creates non-item order rows from Order Total entries
-        $swp_order = $this->parseOrderTotals( $order_totals, $swp_order );
-        
+        $swp_order = $this->parseOrderTotals( $this->getOrderTotals(), $swp_order );
+ 
         // customer is always private individual with partpay
 
         // create individual customer object
@@ -491,10 +464,6 @@ class sveawebpay_partpay extends SveaOsCommerce {
         // retrieve order object set in process_button()
         $swp_order = unserialize($_SESSION["swp_order"]);
 
-// TODO backport these deletions to zencart
-//        $swp_order->usePaymentPlanPayment($_SESSION['sveaPaymentOptionsPP'])->prepareRequest();
-
-        //
         // send payment request to svea, receive response
         try {
             $swp_response = $swp_order->usePaymentPlanPayment($_SESSION['sveaPaymentOptionsPP'])->doRequest();
@@ -549,8 +518,22 @@ class sveawebpay_partpay extends SveaOsCommerce {
         $new_order_id = $insert_id;  // $insert_id contains the new order orders_id
 
         // retrieve response object from before_process()
-        $createOrderResponse = unserialize($_SESSION["swp_response"]);
+        $swp_response = unserialize($_SESSION["swp_response"]);
 
+        // insert order into database
+        $customer_notification = (SEND_EMAILS == 'true') ? '1' : '0';               
+        $sql_data_array = array(
+            'orders_id' => $new_order_id,                          
+            'orders_status_id' => $order->info['order_status'], 
+            'date_added' => 'now()', 
+            'customer_notified' => $customer_notification,
+            'comments' => 
+                'Accepted by Svea ' . date("Y-m-d G:i:s") . ' Security Number #: ' . $swp_response->clientOrderId .
+                " ". $order->info['comments']
+        );
+        tep_db_perform(TABLE_ORDERS_STATUS_HISTORY, $sql_data_array);
+      
+        
 //        // store create order object along with response sveaOrderId in db
 //        $sql_data_array = array(
 //            'orders_id' => $new_order_id,

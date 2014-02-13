@@ -29,14 +29,37 @@ class SveaOsCommerce {
     }
    
     /**
-     *  switch to default currency if the customers currency is not supported
-     * 
-     * @return type -- currency to use
+     * get the customer country from 1) user billing address, if given, or 2) from shop country id in session
      */
-    function getCurrency( $customerCurrency ) {
-        return in_array($customerCurrency, $this->allowed_currencies) ? $customerCurrency : $this->default_currency;
+    function getCountry() {
+        global $order;       
+        // try billing address country first
+        if( isset( $order->billing['country']['iso_code_2'] ) ) {
+            $user_country = $order->billing['country']['iso_code_2']; 
+        }
+        // no billing address set, fallback to session country_id
+        else {
+            $country = tep_get_countries_with_iso_codes( $_SESSION['customer_country_id'] );
+            $user_country =  $country['countries_iso_code_2'];
+        }
+        return $user_country;
     }
-        
+
+    function getLanguage() {
+        global $language;
+        $user_language = tep_db_fetch_array(tep_db_query("select code from " . TABLE_LANGUAGES . " where directory = '" . $language . "'"));
+        return $user_language['code'];
+    }
+    
+    /**
+     *  switch to default currency if the customers currency is not supported
+     */
+    function getCurrency() {
+        global $order;
+        return in_array($order->info['currency'], $this->allowed_currencies) ? $order->info['currency'] : $this->default_currency;
+    }
+    
+    
     /**
      * Given iso 3166 country code, returns English country name.
      * 
@@ -664,6 +687,29 @@ class SveaOsCommerce {
 //        return $historyResult->fields["orders_status_id"];
 //    }
 //   
+    
+    /**
+     * for each item in cart, create WebPayItem::orderRow objects and add to order
+     * @param type $order_totals
+     * @param type $svea_order
+     */
+    function parseOrderProducts( $order_products, &$svea_order, $currency )
+    {
+        foreach( $order_products as $productId => $product ) 
+        {
+            $amount_ex_vat = floatval( $this->convertToCurrency(round($product['final_price'], 2), $currency) );
+
+            $svea_order->addOrderRow(
+                WebPayItem::orderRow()
+                    ->setQuantity(intval($product['qty']))
+                    ->setAmountExVat($amount_ex_vat)      
+                    ->setVatPercent(intval($product['tax']))
+                    ->setDescription($product['name'])
+            );
+        }
+        return $svea_order;
+    }
+    
     /**
      * get order totals from globals and return them in a format akin to that of the
      * order_total::process() (which accumulates values in output array, so we can't
