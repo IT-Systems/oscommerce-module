@@ -726,76 +726,76 @@ class sveawebpay_partpay extends SveaOsCommerce {
 
             // EU error codes
             case "20000" :
-                return ERROR_CODE_20000;
+                return sprintf("Svea error %s: %s", $err, ERROR_CODE_20000);
                 break;
             case "20001" :
-                return ERROR_CODE_20001;
+                return sprintf("Svea error %s: %s", $err, ERROR_CODE_20001);
                 break;
             case "20002" :
-                return ERROR_CODE_20002;
+                return sprintf("Svea error %s: %s", $err, ERROR_CODE_20002);
                 break;
             case "20003" :
-                return ERROR_CODE_20003;
+                return sprintf("Svea error %s: %s", $err, ERROR_CODE_20003);
                 break;
             case "20004" :
-                return ERROR_CODE_20004;
+                return sprintf("Svea error %s: %s", $err, ERROR_CODE_20004);
                 break;
             case "20005" :
-                return ERROR_CODE_20005;
+                return sprintf("Svea error %s: %s", $err, ERROR_CODE_20005);
                 break;
             case "20006" :
-                return ERROR_CODE_20006;
+                return sprintf("Svea error %s: %s", $err, ERROR_CODE_20006);
                 break;
             case "20013" :
-                return ERROR_CODE_20013;
+                return sprintf("Svea error %s: %s", $err, ERROR_CODE_20013);
                 break;
             case "27000" :
-                return ERROR_CODE_27000;
+                return sprintf("Svea error %s: %s", $err, ERROR_CODE_27000);
                 break;
             case "27001" :
-                return ERROR_CODE_27001;
+                return sprintf("Svea error %s: %s", $err, ERROR_CODE_27001);
                 break;
             case "27002" :
-                return ERROR_CODE_27002;
+                return sprintf("Svea error %s: %s", $err, ERROR_CODE_27002);
                 break;
             case "27003" :
-                return ERROR_CODE_27003;
+                return sprintf("Svea error %s: %s", $err, ERROR_CODE_27003);
                 break;
             case "27004" :
-                return ERROR_CODE_27004;
+                return sprintf("Svea error %s: %s", $err, ERROR_CODE_27004);
                 break;
             case "30000" :
-                return ERROR_CODE_30000;
+                return sprintf("Svea error %s: %s", $err, ERROR_CODE_30000);
                 break;
             case "30001" :
-                return ERROR_CODE_30001;
+                return sprintf("Svea error %s: %s", $err, ERROR_CODE_30001);
                 break;
             case "30002" :
-                return ERROR_CODE_30002;
+                return sprintf("Svea error %s: %s", $err, ERROR_CODE_30002);
                 break;
             case "30003" :
-                return ERROR_CODE_30003;
+                return sprintf("Svea error %s: %s", $err, ERROR_CODE_30003);
                 break;
 
             case "40000" :
-                return ERROR_CODE_40000;
+                return sprintf("Svea error %s: %s", $err, ERROR_CODE_40000);
                 break;
             case "40001" :
-                return ERROR_CODE_40001;
+                return sprintf("Svea error %s: %s", $err, ERROR_CODE_40001);
                 break;
             case "40002" :
-                return ERROR_CODE_40002;
+                return sprintf("Svea error %s: %s", $err, ERROR_CODE_40002);
                 break;
             case "40004" :
-                return ERROR_CODE_40004;
+                return sprintf("Svea error %s: %s", $err, ERROR_CODE_40004);
                 break;
 
             case "50000" :
-                return ERROR_CODE_50000;
+                return sprintf("Svea error %s: %s", $err, ERROR_CODE_50000);
                 break;
 
             default :
-                 return ERROR_CODE_DEFAULT . " " . $err . " - " . $msg;     // $err here is the response->resultcode
+                 return sprintf("Svea error %s: %s", $err, ERROR_CODE_DEFAULT . " " . $err . " - " . $msg);     // $err here is the response->resultcode
                 break;
         }
     }

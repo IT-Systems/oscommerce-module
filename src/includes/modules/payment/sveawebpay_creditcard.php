@@ -193,44 +193,43 @@ class sveawebpay_creditcard extends SveaOsCommerce {
 
                     switch ($swp_response->resultcode) { // will autoconvert from string, matching initial numeric part
                         case 100:
-                            $_SESSION['SWP_ERROR'] = ERROR_CODE_100;
+                            $_SESSION['SWP_ERROR'] = sprintf("Svea error %s: %s", $swp_response->resultcode, ERROR_CODE_100);
                             break;
                         case 105:
-                            $_SESSION['SWP_ERROR'] = ERROR_CODE_105;
+                            $_SESSION['SWP_ERROR'] = sprintf("Svea error %s: %s", $swp_response->resultcode, ERROR_CODE_105);
                             break;
                         case 106:
-                            $_SESSION['SWP_ERROR'] = ERROR_CODE_106;
+                            $_SESSION['SWP_ERROR'] = sprintf("Svea error %s: %s", $swp_response->resultcode, ERROR_CODE_106);
                             break;
                         case 107:
-                            $_SESSION['SWP_ERROR'] = ERROR_CODE_107;
+                            $_SESSION['SWP_ERROR'] = sprintf("Svea error %s: %s", $swp_response->resultcode, ERROR_CODE_107);
                             break;
                         case 108:
-                            $_SESSION['SWP_ERROR'] = ERROR_CODE_108;
+                            $_SESSION['SWP_ERROR'] = sprintf("Svea error %s: %s", $swp_response->resultcode, ERROR_CODE_108);
                             break;
                         case 109:
-                            $_SESSION['SWP_ERROR'] = ERROR_CODE_109;
+                            $_SESSION['SWP_ERROR'] = sprintf("Svea error %s: %s", $swp_response->resultcode, ERROR_CODE_109);
                             break;
                         case 110:
-                            $_SESSION['SWP_ERROR'] = ERROR_CODE_110;
+                            $_SESSION['SWP_ERROR'] = sprintf("Svea error %s: %s", $swp_response->resultcode, ERROR_CODE_110);
                             break;
                         case 113:
-                            $_SESSION['SWP_ERROR'] = ERROR_CODE_113;
+                            $_SESSION['SWP_ERROR'] = sprintf("Svea error %s: %s", $swp_response->resultcode, ERROR_CODE_113);
                             break;
                         case 114:
-                            $_SESSION['SWP_ERROR'] = ERROR_CODE_114;
+                            $_SESSION['SWP_ERROR'] = sprintf("Svea error %s: %s", $swp_response->resultcode, ERROR_CODE_114);
                             break;
                         case 121:
-                            $_SESSION['SWP_ERROR'] = ERROR_CODE_121;
+                            $_SESSION['SWP_ERROR'] = sprintf("Svea error %s: %s", $swp_response->resultcode, ERROR_CODE_121);
                             break;
                         case 124:
-                            $_SESSION['SWP_ERROR'] = ERROR_CODE_124;
+                            $_SESSION['SWP_ERROR'] = sprintf("Svea error %s: %s", $swp_response->resultcode, ERROR_CODE_124);
                             break;
                         case 143:
-                            $_SESSION['SWP_ERROR'] = ERROR_CODE_143;
+                            $_SESSION['SWP_ERROR'] = sprintf("Svea error %s: %s", $swp_response->resultcode, ERROR_CODE_143);
                             break;
                         default:
-                            $_SESSION['SWP_ERROR'] =
-                                    ERROR_CODE_DEFAULT . $swp_response->resultcode;
+                            $_SESSION['SWP_ERROR'] = sprintf("Svea error %s: %s", $swp_response->resultcode, ERROR_CODE_DEFAULT . $swp_response->resultcode);
                             break;
                     }
 
