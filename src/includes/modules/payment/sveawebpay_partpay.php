@@ -15,13 +15,12 @@ class sveawebpay_partpay extends SveaOsCommerce {
     global $order;
 
     $this->code = 'sveawebpay_partpay';
-    $this->version = 5;                     // 2014, uses php integration package
+    $this->version = 5;
 
     $this->title = MODULE_PAYMENT_SWPPARTPAY_TEXT_TITLE;
     $this->description = MODULE_PAYMENT_SWPPARTPAY_TEXT_DESCRIPTION;
     $this->enabled = ((MODULE_PAYMENT_SWPPARTPAY_STATUS == 'True') ? true : false);
     $this->sort_order = MODULE_PAYMENT_SWPPARTPAY_SORT_ORDER;
-//    //$this->sveawebpay_url = MODULE_PAYMENT_SWPPARTPAY_URL;
     $this->default_currency = MODULE_PAYMENT_SWPPARTPAY_DEFAULT_CURRENCY;
     $this->allowed_currencies = explode(',', MODULE_PAYMENT_SWPPARTPAY_ALLOWED_CURRENCIES);
     $this->display_images = ((MODULE_PAYMENT_SWPPARTPAY_IMAGES == 'True') ? true : false);
@@ -343,7 +342,6 @@ class sveawebpay_partpay extends SveaOsCommerce {
      *  Here we prepare to populate the order object by creating the
      *  WebPayItem::orderRow objects that make up the order.
      */
-
     function process_button() {
 
         global $db, $order, $order_totals, $language;

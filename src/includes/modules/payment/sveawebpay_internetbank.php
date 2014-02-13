@@ -74,94 +74,94 @@ class sveawebpay_internetbank extends SveaOsCommerce {
         }
     }
 
-  function javascript_validation() {
-    return false;
-  }
-
-  // sets information displayed when choosing between payment options
-  function selection() {
-    global $order, $currencies;
-
-    // get & store country code
-    if( isset($order) ) {
-        $_SESSION['sveaAjaxOrderTotal'] = $order->info['total'];
-        $_SESSION['sveaAjaxCountryCode'] = $order->customer['country']['iso_code_2'];
+    function javascript_validation() {
+        return false;
     }
 
-    $fields = array();
+    // sets information displayed when choosing between payment options
+    function selection() {
+        global $order, $currencies;
 
-    // show bank logo
-    if($order->customer['country']['iso_code_2'] == "SE"){
-         $fields[] = array('title' => '<img src=images/Svea/SVEADIRECTBANK_SE.png />', 'field' => '');
-    }  
-    else {
-        $fields[] = array('title' => '<img src=images/Svea/SVEADIRECTBANK.png />', 'field' => '');
+        // get & store country code
+        if( isset($order) ) {
+            $_SESSION['sveaAjaxOrderTotal'] = $order->info['total'];
+            $_SESSION['sveaAjaxCountryCode'] = $order->customer['country']['iso_code_2'];
+        }
+
+        $fields = array();
+
+        // show bank logo
+        if($order->customer['country']['iso_code_2'] == "SE"){
+             $fields[] = array('title' => '<img src=images/Svea/SVEADIRECTBANK_SE.png />', 'field' => '');
+        }  
+        else {
+            $fields[] = array('title' => '<img src=images/Svea/SVEADIRECTBANK.png />', 'field' => '');
+        }
+
+        if (isset($_REQUEST['payment_error']) && $_REQUEST['payment_error'] == 'sveawebpay_internetbank') { // is set in before_process() on failed payment
+            $fields[] = array('title' => '<span style="color:red">' . $_SESSION['SWP_ERROR'] . '</span>', 'field' => '');
+        }
+
+        // insert svea js
+        $sveaJs =   '<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>' .
+                    '<script type="text/javascript" src="' . $this->web_root . 'ext/jquery/svea/checkout/svea.js"></script>';
+        $fields[] = array('title' => '', 'field' => $sveaJs);
+
+        // customer country is taken from customer settings
+        $customer_country = $order->customer['country']['iso_code_2'];
+
+        // fill in all fields as required to show available bank payment methods for selection
+        $sveaBankPaymentOptions = '<div name="sveaBankPaymentOptions" id="sveaBankPaymentOptions"></div>';
+
+        // create and add the field to be shown by our js when we select SveaInvoice payment method
+        $sveaField =    '<div id="sveaInternetbankField" >' . //style="display:none">' .
+                            $sveaBankPaymentOptions .
+                        '</div>';
+
+        $fields[] = array('title' => '', 'field' => '<br />' . $sveaField);
+
+        return array( 'id'      => $this->code,
+                      'module'  => $this->title,
+                      'fields'  => $fields);
     }
 
-    if (isset($_REQUEST['payment_error']) && $_REQUEST['payment_error'] == 'sveawebpay_internetbank') { // is set in before_process() on failed payment
-        $fields[] = array('title' => '<span style="color:red">' . $_SESSION['SWP_ERROR'] . '</span>', 'field' => '');
+    function pre_confirmation_check() {
+        return false;
     }
 
-    // insert svea js
-    $sveaJs =   '<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>' .
-                '<script type="text/javascript" src="' . $this->web_root . 'ext/jquery/svea/checkout/svea.js"></script>';
-    $fields[] = array('title' => '', 'field' => $sveaJs);
-   
-    // customer country is taken from customer settings
-    $customer_country = $order->customer['country']['iso_code_2'];
+    function confirmation() {
+        return false;
+    }
 
-    // fill in all fields as required to show available bank payment methods for selection
-    $sveaBankPaymentOptions = '<div name="sveaBankPaymentOptions" id="sveaBankPaymentOptions"></div>';
+    function process_button() {
 
-    // create and add the field to be shown by our js when we select SveaInvoice payment method
-    $sveaField =    '<div id="sveaInternetbankField" >' . //style="display:none">' .
-                        $sveaBankPaymentOptions .
-                    '</div>';
+        global $db, $order, $order_totals, $language;
 
-    $fields[] = array('title' => '', 'field' => '<br />' . $sveaField);
+        // calculate the order number
+        $new_order_rs = tep_db_query("select orders_id from ".TABLE_ORDERS." order by orders_id desc limit 1");
+        $new_order_field = tep_db_fetch_array($new_order_rs);
+        $client_order_number = ($new_order_field['orders_id'] + 1);
 
-    return array( 'id'      => $this->code,
-                  'module'  => $this->title,
-                  'fields'  => $fields);
-  }
+        // localization parameters
+        $user_country = $this->getCountry();
+        $user_language = $this->getLanguage();      
+        $currency = $this->getCurrency();
 
-  function pre_confirmation_check() {
-    return false;
-  }
+        // Create and initialize order object, using either test or production configuration
+        $sveaConfig = (MODULE_PAYMENT_SWPINTERNETBANK_MODE === 'Test') ? new OsCommerceSveaConfigTest() : new OsCommerceSveaConfigProd();
 
-  function confirmation() {
-    return false;
-  }
-
-  function process_button() {
-
-    global $db, $order, $order_totals, $language;
-
-    // calculate the order number
-    $new_order_rs = tep_db_query("select orders_id from ".TABLE_ORDERS." order by orders_id desc limit 1");
-    $new_order_field = tep_db_fetch_array($new_order_rs);
-    $client_order_number = ($new_order_field['orders_id'] + 1);
-
-    // localization parameters
-    $user_country = $this->getCountry();
-    $user_language = $this->getLanguage();      
-    $currency = $this->getCurrency();
-
-    // Create and initialize order object, using either test or production configuration
-    $sveaConfig = (MODULE_PAYMENT_SWPINTERNETBANK_MODE === 'Test') ? new OsCommerceSveaConfigTest() : new OsCommerceSveaConfigProd();
-
-    $swp_order = WebPay::createOrder( $sveaConfig )
-        ->setCountryCode( $user_country )
-        ->setCurrency($currency)                       
-        ->setClientOrderNumber($client_order_number.date('c')) // TODO remove date   
-        ->setOrderDate(date('c'))                      
-    ;
+        $swp_order = WebPay::createOrder( $sveaConfig )
+            ->setCountryCode( $user_country )
+            ->setCurrency($currency)                       
+            ->setClientOrderNumber($client_order_number.date('c')) // TODO remove date   
+            ->setOrderDate(date('c'))                      
+        ;
 
         // we use the same code as in invoice/payment plan for order totals, as coupons isn't integral to osCommerce
-        
+
         // create product order rows from each item in cart
         $swp_order = $this->parseOrderProducts( $order->products, $swp_order, $this->getCurrency() );
-        
+
         // creates non-item order rows from Order Total entries
         $swp_order = $this->parseOrderTotals( $this->getOrderTotals(), $swp_order );
 
@@ -174,7 +174,7 @@ class sveawebpay_internetbank extends SveaOsCommerce {
             $country = tep_get_countries_with_iso_codes( $_SESSION['customer_country_id'] );
             $user_country =  $country['countries_iso_code_2'];
         }
-        
+
         $payPageLanguage = "";
         switch ($user_country) {
         case "DE":
@@ -342,9 +342,10 @@ class sveawebpay_internetbank extends SveaOsCommerce {
 
     // sets error message to the GET error value
     function get_error() {
-      return array(
-        'title' => ERROR_MESSAGE_PAYMENT_FAILED,
-        'error' => stripslashes(urldecode($_GET['error'])));
+        return array(
+            'title' => ERROR_MESSAGE_PAYMENT_FAILED,
+            'error' => stripslashes(urldecode($_GET['error']))
+        );
     }
 
     // standard check if installed function
@@ -396,7 +397,8 @@ class sveawebpay_internetbank extends SveaOsCommerce {
             'MODULE_PAYMENT_SWPINTERNETBANK_IMAGES',
             'MODULE_PAYMENT_SWPINTERNETBANK_IGNORE',
             'MODULE_PAYMENT_SWPINTERNETBANK_ZONE',
-            'MODULE_PAYMENT_SWPINTERNETBANK_SORT_ORDER');
+            'MODULE_PAYMENT_SWPINTERNETBANK_SORT_ORDER'
+        );
     }
 }
 ?>
