@@ -4,7 +4,7 @@ SVEAWEBPAY PAYMENT MODULE FOR osCOMMERCE 2.3
 -----------------------------------------------
 Version 5.0
 */
-define('MODULE_PAYMENT_SWPINTERNETBANK_TEXT_TITLE','SVEA Direktbank');
+define('MODULE_PAYMENT_SWPINTERNETBANK_TEXT_TITLE','Svea Direktbank');
 define('MODULE_PAYMENT_SWPINTERNETBANK_TEXT_DESCRIPTION','SveaWebPay Direktbank Hostad - ver 5.0');
 define('MODULE_PAYMENT_SWPINTERNETBANK_HANDLING_APPLIES','En expeditionsavgift på %s tillkommer på ordern.');
 define('ERROR_ALLOWED_CURRENCIES_NOT_DEFINED','En eller flera av de tillåtna valutorna är ej definierade. Dessa måste vara definierade för att kunna använda SweaWebPay Hosted Solution. Logga in till din admin-panel, och säkerställ att alla de tillåtna valutorna i payment-modulen existerar, och att de korrekta växelkursera är satta.');

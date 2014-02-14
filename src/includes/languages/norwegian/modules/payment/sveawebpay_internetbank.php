@@ -4,7 +4,7 @@ SVEAWEBPAY PAYMENT MODULE FOR osCOMMERCE 2.3
 -----------------------------------------------
 Version 5.0
 */
-define('MODULE_PAYMENT_SWPINTERNETBANK_TEXT_TITLE','SVEA direktbank');
+define('MODULE_PAYMENT_SWPINTERNETBANK_TEXT_TITLE','Svea direktbank');
 define('MODULE_PAYMENT_SWPINTERNETBANK_TEXT_DESCRIPTION','SveaWebPay direktbank Hosted - ver 5.0');
 define('MODULE_PAYMENT_SWPINTERNETBANK_HANDLING_APPLIES','En håndteringskostnad på % vil bli lagt til denne order ved checkout.');
 define('ERROR_ALLOWED_CURRENCIES_NOT_DEFINED','En eller fler av de tillatte valutaene er ikke definert. Dette må være aktivert for å kunne bruke SweaWebPay Hosted Solution. Logg inn på din admin panel, og sjekk at de valuta som er brukt i betalingen er listet som tillatt i betalingsmodulen, og at riktig valutakurs er innstilt.');

@@ -112,7 +112,7 @@ define('ERROR_CODE_DEFAULT','Svea Error: ');
 
 
 // OLD osC
-//define('MODULE_PAYMENT_SWPPARTPAY_TEXT_TITLE','SVEA Part Payment');
+//define('MODULE_PAYMENT_SWPPARTPAY_TEXT_TITLE','Svea Part Payment');
 //define('MODULE_PAYMENT_SWPPARTPAY_TEXT_DESCRIPTION','SveaWebPay Webservice Part Payment - ver 5.0');
 //define('MODULE_PAYMENT_SWPPARTPAY_HANDLING_APPLIES','A handling fee of %s will be applied to this order on checkout.');
 //define('ERROR_ALLOWED_CURRENCIES_NOT_DEFINED','One or more of the allowed currencies are not defined. This must be enabled in order to use the SweaWebPay Hosted Solution. Log in to your admin panel, and ensure that all currencies listed as allowed in the paymend module exists, and that the correct exchange rates are set.');

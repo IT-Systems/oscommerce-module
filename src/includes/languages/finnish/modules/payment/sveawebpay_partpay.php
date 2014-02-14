@@ -4,7 +4,7 @@ SVEAWEBPAY PAYMENT MODULE FOR osCOMMERCE 2.3
 -----------------------------------------------
 Version 5.0
 */
-define('MODULE_PAYMENT_SWPPARTPAY_TEXT_TITLE','SVEA Osamaksu');
+define('MODULE_PAYMENT_SWPPARTPAY_TEXT_TITLE','Svea Osamaksu');
 define('MODULE_PAYMENT_SWPPARTPAY_TEXT_DESCRIPTION','SveaWebpay osamaksu Webservice versio  5.0');
 define('MODULE_PAYMENT_SWPPARTPAY_HANDLING_APPLIES','Tilaukseen lisätään %s palvelumaksusta');
 define('ERROR_ALLOWED_CURRENCIES_NOT_DEFINED','Yksi tai useampi sallituista valuutoista ei ole määritelty. Nämä on määriteltävä käyttämään SveaWebPay hosted solutionia. Kirjaudu admin paneeliin ja varmista että.');
