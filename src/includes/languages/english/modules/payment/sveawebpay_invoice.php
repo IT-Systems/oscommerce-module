@@ -1,9 +1,8 @@
 <?php
 /*
-SVEAWEBPAY PAYMENT MODULE FOR osCommerce
------------------------------------------------
-Version 5.0
-English
+ * osCommerce 
+ * Svea Invoice 
+ * EN 5.0
 */
 define('MODULE_PAYMENT_SWPINVOICE_TEXT_TITLE','Svea Invoice');
 define('MODULE_PAYMENT_SWPINVOICE_TEXT_DESCRIPTION','Svea Invoice - version 5.0');
