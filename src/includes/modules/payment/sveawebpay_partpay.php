@@ -255,7 +255,7 @@ class sveawebpay_partpay extends SveaOsCommerce {
             $sveaInitialFee = '<br /><div>' . sprintf( FORM_TEXT_PARTPAY_FEE).'</div>';
             
             if($order->billing['country']['iso_code_2'] == "SE" || $order->billing['country']['iso_code_2'] == "DK"){
-                  $sveaSubmitPaymentOptions = '<button id="sveaSubmitPaymentOptions" type="button">'.FORM_TEXT_GET_PAYPLAN.'</button><br />';
+                  $sveaSubmitPaymentOptions = '<button id="sveaSubmitPaymentOptions" type="button">'.FORM_TEXT_GET_ADDRESS.'</button><br />';
             }
              // create and add the field to be shown by our js when we select Payment Plan payment method
             $sveaField =    

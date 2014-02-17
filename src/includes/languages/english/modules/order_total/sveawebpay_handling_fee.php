@@ -1,5 +1,5 @@
 <?php
-define('MODULE_ORDER_TOTAL_SWPHANDLING_NAME','SveaWebPay Payment handling fee');
-define('MODULE_ORDER_TOTAL_SWPHANDLING_DESCRIPTION','This fee is applied to all payment methods, where set.  This value should be set under Modules >> Payments if available.');
+define('MODULE_ORDER_TOTAL_SWPHANDLING_NAME','Svea Invoice handling fee');
+define('MODULE_ORDER_TOTAL_SWPHANDLING_DESCRIPTION','This fee, if set, is applied to payments using the Svea Invoice payment method.');
 define('MODULE_ORDER_TOTAL_SWPHANDLING_LABEL','Handling fee for %s:');
 ?>

@@ -200,7 +200,9 @@ class sveawebpay_invoice extends SveaOsCommerce {
         
         // inform customer of invoice fee here
         $invoiceFee = constant( "MODULE_ORDER_TOTAL_SWPHANDLING_HANDLING_FEE_".$customer_country );
-        $sveaInvoiceFee = '<br /><div>' . sprintf( MODULE_PAYMENT_SWPINVOICE_HANDLING_APPLIES, $invoiceFee) .'</div>';
+
+        
+        $sveaInvoiceFee = '<br /><div>' . sprintf( MODULE_PAYMENT_SWPINVOICE_HANDLING_APPLIES, $invoiceFee, $currencies->currencies[$_SESSION['currency']]['symbol_right']) .'</div>';
 
         if(     $order->billing['country']['iso_code_2'] == "SE" ||
                 $order->billing['country']['iso_code_2'] == "DK" ||
