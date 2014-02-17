@@ -1,36 +1,59 @@
 <?php
 /*
-SVEAWEBPAY PAYMENT MODULE FOR osCOMMERCE 2.3
------------------------------------------------
-Version 5.0
-*/
+ * osCommerce 
+ * Svea Part Payment
+ * NO 5.0
+ */
+
 define('MODULE_PAYMENT_SWPPARTPAY_TEXT_TITLE','Svea Delbetaling');
-define('MODULE_PAYMENT_SWPPARTPAY_TEXT_DESCRIPTION','SveaWebPay Webservice Delbetaling - ver 5.0');
-define('MODULE_PAYMENT_SWPPARTPAY_HANDLING_APPLIES','En håndteringskostnad på % vil bli lagt til denne order ved checkout.');
-define('ERROR_ALLOWED_CURRENCIES_NOT_DEFINED','En eller fler av de tillatte valutaene er ikke definert. Dette må være aktivert for å kunne bruke SweaWebPay Hosted Solution. Logg inn på din admin panel, og sjekk at de valuta som er brukt i betalingen er listet som tillatt i betalingsmodulen, og at riktig valutakurs er innstilt.');
+define('MODULE_PAYMENT_SWPPARTPAY_TEXT_DESCRIPTION','Svea Delbetaling - version 5.0');
+
+define('ERROR_ALLOWED_CURRENCIES_NOT_DEFINED','En eller fler av de tillatte valutaene er ikke definert. Dette må være aktivert for å kunne bruke Svea Delbetaling. Logg inn på din admin panel, og sjekk at de valuta som er brukt i betalingen er listet som tillatt i betalingsmodulen, og at riktig valutakurs er innstilt.');
 define('ERROR_DEFAULT_CURRENCY_NOT_ALLOWED','Den forinstilte valutaen er ikke inkludert på listen over tillatte valuta. Logg inn på din admin panel, og sjekk at forinstilt valuta er på listen over tillatte valuta i betalingsmodulen.');  
 define('ERROR_MESSAGE_PAYMENT_FAILED','Betalingen misslyktes.');  
 
-define('ERROR_CODE_1','Kan ikke få kredittopplysingsinformasjon');
-define('ERROR_CODE_2','Butikken eller Sveas limit er overskredet');
-define('ERROR_CODE_3','Denne kunden er blokkert eller har vist merkelig/uvanlig adferd');
-define('ERROR_CODE_4','Delbetaling kansellert');
-define('ERROR_CODE_5','Orderen ville få kunden til å overskrede Sveas limit');
-define('ERROR_CODE_6','Kredittgrensen for tilfeldige lån er overskredet.');
-define('ERROR_CODE_7','Kombinasjonen av kampanjekode og beløp er ikke korrekt.');
-define('ERROR_CODE_8','Kunden har dårlig kreditthistorikk hos Svea');
-define('ERROR_CODE_9','Kunden er ikke listet hos kredittlimitleverantøren');
-define('ERROR_CODE_DEFAULT', 'Feil ved prosessering av betaling. Intern feil');
+//Eu error codes
+define('ERROR_CODE_20000','Ordren er stengt');
+define('ERROR_CODE_20001','Ordren nektes');
+define('ERROR_CODE_20002','Noe er galt med ordren');
+define('ERROR_CODE_20003','Ordren er utgått');
+define('ERROR_CODE_20004','Ordren finnes ikke');
+define('ERROR_CODE_20005','Ordre type passer ikke sammen');
+define('ERROR_CODE_20006','Summen av alle ordrelinjer kan ikke være null eller negativt');
+define('ERROR_CODE_20013','Ordren er på vent');
 
-//Form on checkout
-define('FORM_TEXT_SS_NO','SSN:');
-define('FORM_TEXT_GET_ADDRESS','Hent adresse og betalingsalternativ');
-define('FORM_TEXT_GET_PAY_OPTIONS','Hent betalingsalternativ');
-define('FORM_TEXT_INVOICE_ADDRESS','Fakturaadresse:');
-define('FORM_TEXT_PAYMENT_OPTIONS','Betalingsalternativ:');
+define('ERROR_CODE_27000','Den medfølgende kampanjekode beløpets kombinasjon samsvarer ikke med noen kampanje kode knyttet til denne klienten');
+define('ERROR_CODE_27001','Kan ikke levere ordren siden den angitte pdf malen mangler, Kontakt Svea WebPay for mer informasjon');
+define('ERROR_CODE_27002','Kan ikke delvis levere en betalingsplan');
+define('ERROR_CODE_27003','Kan ikke blande en kampanjekode med ett fast månedlig beløp.');
+define('ERROR_CODE_27004','Kan ikke finne en passende kampanjekode for det månedlige beløpet');
 
-define('DD_PARTPAY_IN','Delbetal på ');
-define('DD_PAY_IN_THREE','Delbetal på 3 måneder');
-define('DD_MONTHS',' måneder');
-define('DD_CURRENY_PER_MONTH',' kr/måned');
+define('ERROR_CODE_30000','Kreditt rapporten ble avvist');
+define('ERROR_CODE_30001','Kunden er blokkert eller har utvist uvanlig oppførsel');
+define('ERROR_CODE_30002','Basert på den utførte kreditsjekk ble forespørselen avvist');
+define('ERROR_CODE_30003','Kunden finnes ikke i kredittsjekk');
+
+define('ERROR_CODE_40000','Ingen kunde funnet');
+define('ERROR_CODE_40001','Det gitte postnummer støttes ikke');
+define('ERROR_CODE_40002','Ugyldig kundeinformasjon');
+define('ERROR_CODE_40004','Finner ingen adresse på denne kunden');
+
+define('ERROR_CODE_50000','Klienten har ingen tillatelse for denne metoden');
+
+define('DD_NO_CAMPAIGN_ON_AMOUNT','Kan ikke finne en passende kampanjekode for beløpet');
+
+// used in payment credentials form
+define('FORM_TEXT_PARTPAY_ADDRESS','Faktura adresse:');
+define('FORM_TEXT_PAYMENT_OPTIONS','Betalingsalternativer:');
+
+//define('FORM_TEXT_GET_PAY_OPTIONS','Hent betalingsalternativ');
+define('FORM_TEXT_SS_NO','Fødselsnummer:');
+define('FORM_TEXT_INITIALS','Initialer');    
+define('FORM_TEXT_BIRTHDATE','Fødselsdato');              
+define('FORM_TEXT_VATNO','Organisasjonsnummer'); 
+define('FORM_TEXT_PARTPAY_FEE','Innledende avgift vil bli lagt til');
+//define('FORM_TEXT_GET_PAYPLAN','Hent adresse');
+
+define('ERROR_CODE_DEFAULT','Svea Error: ');
+define('FORM_TEXT_GET_ADDRESS','Hent adresse');
 ?>

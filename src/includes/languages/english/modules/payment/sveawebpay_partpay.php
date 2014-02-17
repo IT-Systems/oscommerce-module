@@ -86,7 +86,7 @@ define('FORM_TEXT_PAYMENT_OPTIONS','Payment options:');
 
 //define('FORM_TEXT_GET_PAY_OPTIONS','Get payment options');
 define('FORM_TEXT_SS_NO','Social Security No (YYYYMMDD-XXXX):');
-define('FORM_TEXT_INITIALS','Initials');                                
+define('FORM_TEXT_INITIALS','Initials');       
 define('FORM_TEXT_BIRTHDATE','Date of Birth');              
 define('FORM_TEXT_VATNO','Vat Number'); 
 define('FORM_TEXT_PARTPAY_FEE','Initial fee will be added to your order.');
