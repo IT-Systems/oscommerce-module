@@ -52,15 +52,6 @@ class SveaOsCommerce {
     }
     
     /**
-     *  switch to default currency if the customers currency is not supported
-     */
-    function getCurrency() {
-        global $order;
-        return in_array($order->info['currency'], $this->allowed_currencies) ? $order->info['currency'] : $this->default_currency;
-    }
-    
-    
-    /**
      * Given iso 3166 country code, returns English country name.
      * 
      * @param string $iso3166
@@ -693,8 +684,12 @@ class SveaOsCommerce {
      * @param type $order_totals
      * @param type $svea_order
      */
-    function parseOrderProducts( $order_products, &$svea_order, $currency )
+    function parseOrderProducts( $order_products, &$svea_order )
     {
+        global $order;
+        
+        $currency = $order->info['currency'];          
+        
         foreach( $order_products as $productId => $product ) 
         {
             $amount_ex_vat = floatval( $this->convertToCurrency(round($product['final_price'], 2), $currency) );
@@ -756,7 +751,7 @@ class SveaOsCommerce {
     function parseOrderTotals( $order_totals, &$svea_order ) {
         global $db, $order;
       
-        $currency = $this->getCurrency($order->info['currency']);
+        $currency = $order->info['currency'];
             
         foreach ($order_totals as $ot_id => $order_total) {
                                          

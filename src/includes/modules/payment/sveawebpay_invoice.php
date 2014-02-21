@@ -14,14 +14,12 @@ class sveawebpay_invoice extends SveaOsCommerce {
         global $order;
 
         $this->code = 'sveawebpay_invoice';
-        $this->version = 5;
+        $this->version = "5.0";
 
         $this->title = MODULE_PAYMENT_SWPINVOICE_TEXT_TITLE;
         $this->description = MODULE_PAYMENT_SWPINVOICE_TEXT_DESCRIPTION;
         $this->enabled = ((MODULE_PAYMENT_SWPINVOICE_STATUS == 'True') ? true : false);
         $this->sort_order = MODULE_PAYMENT_SWPINVOICE_SORT_ORDER;
-        $this->default_currency = MODULE_PAYMENT_SWPINVOICE_DEFAULT_CURRENCY;
-        $this->allowed_currencies = explode(',', MODULE_PAYMENT_SWPINVOICE_ALLOWED_CURRENCIES);
         $this->display_images = ((MODULE_PAYMENT_SWPINVOICE_IMAGES == 'True') ? true : false);
         $this->ignore_list = explode(',', MODULE_PAYMENT_SWPINVOICE_IGNORE);
         if ((int)MODULE_PAYMENT_SWPINVOICE_ORDER_STATUS_ID > 0)
@@ -32,22 +30,12 @@ class sveawebpay_invoice extends SveaOsCommerce {
     function update_status() {
         global $db, $order, $currencies, $messageStack;
 
-        // update internal currency
-        $this->default_currency = MODULE_PAYMENT_SWPINVOICE_DEFAULT_CURRENCY;
-        $this->allowed_currencies = explode(',', MODULE_PAYMENT_SWPINVOICE_ALLOWED_CURRENCIES);
-
         // do not use this module if any of the allowed currencies are not set in osCommerce
-        foreach( $this->allowed_currencies as $currency ) {
+        foreach($this->getInvoiceCurrencies() as $currency ) {
             if( !is_array($currencies->currencies[strtoupper($currency)]) ) {
                 $this->enabled = false;
                 $messageStack->add('header', ERROR_ALLOWED_CURRENCIES_NOT_DEFINED, 'error');
             }
-        }
-
-        // do not use this module if the default currency is not among the allowed
-        if (!in_array($this->default_currency, $this->allowed_currencies)) {
-            $this->enabled = false;
-            $messageStack->add('header', ERROR_DEFAULT_CURRENCY_NOT_ALLOWED, 'error');
         }
 
         // do not use this module if the geograhical zone is set and we are not in it
@@ -242,7 +230,7 @@ class sveawebpay_invoice extends SveaOsCommerce {
      */
     function pre_confirmation_check() 
     {
-        global $order;
+        global $order, $currency;
 
         // check if we've performed a getAddress lookup
         if( isset( $_SESSION['sveaGetAddressesResponse'] ) )
@@ -283,6 +271,28 @@ class sveawebpay_invoice extends SveaOsCommerce {
                 }
             }
         }    
+
+        // make sure we use the correct invoice currency corresponding to the customer country here!
+        $customer_country = $order->customer['country']['iso_code_2'];
+        
+        // did the customer have a different currency selected than the invoice country currency?
+        if( $_SESSION['currency'] != $this->getInvoiceCurrency( $customer_country ) )
+        {         
+            // set shop currency to the selected payment method currency
+            $order->info['currency'] = $this->getInvoiceCurrency( $customer_country );
+            $_SESSION['currency'] = $order->info['currency'];
+
+            // redirect to update order_totals to new currency, making sure to preserve post data
+            $_SESSION['sveapostdata'] = $_POST; 
+            tep_redirect(tep_href_link(FILENAME_CHECKOUT_CONFIRMATION));    // redirect to update order_totals to new currency               
+        }
+        
+        if( isset($_SESSION['sveapostdata']) )
+        {
+            $_POST = array_merge( $_POST, $_SESSION['sveapostdata'] );
+            unset( $_SESSION['sveapostdata'] );
+        }
+
         return false;
     }
 
@@ -333,7 +343,7 @@ class sveawebpay_invoice extends SveaOsCommerce {
         ;
 
         // create product order rows from each item in cart
-        $swp_order = $this->parseOrderProducts( $order->products, $swp_order, $this->getCurrency() );
+        $swp_order = $this->parseOrderProducts( $order->products, $swp_order );
         
         // creates non-item order rows from Order Total entries
         $swp_order = $this->parseOrderTotals( $this->getOrderTotals(), $swp_order );
@@ -482,7 +492,9 @@ class sveawebpay_invoice extends SveaOsCommerce {
         // send payment request to svea, receive response       
         try {
             $swp_response = $swp_order->useInvoicePayment()->doRequest();
-        }
+//$swp_response = $swp_order->useInvoicePayment()->prepareRequest();
+//print_r($swp_response ); die;
+            }
         catch (Exception $e){  
             // hack together a fake response object containing the error & errormessage
             $swp_response = (object) array( "accepted" => false, "resultcode" => 1000, "errormessage" => $e->getMessage() ); //new "error" 1000
@@ -714,5 +726,51 @@ class sveawebpay_invoice extends SveaOsCommerce {
                 break;
         }
     } 
+
+    /**
+     * Returns the currency used for an invoice country. 
+     */
+    function getInvoiceCurrency( $country ) 
+    {
+        $country_currencies = array(
+            'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_SE' => 'SEK',
+            'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_NO' => 'NOK',
+            'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_FI' => 'EUR',
+            'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_DK' => 'DKK',
+            'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_NL' => 'EUR',
+            'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_DE' => 'EUR'
+        );
+ 
+        $method = "MODULE_PAYMENT_SWPINVOICE_CLIENTNO_" . $country;
+        
+        return $country_currencies[$method];
+    } 
+    
+    /**
+     * Returns the currencies used in all countries where an invoice payment 
+     * method has been configured (i.e. clientno is set for country in config). 
+     * Used in invoice to determine currencies which must be set.
+     * 
+     * @return array - currencies for countries with ug clientno set in config 
+     */
+    function getInvoiceCurrencies() 
+    {
+        $country_currencies = array(
+            'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_SE' => 'SEK',
+            'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_NO' => 'NOK',
+            'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_FI' => 'EUR',
+            'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_DK' => 'DKK',
+            'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_NL' => 'EUR',
+            'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_DE' => 'EUR'
+        );
+
+        $currencies = array();
+        foreach( $country_currencies as $country => $currency )
+        {
+            if( constant($country)!=NULL ) $currencies[] = $currency;
+        }
+        
+        return array_unique( $currencies );
+    }   
 }
 ?>
