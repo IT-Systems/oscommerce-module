@@ -21,8 +21,6 @@ class sveawebpay_partpay extends SveaOsCommerce {
     $this->description = MODULE_PAYMENT_SWPPARTPAY_TEXT_DESCRIPTION;
     $this->enabled = ((MODULE_PAYMENT_SWPPARTPAY_STATUS == 'True') ? true : false);
     $this->sort_order = MODULE_PAYMENT_SWPPARTPAY_SORT_ORDER;
-    $this->default_currency = MODULE_PAYMENT_SWPPARTPAY_DEFAULT_CURRENCY;
-    $this->allowed_currencies = explode(',', MODULE_PAYMENT_SWPPARTPAY_ALLOWED_CURRENCIES);
     $this->display_images = ((MODULE_PAYMENT_SWPPARTPAY_IMAGES == 'True') ? true : false);
     $this->ignore_list = explode(',', MODULE_PAYMENT_SWPPARTPAY_IGNORE);
     if ((int)MODULE_PAYMENT_SWPPARTPAY_ORDER_STATUS_ID > 0)
@@ -33,22 +31,12 @@ class sveawebpay_partpay extends SveaOsCommerce {
     function update_status() {
         global $db, $order, $currencies, $messageStack;
 
-        // update internal currency
-        $this->default_currency = MODULE_PAYMENT_SWPPARTPAY_DEFAULT_CURRENCY;
-        $this->allowed_currencies = explode(',', MODULE_PAYMENT_SWPPARTPAY_ALLOWED_CURRENCIES);
-
         // do not use this module if any of the allowed currencies are not set in osCommerce
-        foreach ($this->allowed_currencies as $currency) {
+        foreach ($this->getPartpayCurrencies() as $currency) {
             if (!is_array($currencies->currencies[strtoupper($currency)])) {
                 $this->enabled = false;
                 $messageStack->add('header', ERROR_ALLOWED_CURRENCIES_NOT_DEFINED, 'error');
             }
-        }
-
-        // do not use this module if the default currency is not among the allowed
-        if (!in_array($this->default_currency, $this->allowed_currencies)) {
-            $this->enabled = false;
-            $messageStack->add('header', ERROR_DEFAULT_CURRENCY_NOT_ALLOWED, 'error');
         }
 
         // do not use this module if the geograhical zone is set and we are not in it
@@ -285,7 +273,7 @@ class sveawebpay_partpay extends SveaOsCommerce {
 
     function pre_confirmation_check()
     {
-        global $order;
+        global $order, $currency;
 
         // check if we've performed a getAddress lookup
         if( isset( $_SESSION['sveaGetAddressesResponse'] ) )
@@ -326,6 +314,27 @@ class sveawebpay_partpay extends SveaOsCommerce {
                 }
             }
         }    
+        
+        $customer_country = $order->customer['country']['iso_code_2'];
+        
+        // did the customer have a different currency selected than the invoice country currency?
+        if( $_SESSION['currency'] != $this->getPartpayCurrency( $customer_country ) )
+        {            
+            // set shop currency to the selected payment method currency
+            $order->info['currency'] = $this->getPartpayCurrency( $customer_country );
+            $_SESSION['currency'] = $order->info['currency'];
+
+            // redirect to update order_totals to new currency, making sure to preserve post data
+            $_SESSION['sveapostdata'] = $_POST; 
+            tep_redirect(tep_href_link(FILENAME_CHECKOUT_CONFIRMATION));    // redirect to update order_totals to new currency               
+        }
+        
+        if( isset($_SESSION['sveapostdata']) )
+        {
+            $_POST = array_merge( $_POST, $_SESSION['sveapostdata'] );
+            unset( $_SESSION['sveapostdata'] );
+        }        
+        
         return false;
     }
 
@@ -366,7 +375,6 @@ class sveawebpay_partpay extends SveaOsCommerce {
         // localization parameters
         $user_country = $this->getCountry();
         $user_language = $this->getLanguage();
-        $currency = $this->getCurrency();
 
         // Create and initialize order object, using either test or production configuration
         $sveaConfig = (MODULE_PAYMENT_SWPPARTPAY_MODE === 'Test') ? new OsCommerceSveaConfigTest() : new OsCommerceSveaConfigProd();
@@ -379,7 +387,7 @@ class sveawebpay_partpay extends SveaOsCommerce {
         ;
 
         // create product order rows from each item in cart
-        $swp_order = $this->parseOrderProducts( $order->products, $swp_order, $this->getCurrency() );
+        $swp_order = $this->parseOrderProducts( $order->products, $swp_order );
         
         // creates non-item order rows from Order Total entries
         $swp_order = $this->parseOrderTotals( $this->getOrderTotals(), $swp_order );
@@ -394,8 +402,8 @@ class sveawebpay_partpay extends SveaOsCommerce {
 
         // set individual customer SSN
         if( ($user_country == 'SE') ||
-            ($user_country == 'NO') ||
-            ($user_country == 'DK') )
+            ($user_country == 'NO') || 
+           ($user_country == 'DK') )
         {
             $swp_customer->setNationalIdNumber( $post_sveaSSN );
         }
@@ -800,186 +808,50 @@ class sveawebpay_partpay extends SveaOsCommerce {
         }
     }
        
-//    /**
-//     * Given an orderID, reconstruct the svea order object and send deliver order request, return response
-//     * 
-//     * @param int $oID -- $oID is the order id
-//     * @return Svea\DeliverOrderResult
-//     */
-//    function doDeliverOrderPartPay($oID) {   
-//        global $db;
-//
-//        // get zencart order from db
-//        $order = new order($oID); 
-//        
-//        // get svea order id reference returned in createOrder request result
-//        $sveaOrderId = $this->getSveaOrderId( $oID );
-//        $swp_order = $this->getSveaCreateOrderObject( $oID );
-//        
-//        // Create and initialize order object, using either test or production configuration
-//        $sveaConfig = (MODULE_PAYMENT_SWPPARTPAY_MODE === 'Test') ? new ZenCartSveaConfigTest() : new ZenCartSveaConfigProd();
-//
-//        $swp_deliverOrder = WebPay::deliverOrder( $sveaConfig )
-//            ->setOrderId($sveaOrderId)                                  
-//        ;
-//    
-//        // TODO create helper functions in integration package that transforms createOrder -> deliverOrder -> closeOrder etc. (see INTG-324)
-//
-//        // this really exploits CreateOrderRow objects having public properties...
-//        // ~hack
-//        $swp_deliverOrder->orderRows = $swp_order->orderRows;
-//        $swp_deliverOrder->shippingFeeRows = $swp_order->shippingFeeRows;
-//        $swp_deliverOrder->invoiceFeeRows = $swp_order->invoiceFeeRows;
-//        $swp_deliverOrder->fixedDiscountRows = $swp_order->fixedDiscountRows;
-//        $swp_deliverOrder->relativeDiscountRows = $swp_order->relativeDiscountRows;
-//        $swp_deliverOrder->countryCode = $swp_order->countryCode;
-//        // /hack
-//
-//        $swp_deliverResponse = $swp_deliverOrder->deliverPaymentPlanOrder()->doRequest();
-//
-//        // if deliverorder accepted, update svea_order table with Svea contractNumber
-//        if( $swp_deliverResponse->accepted == true ) 
-//        {
-//            $db->Execute(   
-//                "update svea_order " .
-//                "set invoice_id = " . $swp_deliverResponse->contractNumber. " " .
-//                "where orders_id = " . (int)$oID )
-//            ; 
-//        }
-//        // return deliver order response
-//        return $swp_deliverResponse;
-//    }   
-//  
-//    /**
-//     * Called from admin/orders.php when admin chooses to edit an order and updates its order status
-//     * 
-//     * @param int $oID
-//     * @param type $status
-//     * @param type $comments
-//     * @param type $customer_notified
-//     * @param type $old_orders_status
-//     */
-//    function _doStatusUpdate($oID, $status, $comments, $customer_notified, $old_orders_status) {       
-//        global $db;
-//
-//        //if this is a legacy order (i.e. it isn't in table svea_order), fail gracefully: reset status to old status if needed
-//        if( ! $this->getSveaOrderId( $oID ) )
-//        {        
-//            $comment =  'WARNING: Unable to administrate orders created with Svea payment module < version 4.1.';
-//            if( $status == SVEA_ORDERSTATUS_CLOSED_ID || $status == SVEA_ORDERSTATUS_CREDITED_ID || $status == SVEA_ORDERSTATUS_DELIVERED_ID )
-//            {
-//                $comment = $comment . " Status not changed.";
-//                $status = $old_orders_status;
-//            }
-//            $this->updateOrdersStatus( $oID, $status, $comment );   
-//            
-//            return; //exit _doStatusUpdate
-//        }        
-//        
-//        switch( $status ) 
-//        { 
-//        case $old_orders_status:
-//            // do nothing
-//            break;
-//            
-//        case MODULE_PAYMENT_SWPPARTPAY_AUTODELIVER:  
-//            // deliver if new status == autodeliver status setting
-//        case SVEA_ORDERSTATUS_DELIVERED_ID:
-//            $deliverResult = $this->doDeliverOrderPartPay($oID);
-//            if( $deliverResult->accepted == true ) 
-//            {               
-//                $comment = 'Delivered by status update. (SveaOrderId: ' . $this->getSveaOrderId( $oID ) . ')';
-//                $status = SVEA_ORDERSTATUS_DELIVERED_ID;  // override set status
-//            }
-//            else // deliverOrder failed, so reset status to old status & state order closed in comment
-//            {
-//                $comment =  'WARNING: Deliver order failed, status not changed. ' . 
-//                            'Error: ' . $deliverResult->errormessage . ' (SveaOrderId: ' .  $this->getSveaOrderId( $oID ) . ')';
-//                $status = $old_orders_status;
-//            }
-//            $this->updateOrdersStatus( $oID, $status, $comment );   
-//            break;
-//            
-//        case SVEA_ORDERSTATUS_CLOSED_ID:
-//            $this->_doVoid( $oID, $old_orders_status );
-//            break;
-//        
-//        case SVEA_ORDERSTATUS_CREDITED_ID:
-//            $this->_doRefund( $oID, $old_orders_status );
-//            break;
-//        
-//        default:
-//            break;
-//        }
-//    }
-//
-//    // called when we want to refund a delivered order (i.e. invoice)
-//    function _doRefund($oID, $from_doStatusUpdate = false ) {      
-//        global $db;
-//        
-//        // get svea invoice id reference returned with deliverOrder request result
-//        $sveaOrderId = $this->getSveaOrderId( $oID );
-//        $contractNumber = $this->getSveaInvoiceId( $oID );   // contains contractNumber
-//        
-//        $comment =  'WARNING: Credit invoice is not applicable to Payment plan orders, status not changed. ' . "(ContractNumber: " . $contractNumber  . ')'; 
-//        $status = ($from_doStatusUpdate == false) ? $this->getCurrentOrderStatus($oID) : $from_doStatusUpdate;     // use current/old order status
-//        
-//        if( $from_doStatusUpdate == true )  // update status inserted before _doStatusUpdate
-//        {
-//            $this->updateOrdersStatus( $oID, $status, $comment );
-//        }
-//        else    // insert status
-//        {
-//            $this->insertOrdersStatus( $oID, $status, $comment );
-//        }
-//    }
-//    
-//    // called when we want to cancel (close) an undelivered order
-//    function _doVoid($oID, $from_doStatusUpdate = false ) {      
-//        global $db;
-//        
-//        $sveaOrderId = $this->getSveaOrderId( $oID );
-//        $swp_order = $this->getSveaCreateOrderObject( $oID );
-//        
-//        // Create and initialize order object, using either test or production configuration
-//        $sveaConfig = (MODULE_PAYMENT_SWPPARTPAY_MODE === 'Test') ? new ZenCartSveaConfigTest() : new ZenCartSveaConfigProd();
-//
-//        $swp_closeOrder = WebPay::closeOrder($sveaConfig)
-//            ->setOrderId($sveaOrderId)    
-//        ;
-//     
-//        // this really exploits CreateOrderRow objects having public properties...
-//        // ~hack
-//        $swp_closeOrder->orderRows = $swp_order->orderRows;
-//        $swp_closeOrder->shippingFeeRows = $swp_order->shippingFeeRows;
-//        $swp_closeOrder->invoiceFeeRows = $swp_order->invoiceFeeRows;
-//        $swp_closeOrder->fixedDiscountRows = $swp_order->fixedDiscountRows;
-//        $swp_closeOrder->relativeDiscountRows = $swp_order->relativeDiscountRows;
-//        $swp_closeOrder->countryCode = $swp_order->countryCode;
-//        // /hack
-//
-//        $swp_closeResponse = $swp_closeOrder->closePaymentPlanOrder()->doRequest(); 
-//
-//        if( $swp_closeResponse->accepted == true ) 
-//        {
-//            $comment = 'Svea order closed. ' . '(SveaOrderId: ' . $sveaOrderId . ')';    
-//            $status = SVEA_ORDERSTATUS_CLOSED_ID;
-//        }
-//        else    // close order failed, insert error in history
-//        {
-//            $comment =  'WARNING: Close order request failed, status not changed. ' . 
-//                        'Error: ' . $swp_closeResponse->errormessage . ' (SveaOrderId: ' . $sveaOrderId . ')';               
-//            $status = ($from_doStatusUpdate == false) ? $this->getCurrentOrderStatus($oID) : $from_doStatusUpdate;     // use current/old order status
-//        }    
-//        
-//        if( $from_doStatusUpdate == true )  // update status inserted before _doStatusUpdate
-//        {
-//            $this->updateOrdersStatus( $oID, $status, $comment );
-//        }
-//        else    // insert status
-//        {
-//            $this->insertOrdersStatus( $oID, $status, $comment );
-//        }       
-//    }
+/**
+     * Returns the currency used for an partpay country. 
+     */
+    function getPartpayCurrency( $country ) 
+    {
+        $country_currencies = array(
+            'MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_SE' => 'SEK',
+            'MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_NO' => 'NOK',
+            'MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_FI' => 'EUR',
+            'MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_DK' => 'DKK',
+            'MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_NL' => 'EUR',
+            'MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_DE' => 'EUR'
+        );
+
+        $method = "MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_" . $country;
+        
+        return $country_currencies[$method];
+    }
+    
+    /**
+     * Returns the currencies used in all countries where an partpay payment 
+     * method has been configured (i.e. clientno is set for country in config). 
+     * Used in partpay to determine currencies which must be set.
+     * 
+     * @return array - currencies for countries with ug clientno set in config 
+     */
+    function getPartpayCurrencies() 
+    {
+        $country_currencies = array(
+            'MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_SE' => 'SEK',
+            'MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_NO' => 'NOK',
+            'MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_FI' => 'EUR',
+            'MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_DK' => 'DKK',
+            'MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_NL' => 'EUR',
+            'MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_DE' => 'EUR'
+        );
+
+        $currencies = array();
+        foreach( $country_currencies as $country => $currency )
+        {
+            if( constant($country)!=NULL ) $currencies[] = $currency;
+        }
+        
+        return array_unique( $currencies );
+    }
 }
 ?>
