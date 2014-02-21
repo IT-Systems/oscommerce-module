@@ -779,7 +779,7 @@ class SveaOsCommerce {
                     $shipping_tax_rate = tep_get_tax_rate( $shipping_tax_class );
                     
                     // get shipping cost ex vat from globals
-                    $shipping_cost_ex_vat = $GLOBALS['shipping']['cost'];
+                    $shipping_cost_ex_vat = floatval( $this->convertToCurrency( round($GLOBALS['shipping']['cost'],2), $currency) );
 
                     // add WebPayItem::shippingFee to swp_order object
                     $svea_order->addFee(
@@ -794,7 +794,7 @@ class SveaOsCommerce {
                 case 'sveawebpay_handling_fee' :
 
                     // we need both the fee and the tax rate, but $order_total['value'] only contains the compounded amount 
-                    // we bypass it and go to the configured cost and tax rate for the country.                     
+                    // we bypass it and go to the configured cost and tax rate for the country (as defined by delivery address)                     
                     $fee_cost = constant("MODULE_ORDER_TOTAL_SWPHANDLING_HANDLING_FEE_".$order->delivery['country']['iso_code_2']);
                     $tax_class = constant("MODULE_ORDER_TOTAL_SWPHANDLING_TAX_CLASS_".$order->delivery['country']['iso_code_2']);
                     $tax_rate = tep_get_tax_rate($tax_class, $order->delivery['country']['id'], $order->delivery['zone_id']);
