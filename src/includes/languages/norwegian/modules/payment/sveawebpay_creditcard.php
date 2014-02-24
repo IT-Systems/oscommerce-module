@@ -1,13 +1,13 @@
 <?php
 /*
-SVEAWEBPAY PAYMENT MODULE FOR osCOMMERCE 2.3
------------------------------------------------
-Version 4.0
-*/
-define('MODULE_PAYMENT_SWPCREDITCARD_TEXT_TITLE','SVEA kort betaling');
-define('MODULE_PAYMENT_SWPCREDITCARD_TEXT_DESCRIPTION','SveaWebPay Card Payment Hosted - ver 4.0');
-define('MODULE_PAYMENT_SWPCREDITCARD_HANDLING_APPLIES','En håndteringskostnad på % vil bli lagt til denne order ved checkout.');
-define('ERROR_ALLOWED_CURRENCIES_NOT_DEFINED','En eller fler av de tillatte valutaene er ikke definert. Dette må være aktivert for å kunne bruke SweaWebPay Hosted Solution. Logg inn på din admin panel, og sjekk at de valuta som er brukt i betalingen er listet som tillatt i betalingsmodulen, og at riktig valutakurs er innstilt.');
+ * osCommerce 
+ * Svea Card
+ * NO 5.0
+ */
+define('MODULE_PAYMENT_SWPCREDITCARD_TEXT_TITLE','Svea Kort');
+define('MODULE_PAYMENT_SWPCREDITCARD_TEXT_DESCRIPTION','Svea Kort - ver 5.0');
+
+define('ERROR_ALLOWED_CURRENCIES_NOT_DEFINED','En eller fler av de tillatte valutaene er ikke definert. Dette må være aktivert for å kunne bruke Svea Kort. Logg inn på din admin panel, og sjekk at de valuta som er brukt i betalingen er listet som tillatt i betalingsmodulen, og at riktig valutakurs er innstilt.');
 define('ERROR_DEFAULT_CURRENCY_NOT_ALLOWED','Den forinstilte valutaen er ikke inkludert på listen over tillatte valuta. Logg inn på din admin panel, og sjekk at forinstilt valuta er på listen over tillatte valuta i betalingsmodulen.');  
 define('ERROR_MESSAGE_PAYMENT_FAILED','Betaling misslyktes.');  
 

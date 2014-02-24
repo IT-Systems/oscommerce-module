@@ -1,13 +1,13 @@
 <?php
 /*
-SVEAWEBPAY PAYMENT MODULE FOR osCOMMERCE 2.3
------------------------------------------------
-Version 4.0
-*/
-define('MODULE_PAYMENT_SWPINTERNETBANK_TEXT_TITLE','SVEA Direktbank');
-define('MODULE_PAYMENT_SWPINTERNETBANK_TEXT_DESCRIPTION','SveaWebPay Direktbank Hostad - ver 4.0');
-define('MODULE_PAYMENT_SWPINTERNETBANK_HANDLING_APPLIES','En expeditionsavgift på %s tillkommer på ordern.');
-define('ERROR_ALLOWED_CURRENCIES_NOT_DEFINED','En eller flera av de tillåtna valutorna är ej definierade. Dessa måste vara definierade för att kunna använda SweaWebPay Hosted Solution. Logga in till din admin-panel, och säkerställ att alla de tillåtna valutorna i payment-modulen existerar, och att de korrekta växelkursera är satta.');
+ * osCommerce 
+ * Svea Internetbank
+ * EN 5.0
+ */
+define('MODULE_PAYMENT_SWPINTERNETBANK_TEXT_TITLE','Svea Direktbank');
+define('MODULE_PAYMENT_SWPINTERNETBANK_TEXT_DESCRIPTION','Svea Direktbank - version 5.0');
+
+define('ERROR_ALLOWED_CURRENCIES_NOT_DEFINED','En eller flera av de tillåtna valutorna är ej definierade. Dessa måste vara definierade för att kunna använda Svea Direktbank. Logga in till din admin-panel, och säkerställ att alla de tillåtna valutorna i payment-modulen existerar, och att de korrekta växelkursera är satta.');
 define('ERROR_DEFAULT_CURRENCY_NOT_ALLOWED','Standardvalutan är ej med i listan av de tillåtna. Logga in till your admin-panel, och säkerställ att standardvalutan finns med bland de tillåtna i payment-modulen.');  
 define('ERROR_MESSAGE_PAYMENT_FAILED','Betalningen misslyckades.');  
 
@@ -25,6 +25,4 @@ define('ERROR_CODE_124','Belppet överstiger maxgränsen för köp');
 define('ERROR_CODE_143','Kredit avvisad av bank');
 
 define('ERROR_CODE_DEFAULT', 'Ett okänt fel har uppstått vid behandling av din betalning. Var vänlig uppge denna kod när du kontaktar supporten. Felkod: ');
-
-
 ?>
