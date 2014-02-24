@@ -54,13 +54,13 @@ In this example we'll first configure the Svea invoice payment method, instructi
 
 * You will now see the choosen method in the list of installed payment methods. Select the _edit_ button to modify the payment method settings. 
 
-![Invoice payment settings] (https://github.com/sveawebpay/zencart-module/raw/develop/docs/image/invoice_settings_1.PNG "Svea Invoice settings 1")
+![Invoice payment settings] (https://github.com/sveawebpay/oscommerce-module/raw/develop/docs/image/invoice_settings_1.PNG "Svea Invoice settings 1")
 
 * _Enable Svea Invoice Module_: if set to false, the module is disabled and won't show up in the customer list of available payment methods on checkout.
 
 * _Svea Username XX_, _Svea Password XX_ and _Svea Client no XX_: enter the username and password that corresponds to your client number for the country(XX) in question. You can only accept invoice payments from countries for which you have entered credentials, other country fields should be left empty. Test credentials will be provided to you by your Svea integration manager upon request. 
 
-![Invoice payment settings] (https://github.com/sveawebpay/zencart-module/raw/develop/docs/image/invoice_settings_2.PNG "Svea Invoice settings 2")
+![Invoice payment settings] (https://github.com/sveawebpay/oscommerce-module/raw/develop/docs/image/invoice_settings_2.PNG "Svea Invoice settings 2")
 
 * _Transaction mode_: Determines whether payments using this method go to Svea's test or production servers. Until you have been giving the go ahead by your Svea integration manager, this should be set to Test. Then, in order to receive payments for production orders, this setting should be switched over to Production.
 
@@ -85,7 +85,7 @@ The Svea Invoice handling fee order total module is used to add an invoice fee t
 
 * Select _Svea Invoice handling fee_ from the list of installed order total modules and select the _edit_ button:
 
-![Invoice fee settings] (https://github.com/sveawebpay/zencart-module/raw/develop/docs/image/invoice_fee_settings.PNG "Invoice fee settings")
+![Invoice fee settings] (https://github.com/sveawebpay/oscommerce-module/raw/develop/docs/image/invoice_fee_settings.PNG "Invoice fee settings")
 
 * _Enable Svea Invoice Fee_: If set to false, no invoice fee will be applied to invoice payments in any country. (If you wish to temporarily disable a single country invoice fee, set its fee entry to 0 below and it will not show up in the order total.)
 
