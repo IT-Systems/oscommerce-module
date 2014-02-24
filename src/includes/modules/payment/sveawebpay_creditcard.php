@@ -291,10 +291,10 @@ class sveawebpay_creditcard extends SveaOsCommerce {
     function install() {
         $common = "insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added";
         tep_db_query($common . ", set_function) values ('Enable Svea Card Payment Module', 'MODULE_PAYMENT_SWPCREDITCARD_STATUS', 'True', 'Do you want to accept Svea payments?', '6', '0', now(), 'tep_cfg_select_option(array(\'True\', \'False\'), ')");
-        tep_db_query($common . ") values ('Svea Card Merchant ID', 'MODULE_PAYMENT_SWPCREDITCARD_MERCHANT_ID', '1130', 'The Merchant ID', '6', '0', now())");
-        tep_db_query($common . ") values ('Svea Card Secret Word', 'MODULE_PAYMENT_SWPCREDITCARD_SW', '8a9cece566e808da63c6f07ff415ff9e127909d000d259aba24daa2fed6d9e3f8b0b62e8ad1fa91c7d7cd6fc3352deaae66cdb533123edf127ad7d1f4c77e7a3', 'The Secret word', '6', '0', now())");
-        tep_db_query($common . ") values ('Svea Card Test Merchant ID', 'MODULE_PAYMENT_SWPCREDITCARD_MERCHANT_ID_TEST', '1130', 'The Merchant ID', '6', '0', now())");
-        tep_db_query($common . ") values ('Svea Card Test Secret Word', 'MODULE_PAYMENT_SWPCREDITCARD_SW_TEST', '8a9cece566e808da63c6f07ff415ff9e127909d000d259aba24daa2fed6d9e3f8b0b62e8ad1fa91c7d7cd6fc3352deaae66cdb533123edf127ad7d1f4c77e7a3', 'The Secret word', '6', '0', now())");
+        tep_db_query($common . ") values ('Svea Card Merchant ID', 'MODULE_PAYMENT_SWPCREDITCARD_MERCHANT_ID', '', 'The Merchant ID', '6', '0', now())");
+        tep_db_query($common . ") values ('Svea Card Secret Word', 'MODULE_PAYMENT_SWPCREDITCARD_SW', '', 'The Secret word', '6', '0', now())");
+        tep_db_query($common . ") values ('Svea Card Test Merchant ID', 'MODULE_PAYMENT_SWPCREDITCARD_MERCHANT_ID_TEST', '', 'The Merchant ID', '6', '0', now())");
+        tep_db_query($common . ") values ('Svea Card Test Secret Word', 'MODULE_PAYMENT_SWPCREDITCARD_SW_TEST', '', 'The Secret word', '6', '0', now())");
         tep_db_query($common . ", set_function) values ('Transaction Mode', 'MODULE_PAYMENT_SWPCREDITCARD_MODE', 'Test', 'Transaction mode used for processing orders. Production should be used for a live working cart. Test for testing.', '6', '0', now(), 'tep_cfg_select_option(array(\'Production\', \'Test\'), ')");
         tep_db_query($common . ", set_function, use_function) values ('Set Order Status', 'MODULE_PAYMENT_SWPCREDITCARD_ORDER_STATUS_ID', '0', 'Set the status of orders made with this payment module to this value', '6', '0', now(), 'tep_cfg_pull_down_order_statuses(', 'tep_get_order_status_name')");
         tep_db_query($common . ", set_function) values ('Display SveaWebPay Images', 'MODULE_PAYMENT_SWPCREDITCARD_IMAGES', 'True', 'Do you want to display SveaWebPay images when choosing between payment options?', '6', '0', now(), 'tep_cfg_select_option(array(\'True\', \'False\'), ')");
