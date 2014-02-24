@@ -13,8 +13,8 @@ class sveawebpay_internetbank extends SveaOsCommerce {
         global $order;
 
         $this->code = 'sveawebpay_internetbank';
-        $this->version = "5";
-   
+        $this->version = "5.0.0";
+        
         // used by card, directbank when posting form in checkout_confirmation.php
         $this->form_action_url = (MODULE_PAYMENT_SWPINTERNETBANK_MODE == 'Test') ? Svea\SveaConfig::SWP_TEST_URL : Svea\SveaConfig::SWP_PROD_URL;     
   

@@ -14,7 +14,7 @@ class sveawebpay_invoice extends SveaOsCommerce {
         global $order;
 
         $this->code = 'sveawebpay_invoice';
-        $this->version = "5.0";
+        $this->version = "5.0.0";
 
         $this->title = MODULE_PAYMENT_SWPINVOICE_TEXT_TITLE;
         $this->description = MODULE_PAYMENT_SWPINVOICE_TEXT_DESCRIPTION;
