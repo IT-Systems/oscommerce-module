@@ -107,7 +107,7 @@ class sveawebpay_creditcard extends SveaOsCommerce {
         // localization parameters
         $user_country = $this->getCountry();
         $user_language = $this->getLanguage();
-        $currency = $this->getCurrency();
+        $currency = $order->info['currency'];
 
         // Create and initialize order object, using either test or production configuration
         $sveaConfig = (MODULE_PAYMENT_SWPCREDITCARD_MODE === 'Test') ? new OsCommerceSveaConfigTest() : new OsCommerceSveaConfigProd();
@@ -122,7 +122,7 @@ class sveawebpay_creditcard extends SveaOsCommerce {
         // we use the same code as in invoice/payment plan for order totals, as coupons isn't integral to osCommerce
         
         // create product order rows from each item in cart
-        $swp_order = $this->parseOrderProducts( $order->products, $swp_order, $this->getCurrency() );
+        $swp_order = $this->parseOrderProducts( $order->products, $swp_order );
         
         // creates non-item order rows from Order Total entries
         $swp_order = $this->parseOrderTotals( $this->getOrderTotals(), $swp_order );
