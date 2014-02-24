@@ -339,6 +339,8 @@ class sveawebpay_invoice extends SveaOsCommerce {
         $user_country = $this->getCountry();
         $user_language = $this->getLanguage();
         
+        $currency = $order->info['currency'];
+        
         // Create and initialize order object, using either test or production configuration
         $sveaConfig = (MODULE_PAYMENT_SWPINVOICE_MODE === 'Test') ? new OsCommerceSveaConfigTest() : new OsCommerceSveaConfigProd();
 

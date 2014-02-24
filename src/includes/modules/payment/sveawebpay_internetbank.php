@@ -22,8 +22,6 @@ class sveawebpay_internetbank extends SveaOsCommerce {
         $this->description = MODULE_PAYMENT_SWPINTERNETBANK_TEXT_DESCRIPTION;
         $this->enabled = ((MODULE_PAYMENT_SWPINTERNETBANK_STATUS == 'True') ? true : false);
         $this->sort_order = MODULE_PAYMENT_SWPINTERNETBANK_SORT_ORDER;
-        $this->default_currency = MODULE_PAYMENT_SWPINTERNETBANK_DEFAULT_CURRENCY;
-        $this->allowed_currencies = explode(',', MODULE_PAYMENT_SWPINTERNETBANK_ALLOWED_CURRENCIES);
         $this->display_images = ((MODULE_PAYMENT_SWPINTERNETBANK_IMAGES == 'True') ? true : false);
         $this->ignore_list = explode(',', MODULE_PAYMENT_SWPINTERNETBANK_IGNORE);
         if ((int)MODULE_PAYMENT_SWPINTERNETBANK_ORDER_STATUS_ID > 0)
@@ -33,24 +31,6 @@ class sveawebpay_internetbank extends SveaOsCommerce {
 
     function update_status() {
         global $db, $order, $currencies, $messageStack;
-
-        // update internal currency
-        $this->default_currency = MODULE_PAYMENT_SWPINTERNETBANK_DEFAULT_CURRENCY;
-        $this->allowed_currencies = explode(',', MODULE_PAYMENT_SWPINTERNETBANK_ALLOWED_CURRENCIES);
-
-        // do not use this module if any of the allowed currencies are not set in osCommerce
-        foreach ($this->allowed_currencies as $currency) {
-            if (!is_array($currencies->currencies[strtoupper($currency)])) {
-                $this->enabled = false;
-                $messageStack->add('header', ERROR_ALLOWED_CURRENCIES_NOT_DEFINED, 'error');
-            }
-        }
-
-        // do not use this module if the default currency is not among the allowed
-        if (!in_array($this->default_currency, $this->allowed_currencies)) {
-            $this->enabled = false;
-            $messageStack->add('header', ERROR_DEFAULT_CURRENCY_NOT_ALLOWED, 'error');
-        }
 
         // do not use this module if the geograhical zone is set and we are not in it
         if (($this->enabled == true) && ((int) MODULE_PAYMENT_SWPINTERNETBANK_ZONE > 0)) {
@@ -144,8 +124,8 @@ class sveawebpay_internetbank extends SveaOsCommerce {
 
         // localization parameters
         $user_country = $this->getCountry();
-        $user_language = $this->getLanguage();      
-        $currency = $this->getCurrency();
+        $user_language = $this->getLanguage();
+        $currency = $order->info['currency'];
 
         // Create and initialize order object, using either test or production configuration
         $sveaConfig = (MODULE_PAYMENT_SWPINTERNETBANK_MODE === 'Test') ? new OsCommerceSveaConfigTest() : new OsCommerceSveaConfigProd();
@@ -160,7 +140,7 @@ class sveawebpay_internetbank extends SveaOsCommerce {
         // we use the same code as in invoice/payment plan for order totals, as coupons isn't integral to osCommerce
 
         // create product order rows from each item in cart
-        $swp_order = $this->parseOrderProducts( $order->products, $swp_order, $this->getCurrency() );
+        $swp_order = $this->parseOrderProducts( $order->products, $swp_order );
 
         // creates non-item order rows from Order Total entries
         $swp_order = $this->parseOrderTotals( $this->getOrderTotals(), $swp_order );
@@ -366,8 +346,6 @@ class sveawebpay_internetbank extends SveaOsCommerce {
         tep_db_query($common . ") values ('Svea Direct Bank Test Merchant ID', 'MODULE_PAYMENT_SWPINTERNETBANK_MERCHANT_ID_TEST', '', 'The Merchant ID', '6', '0', now())");
         tep_db_query($common . ") values ('Svea Direct Bank Test Secret Word', 'MODULE_PAYMENT_SWPINTERNETBANK_SW_TEST', '', 'The Secret word', '6', '0', now())");
         tep_db_query($common . ", set_function) values ('Transaction Mode', 'MODULE_PAYMENT_SWPINTERNETBANK_MODE', 'Test', 'Transaction mode used for processing orders. Production should be used for a live working cart. Test for testing.', '6', '0', now(), 'tep_cfg_select_option(array(\'Production\', \'Test\'), ')");
-        tep_db_query($common . ") values ('Accepted Currencies', 'MODULE_PAYMENT_SWPINTERNETBANK_ALLOWED_CURRENCIES','SEK,NOK,DKK,EUR', 'The accepted currencies, separated by commas.  These <b>MUST</b> exist within your currencies table, along with the correct exchange rates.','6','0',now())");
-        tep_db_query($common . ", set_function) values ('Default Currency', 'MODULE_PAYMENT_SWPINTERNETBANK_DEFAULT_CURRENCY', 'SEK', 'Default currency used, if the customer uses an unsupported currency it will be converted to this. This should also be in the supported currencies list.', '6', '0', now(), 'tep_cfg_select_option(array(\'SEK\',\'NOK\',\'DKK\',\'EUR\'), ')");
     tep_db_query($common . ", set_function, use_function) values ('Set Order Status', 'MODULE_PAYMENT_SWPINTERNETBANK_ORDER_STATUS_ID', '0', 'Set the status of orders made with this payment module to this value', '6', '0', now(), 'tep_cfg_pull_down_order_statuses(', 'tep_get_order_status_name')");
         tep_db_query($common . ", set_function) values ('Display SveaWebPay Images', 'MODULE_PAYMENT_SWPINTERNETBANK_IMAGES', 'True', 'Do you want to display SveaWebPay images when choosing between payment options?', '6', '0', now(), 'tep_cfg_select_option(array(\'True\', \'False\'), ')");
 
@@ -390,8 +368,6 @@ class sveawebpay_internetbank extends SveaOsCommerce {
             'MODULE_PAYMENT_SWPINTERNETBANK_MERCHANT_ID_TEST',
             'MODULE_PAYMENT_SWPINTERNETBANK_SW_TEST',
             'MODULE_PAYMENT_SWPINTERNETBANK_MODE',
-            'MODULE_PAYMENT_SWPINTERNETBANK_ALLOWED_CURRENCIES',
-            'MODULE_PAYMENT_SWPINTERNETBANK_DEFAULT_CURRENCY',
             'MODULE_PAYMENT_SWPINTERNETBANK_ORDER_STATUS_ID',
             'MODULE_PAYMENT_SWPINTERNETBANK_IMAGES',
             'MODULE_PAYMENT_SWPINTERNETBANK_IGNORE',
