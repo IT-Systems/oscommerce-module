@@ -24,7 +24,7 @@ jQuery(document).ready(function (){
     jQuery("input[type=radio][name='payment']").prop('checked', false);
 
     // show fields depending on payment method selected
-    jQuery("input[type=radio][name='payment']").click( function() {
+    jQuery("input[type=radio][name='payment']").parent().parent().click( function() { // hook to entire radio button <tr>
 
         var checked_payment = jQuery("input:radio[name=payment]:checked").val();
         switch( checked_payment ) {
