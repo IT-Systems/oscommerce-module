@@ -536,7 +536,7 @@ class sveawebpay_partpay extends SveaOsCommerce {
             'date_added' => 'now()', 
             'customer_notified' => $customer_notification,
             'comments' => 
-                'Accepted by Svea ' . date("Y-m-d G:i:s") . ' Security Number #: ' . $swp_response->clientOrderId .
+                'Accepted by Svea ' . date("Y-m-d G:i:s") . ' Security Number #: ' . $swp_response->sveaOrderId .
                 " ". $order->info['comments']
         );
         tep_db_perform(TABLE_ORDERS_STATUS_HISTORY, $sql_data_array);
