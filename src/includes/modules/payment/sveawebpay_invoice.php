@@ -75,9 +75,10 @@ class sveawebpay_invoice extends SveaOsCommerce {
         $fields = array();
 
         // add svea invoice image file
-        if ($this->display_images)
+        if ($this->display_images) {
              $fields[] = array('title' => '<img src=images/Svea/SVEAINVOICEEU_'.$order->customer['country']['iso_code_2'].'.png />', 'field' => '');
-                
+        }
+             
         // catch and display error messages raised when i.e. payment request from before_process() below turns out not accepted
         if (isset($_REQUEST['payment_error']) && $_REQUEST['payment_error'] == 'sveawebpay_invoice') {
             $fields[] = array('title' => '<span style="color:red">' . $_SESSION['SWP_ERROR'] . '</span>', 'field' => '');

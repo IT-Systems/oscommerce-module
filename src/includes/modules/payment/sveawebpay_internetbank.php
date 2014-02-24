@@ -71,13 +71,14 @@ class sveawebpay_internetbank extends SveaOsCommerce {
         $fields = array();
 
         // show bank logo
-        if($order->customer['country']['iso_code_2'] == "SE"){
-             $fields[] = array('title' => '<img src=images/Svea/SVEADIRECTBANK_SE.png />', 'field' => '');
-        }  
-        else {
-            $fields[] = array('title' => '<img src=images/Svea/SVEADIRECTBANK.png />', 'field' => '');
+        if ($this->display_images) {
+            if($order->customer['country']['iso_code_2'] == "SE"){
+                 $fields[] = array('title' => '<img src=images/Svea/SVEADIRECTBANK_SE.png />', 'field' => '');
+            }  
+            else {
+                $fields[] = array('title' => '<img src=images/Svea/SVEADIRECTBANK.png />', 'field' => '');
+            }
         }
-
         if (isset($_REQUEST['payment_error']) && $_REQUEST['payment_error'] == 'sveawebpay_internetbank') { // is set in before_process() on failed payment
             $fields[] = array('title' => '<span style="color:red">' . $_SESSION['SWP_ERROR'] . '</span>', 'field' => '');
         }

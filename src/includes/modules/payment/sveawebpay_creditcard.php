@@ -66,20 +66,22 @@ class sveawebpay_creditcard extends SveaOsCommerce {
         $fields = array();
 
         // show card logos
-        if ($order->customer['country']['iso_code_2'] == "SE") {
-            $fields[] = array('title' => '<img src=images/Svea/SVEACARD_SE.png />', 
-                'field' => '<img src=images/Svea/KORTCERT.png /><img src=images/Svea/AMEX.png /><img src=images/Svea/DINERS.png />');
-        } 
-        else {
-            $fields[] = array('title' => '<img src=images/Svea/SVEACARD.png />', 
-                'field' => '<img src=images/Svea/KORTCERT.png /><img src=images/Svea/AMEX.png /><img src=images/Svea/DINERS.png />');
-        }
+        if ($this->display_images) {
+            if ($order->customer['country']['iso_code_2'] == "SE") {
+                $fields[] = array('title' => '<img src=images/Svea/SVEACARD_SE.png />', 
+                    'field' => '<img src=images/Svea/KORTCERT.png /><img src=images/Svea/AMEX.png /><img src=images/Svea/DINERS.png />');
+            } 
+            else {
+                $fields[] = array('title' => '<img src=images/Svea/SVEACARD.png />', 
+                    'field' => '<img src=images/Svea/KORTCERT.png /><img src=images/Svea/AMEX.png /><img src=images/Svea/DINERS.png />');
+            }
 
-        // show error message from failed payment attempt
-        if (isset($_REQUEST['payment_error']) && $_REQUEST['payment_error'] == 'sveawebpay_creditcard') { // is set in before_process()
-            $fields[] = array('title' => '<span style="color:red">' . $_SESSION['SWP_ERROR'] . '</span>', 'field' => '');
+            // show error message from failed payment attempt
+            if (isset($_REQUEST['payment_error']) && $_REQUEST['payment_error'] == 'sveawebpay_creditcard') { // is set in before_process()
+                $fields[] = array('title' => '<span style="color:red">' . $_SESSION['SWP_ERROR'] . '</span>', 'field' => '');
+            }
         }
-
+        
         return array(
             'id' => $this->code,
             'module' => $this->title,
