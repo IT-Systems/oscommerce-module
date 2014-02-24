@@ -153,7 +153,7 @@ class sveawebpay_internetbank extends SveaOsCommerce {
         $swp_order = WebPay::createOrder( $sveaConfig )
             ->setCountryCode( $user_country )
             ->setCurrency($currency)                       
-            ->setClientOrderNumber($client_order_number.date('c')) // TODO remove date   
+            ->setClientOrderNumber($client_order_number)
             ->setOrderDate(date('c'))                      
         ;
 

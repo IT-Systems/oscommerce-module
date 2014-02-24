@@ -148,7 +148,7 @@ function sveaAjaxGetAddresses( $ssn, $country, $isCompany, $paymentType ) {
         
         $response->country = $country; // hack to pass country to session; inject country into object 
         
-        $_SESSION['sveaGetAddressesResponse'] = serialize( $response );     // TODO make use of this...
+        $_SESSION['sveaGetAddressesResponse'] = serialize( $response );
     }
 }
 
