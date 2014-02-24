@@ -186,12 +186,19 @@ class sveawebpay_invoice extends SveaOsCommerce {
                                 '</div><br />';
         }
         
-        // inform customer of invoice fee here
-        $invoiceFee = constant( "MODULE_ORDER_TOTAL_SWPHANDLING_HANDLING_FEE_".$customer_country );
+        // add information about invoice if invoice fee module enabled
+        if ( constant( MODULE_ORDER_TOTAL_SWPHANDLING_STATUS ) == 'True' ) {
+            $paymentfee_cost = constant( "MODULE_ORDER_TOTAL_SWPHANDLING_HANDLING_FEE_".$customer_country );
 
+            $tax_class = constant( "MODULE_ORDER_TOTAL_SWPHANDLING_TAX_CLASS_".$customer_country );
+            if (DISPLAY_PRICE_WITH_TAX == "true" && $tax_class > 0) {  
+                $paymentfee_tax = $paymentfee_cost * tep_get_tax_rate($tax_class, $order->delivery['country']['id'], $order->delivery['zone_id']) /100;
+            }
         
-        $sveaInvoiceFee = '<br /><div>' . sprintf( MODULE_PAYMENT_SWPINVOICE_HANDLING_APPLIES, $invoiceFee, $currencies->currencies[$_SESSION['currency']]['symbol_right']) .'</div>';
-
+            $sveaInvoiceFee =
+                '<br /><div>' . sprintf( MODULE_PAYMENT_SWPINVOICE_HANDLING_APPLIES, $currencies->format($paymentfee_cost + $paymentfee_tax), "");
+        }
+      
         if(     $order->billing['country']['iso_code_2'] == "SE" ||
                 $order->billing['country']['iso_code_2'] == "DK" ||
                 $order->billing['country']['iso_code_2'] == "NO" )      // but don't show button/do getAddress unless customer is company!

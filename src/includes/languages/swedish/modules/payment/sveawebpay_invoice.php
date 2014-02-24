@@ -22,12 +22,12 @@ define('ERROR_CODE_20006','Summan av orderraderna kan ej vara noll eller negativ
 define('ERROR_CODE_20013','Ordern väntar');
 
 define('ERROR_CODE_30000','Kreditupplysningen avslogs');
-define('ERROR_CODE_30001','Kunden är blockerad eller har uppvisat udda k�pbeteende.');
+define('ERROR_CODE_30001','Kunden är blockerad eller har uppvisat udda köpbeteende.');
 define('ERROR_CODE_30002','Ordern nekades baserat på kreditupplysningen.');
 define('ERROR_CODE_30003','Det går ej att hitta kunden i kreditupplysningen.');
 
 define('ERROR_CODE_40000','Det går ej att hitta kunden');
-define('ERROR_CODE_40001','Landskoden städs ej');
+define('ERROR_CODE_40001','Landskoden stödjs ej');
 define('ERROR_CODE_40002','Ogiltiga kunduppgifter');
 define('ERROR_CODE_40004','Det gick ej att hitta några adresser för den här kunden');
 
