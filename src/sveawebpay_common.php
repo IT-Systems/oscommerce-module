@@ -1,5 +1,8 @@
 <?php //
 
+define('SVEA_ORDERSTATUS_DELIVERED_ID', 1703);
+define('SVEA_ORDERSTATUS_DELIVERED', 'Svea: Delivered');  // not used
+
 /**
  * Class SveaOsCommerce contains various utility functions used by Svea osCommerce payment modules
  *
@@ -577,108 +580,68 @@ class SveaOsCommerce {
         return( array_key_exists( $country, array_flip($countrynames) ) ? 
                 array_flip($countrynames[$country]) : "swp_error: getCountryCode: unknown country name" );
     }    
-          
-//    /**
-//     * Updates latest order_status entry in table order, orders_status_history
-//     * 
-//     * @param int $oID  -- order id to change orders_status for
-//     * @param int $status -- updated status you want to set
-//     * @param string $comment -- updated comment you want to set
-//     */
-//    function updateOrdersStatus( $oID, $status, $comment ) {
-//        global $db;
-//
-//        $historyResult = $db->Execute(  "select * from " . TABLE_ORDERS_STATUS_HISTORY . " where orders_id = ". (int)$oID .
-//                                        " order by date_added DESC LIMIT 1");
-//        $oshID = $historyResult->fields["orders_status_history_id"];
-//        $comments = $historyResult->fields["comments"];
-//
-//        $db->Execute(   "update " . TABLE_ORDERS_STATUS_HISTORY . " " .
-//                        "set comments = '" . $comments . "\n " . $comment . "', " .
-//                        "orders_status_id = " . (int)$status . ", " .
-//                        "customer_notified = " . 0 . " " .         // 0 for "no email" (open lock symbol) in order status history
-//                        "where orders_status_history_id = " . (int)$oshID)
-//        ;
-//        
-//        $db->Execute(   "update " . TABLE_ORDERS . " " .
-//                        "set orders_status = " . (int)$status . " " .
-//                        "where orders_id = " . (int)$oID );
-//    }
-//     
-//    /**
-//     * Creates an orders_status_history and then updates an order status entry in table order, orders_status_history
-//     * 
-//     * @param int $oID  -- order id to change orders_status for
-//     * @param int $status -- updated status you want to set
-//     * @param string $comment -- updated comment you want to set
-//     */
-//    function insertOrdersStatus( $oID, $status, $comment ) {
-//        $sql_data_array = array(
-//                'orders_id' => $oID,
-//                'orders_status_id' => $status,                           
-//                'date_added' => 'now()',
-//                'customer_notified' => 0,  // 0 for "no email" (open lock symbol) in order status history
-//                'comments' => $comment
-//        );
-//        zen_db_perform(TABLE_ORDERS_STATUS_HISTORY, $sql_data_array);
-//
-//        $this->updateOrdersStatus( $oID, $status, $comment );
-//    }
-//    
-//    /**
-//     * Return the Svea sveaOrderId corresponding to an order, or false if order not found in svea_order table
-//     * 
-//     * @param int $oID -- order id
-//     * @return int -- svea order id, or false if order not found in svea_order table
-//     */
-//    function getSveaOrderId( $oID ) {
-//        global $db;
-//        
-//        $sveaResult = $db->Execute("SELECT * FROM svea_order WHERE orders_id = " . (int)$oID );
-//        return isset( $sveaResult->fields["sveaorderid"] ) ? $sveaResult->fields["sveaorderid"] : false;
-//    }
-//    
-//    /**
-//     * Return the Svea invoiceId corresponding to an order
-//     * 
-//     * @param int $oID -- order id
-//     * @return int -- svea invoice id
-//     */
-//    function getSveaInvoiceId( $oID ) {
-//        global $db;
-//        
-//        $sveaResult = $db->Execute("SELECT * FROM svea_order WHERE orders_id = " . (int)$oID );
-//        return $sveaResult->fields["invoice_id"];
-//    }
-//    
-//    /**
-//     * Return the Svea create order object corresponding to an order
-//     * 
-//     * @param int $oID -- order id
-//     * @return Svea\CreateOrderBuilder
-//     */
-//    function getSveaCreateOrderObject( $oID ) {
-//        global $db;
-//        
-//        $sveaResult = $db->Execute("SELECT * FROM svea_order WHERE orders_id = " . (int)$oID );
-//        return unserialize( $sveaResult->fields["createorder_object"] );
-//    }
-//
-//    /**
-//     * get current order status for order from orders table
-//     * 
-//     * @param int $oID -- order id
-//     * @return int -- current order status 
-//     */
-//    function getCurrentOrderStatus( $oID ) {
-//        global $db;
-//        
-//        $historyResult = $db->Execute(  "select * from orders_status_history where orders_id = ". (int)$oID .
-//                                        " order by date_added DESC LIMIT 1");
-//        return $historyResult->fields["orders_status_id"];
-//    }
-//   
+            
+    /**
+     * Creates an orders_status_history and then updates an order status entry in table order, orders_status_history
+     * 
+     * @param int $oID  -- order id to change orders_status for
+     * @param int $status -- updated status you want to set
+     * @param string $comment -- updated comment you want to set
+     */
+    function insertOrdersStatus( $oID, $status, $comment ) {
+        $sql_data_array = array(
+                'orders_id' => $oID,
+                'orders_status_id' => $status,                           
+                'date_added' => 'now()',
+                'customer_notified' => 0,  // 0 for "no email" (open lock symbol) in order status history
+                'comments' => $comment
+        );
+        tep_db_perform(TABLE_ORDERS_STATUS_HISTORY, $sql_data_array);
+
+        $this->updateOrdersStatus( $oID, $status, $comment );
+    }
     
+    /**
+     * Return the Svea sveaOrderId corresponding to an order, or false if order not found in svea_order table
+     * 
+     * @param int $oID -- order id
+     * @return int -- svea order id, or false if order not found in svea_order table
+     */
+    function getSveaOrderId( $oID ) {
+        
+        $sveaResult = tep_db_query("SELECT * FROM svea_order WHERE orders_id = " . (int)$oID );
+        $fields = $sveaResult->fetch_assoc();
+        
+        return isset( $fields["sveaorderid"] ) ? $fields["sveaorderid"] : false;
+    }
+    
+    /**
+     * Return the Svea create order object corresponding to an order
+     * 
+     * @param int $oID -- order id
+     * @return Svea\CreateOrderBuilder
+     */
+    function getSveaCreateOrderObject( $oID ) {
+        
+        $sveaResult = tep_db_query("SELECT * FROM svea_order WHERE orders_id = " . (int)$oID );
+        $fields = $sveaResult->fetch_assoc();        
+        
+        return unserialize( $fields["createorder_object"] );
+    }
+
+    /**
+     * get current order status for order from orders table
+     * 
+     * @param int $oID -- order id
+     * @return int -- current order status 
+     */
+    function getCurrentOrderStatus( $oID ) {        
+        $historyResult = tep_db_query(  "select * from orders_status_history where orders_id = ". (int)$oID .
+                                        " order by date_added DESC LIMIT 1");
+        $fields = $historyResult->fetch_assoc();
+        return $fields["orders_status_id"];
+    }
+     
     /**
      * for each item in cart, create WebPayItem::orderRow objects and add to order
      * @param type $order_totals
@@ -716,9 +679,6 @@ class SveaOsCommerce {
     {    
        global $order_total_modules;
         
-//        print_r($order_total_modules);
-//        print_r($order_total_modules->process()); die;
-       
         $order_totals = array();
         foreach( $order_total_modules->modules as $n => $module_filename )
         {
