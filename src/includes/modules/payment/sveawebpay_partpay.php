@@ -15,7 +15,7 @@ class sveawebpay_partpay extends SveaOsCommerce {
     global $order;
 
     $this->code = 'sveawebpay_partpay';
-    $this->version = "5.0.0";
+    $this->version = "5.1.0";
 
     $this->title = MODULE_PAYMENT_SWPPARTPAY_TEXT_TITLE;
     $this->description = MODULE_PAYMENT_SWPPARTPAY_TEXT_DESCRIPTION;
