@@ -1,7 +1,7 @@
 <?php //
 
-define('SVEA_ORDERSTATUS_DELIVERED_ID', 1703);
-define('SVEA_ORDERSTATUS_DELIVERED', 'Svea: Delivered');  // not used
+define('SVEA_ORDERSTATUS_DELIVERED_ID', 3);     // need to be one of osC default to show up in history?
+//define('SVEA_ORDERSTATUS_DELIVERED', 'Svea: Delivered');  // not used
 
 /**
  * Class SveaOsCommerce contains various utility functions used by Svea osCommerce payment modules

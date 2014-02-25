@@ -525,66 +525,51 @@ class sveawebpay_partpay extends SveaOsCommerce {
 
     // if payment accepted, insert order into database
      function after_process() {
-        global $insert_id, $order, $db;
+        global $insert_id;
 
         $new_order_id = $insert_id;  // $insert_id contains the new order orders_id
 
         // retrieve response object from before_process()
-        $swp_response = unserialize($_SESSION["swp_response"]);
+        $createOrderResponse = unserialize($_SESSION["swp_response"]);
 
-        // insert order into database
-        $customer_notification = (SEND_EMAILS == 'true') ? '1' : '0';               
+        // store create order object along with response sveaOrderId in db
         $sql_data_array = array(
-            'orders_id' => $new_order_id,                          
-            'orders_status_id' => $order->info['order_status'], 
-            'date_added' => 'now()', 
-            'customer_notified' => $customer_notification,
-            'comments' => 
-                'Accepted by Svea ' . date("Y-m-d G:i:s") . ' Security Number #: ' . $swp_response->sveaOrderId .
-                " ". $order->info['comments']
+            'orders_id' => $new_order_id,
+            'sveaorderid' => $createOrderResponse->sveaOrderId,
+            'createorder_object' => $_SESSION["swp_order"]      // session data is already serialized
         );
-        tep_db_perform(TABLE_ORDERS_STATUS_HISTORY, $sql_data_array);
-      
+        tep_db_perform("svea_order", $sql_data_array);
         
-//        // store create order object along with response sveaOrderId in db
-//        $sql_data_array = array(
-//            'orders_id' => $new_order_id,
-//            'sveaorderid' => $createOrderResponse->sveaOrderId,
-//            'createorder_object' => $_SESSION["swp_order"]      // session data is already serialized
-//        );
-//        zen_db_perform("svea_order", $sql_data_array);
-//   
-//        // if autodeliver order status matches the new order status, deliver the order
-//        if( $this->getCurrentOrderStatus( $new_order_id ) == MODULE_PAYMENT_SWPPARTPAY_AUTODELIVER )
-//        {          
-//            $deliverResponse = $this->doDeliverOrderPartPay($new_order_id);
-//            if( $deliverResponse->accepted == true ) 
-//            {
-//                $comment = 'Order AutoDelivered. (SveaOrderId: ' .$this->getSveaOrderId( $new_order_id ). ')'; 
-//                
-//                // insert autodeliver order status update in database
-//                $sql_data_array = array(
-//                    'orders_id' => $new_order_id,
-//                    'orders_status_id' => SVEA_ORDERSTATUS_DELIVERED_ID,              
-//                    'date_added' => 'now()',
-//                    'customer_notified' => 0,  // 0 for "no email" (open lock symbol) in order status history
-//                    'comments' => $comment
-//                );
-//                zen_db_perform(TABLE_ORDERS_STATUS_HISTORY, $sql_data_array);
-//                
-//                $db->Execute(   "update " . TABLE_ORDERS . " " .
-//                                "set orders_status = " . SVEA_ORDERSTATUS_DELIVERED_ID . " " .
-//                                "where orders_id = " . $new_order_id 
-//                );
-//            }
-//            else 
-//            {
-//                $comment =  'WARNING: AutoDeliver failed, status not changed. ' .
-//                            'Error: ' . $deliverResponse->errormessage . ' (SveaOrderId: ' .$this->getSveaOrderId( $new_order_id ). ')';
-//                $this->insertOrdersStatus( $new_order_id, $this->getCurrentOrderStatus( $new_order_id ), $comment );
-//            }
-//        }
+        // if autodeliver order status matches the new order status, deliver the order
+        if( $this->getCurrentOrderStatus( $new_order_id ) == MODULE_PAYMENT_SWPPARTPAY_AUTODELIVER )
+        {
+            $deliverResponse = $this->doDeliverOrderPartPay($new_order_id);
+            if( $deliverResponse->accepted == true )
+            {            
+                $comment = 'Order AutoDelivered. (SveaOrderId: ' .$this->getSveaOrderId( $new_order_id ). ')';
+                //$this->insertOrdersStatus( $new_order_id, SVEA_ORDERSTATUS_DELIVERED_ID, $comment );
+                $sql_data_array = array(
+                    'orders_id' => $new_order_id,
+                    'orders_status_id' => SVEA_ORDERSTATUS_DELIVERED_ID,
+                    'date_added' => 'now()',
+                    'customer_notified' => 0,  // 0 for "no email" (open lock symbol) in order status history   //TODO use card SEND_MAIL behaviour
+                    'comments' => $comment
+                );
+                tep_db_perform(TABLE_ORDERS_STATUS_HISTORY, $sql_data_array);
 
+                tep_db_query(   "update " . TABLE_ORDERS . " " .
+                                "set orders_status = " . SVEA_ORDERSTATUS_DELIVERED_ID . " " .
+                                "where orders_id = " . $new_order_id
+                );
+            }
+            else
+            {
+                $comment =  'WARNING: AutoDeliver failed, status not changed. ' .
+                            'Error: ' . $deliverResponse->errormessage . ' (SveaOrderId: ' .$this->getSveaOrderId( $new_order_id ). ')';
+                $this->insertOrdersStatus( $new_order_id, $this->getCurrentOrderStatus( $new_order_id ), $comment );
+            }
+        }
+        
         // clean up our session variables set during checkout   //$SESSION[swp_*
         unset($_SESSION['swp_order']);
         unset($_SESSION['swp_response']);
@@ -612,43 +597,62 @@ class sveawebpay_partpay extends SveaOsCommerce {
     // insert configuration keys here
     function install() {
         $common = "insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added";
-    tep_db_query($common . ", set_function) values ('Enable Svea Payment Plan Module', 'MODULE_PAYMENT_SWPPARTPAY_STATUS', 'True', '', '6', '0', now(), 'tep_cfg_select_option(array(\'True\', \'False\'), ')");
-    tep_db_query($common . ") values ('Svea Username SE', 'MODULE_PAYMENT_SWPPARTPAY_USERNAME_SE', '', 'Username for Svea Payment Plan Sweden', '6', '0', now())");
-    tep_db_query($common . ") values ('Svea Password SE', 'MODULE_PAYMENT_SWPPARTPAY_PASSWORD_SE', '', 'Password for Svea Payment Plan Sweden', '6', '0', now())");
-    tep_db_query($common . ") values ('Svea Client No SE', 'MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_SE', '', '', '6', '0', now())");
-    tep_db_query($common . ") values ('Min amount for SE in SEK', 'MODULE_PAYMENT_SWPPARTPAY_MIN_SE', '', 'The minimum amount for use of this payment. Check with your Svea campaign rules. Ask your Svea integration manager if unsure.', '6', '0', now())");
-    tep_db_query($common . ") values ('Max amount for SE in SEK', 'MODULE_PAYMENT_SWPPARTPAY_MAX_SE', '', 'The maximum amount for use of this payment. Check with your Svea campaign rules. Ask your Svea integration manager if unsure.', '6', '0', now())");
-    tep_db_query($common . ") values ('Svea Username NO', 'MODULE_PAYMENT_SWPPARTPAY_USERNAME_NO', '', 'Username for Svea Payment Plan Norway', '6', '0', now())");
-    tep_db_query($common . ") values ('Svea Password NO', 'MODULE_PAYMENT_SWPPARTPAY_PASSWORD_NO', '', 'Password for Svea Payment Plan Norway', '6', '0', now())");
-    tep_db_query($common . ") values ('Svea Client no NO', 'MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_NO', '', '', '6', '0', now())");
-    tep_db_query($common . ") values ('Min amount for NO in NOK', 'MODULE_PAYMENT_SWPPARTPAY_MIN_NO', '', 'The minimum amount for use of this payment. Check with your Svea campaign rules. Ask your Svea integration manager if unsure.', '6', '0', now())");
-    tep_db_query($common . ") values ('Max amount for NO in NOK', 'MODULE_PAYMENT_SWPPARTPAY_MAX_NO', '', 'The maximum amount for use of this payment. Check with your Svea campaign rules. Ask your Svea integration manager if unsure.', '6', '0', now())");
-    tep_db_query($common . ") values ('Svea Username FI', 'MODULE_PAYMENT_SWPPARTPAY_USERNAME_FI', '', 'Username for Svea Payment Plan Finland', '6', '0', now())");
-    tep_db_query($common . ") values ('Svea Password FI', 'MODULE_PAYMENT_SWPPARTPAY_PASSWORD_FI', '', 'Password for Svea Payment Plan Finland', '6', '0', now())");
-    tep_db_query($common . ") values ('Svea Client no FI', 'MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_FI', '', '', '6', '0', now())");
-    tep_db_query($common . ") values ('Min amount for FI in EUR', 'MODULE_PAYMENT_SWPPARTPAY_MIN_FI', '', 'The minimum amount for use of this payment. Check with your Svea campaign rules. Ask your Svea integration manager if unsure.', '6', '0', now())");
-    tep_db_query($common . ") values ('Max amount for FI in EUR', 'MODULE_PAYMENT_SWPPARTPAY_MAX_FI', '', 'The maximum amount for use of this payment. Check with your Svea campaign rules. Ask your Svea integration manager if unsure.', '6', '0', now())");
-    tep_db_query($common . ") values ('Svea Username DK', 'MODULE_PAYMENT_SWPPARTPAY_USERNAME_DK', '', 'Username for Svea Payment Plan Denmark', '6', '0', now())");
-    tep_db_query($common . ") values ('Svea Password DK', 'MODULE_PAYMENT_SWPPARTPAY_PASSWORD_DK', '', 'Password for Svea Payment Plan Denmark', '6', '0', now())");
-    tep_db_query($common . ") values ('Svea Client no DK', 'MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_DK', '', '', '6', '0', now())");
-    tep_db_query($common . ") values ('Min amount for DK in DKK', 'MODULE_PAYMENT_SWPPARTPAY_MIN_DK', '', 'The minimum amount for use of this payment. Check with your Svea campaign rules. Ask your Svea integration manager if unsure.', '6', '0', now())");
-    tep_db_query($common . ") values ('Max amount for DK in DKK', 'MODULE_PAYMENT_SWPPARTPAY_MAX_DK', '', 'The maximum amount for use of this payment. Check with your Svea campaign rules. Ask your Svea integration manager if unsure.', '6', '0', now())");
-    tep_db_query($common . ") values ('Svea Username NL', 'MODULE_PAYMENT_SWPPARTPAY_USERNAME_NL', '', 'Username for Svea Payment Plan Netherlands', '6', '0', now())");
-    tep_db_query($common . ") values ('Svea Password NL', 'MODULE_PAYMENT_SWPPARTPAY_PASSWORD_NL', '', 'Password for Svea Payment Plan Netherlands', '6', '0', now())");
-    tep_db_query($common . ") values ('Svea Client no NL', 'MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_NL', '', '', '6', '0', now())");
-    tep_db_query($common . ") values ('Min amount for NL in EUR', 'MODULE_PAYMENT_SWPPARTPAY_MIN_NL', '', 'The minimum amount for use of this payment. Check with your Svea campaign rules. Ask your Svea integration manager if unsure.', '6', '0', now())");
-    tep_db_query($common . ") values ('Max amount for NL in EUR', 'MODULE_PAYMENT_SWPPARTPAY_MAX_NL', '', 'The maximum amount for use of this payment. Check with your Svea campaign rules. Ask your Svea integration manager if unsure.', '6', '0', now())");
-    tep_db_query($common . ") values ('Svea Username DE', 'MODULE_PAYMENT_SWPPARTPAY_USERNAME_DE', '', 'Username for Svea Payment Plan Germany', '6', '0', now())");
-    tep_db_query($common . ") values ('Svea Password DE', 'MODULE_PAYMENT_SWPPARTPAY_PASSWORD_DE', '', 'Password for Svea Payment Plan Germany', '6', '0', now())");
-    tep_db_query($common . ") values ('Svea Client no DE', 'MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_DE', '', '', '6', '0', now())");
-    tep_db_query($common . ") values ('Min amount for DE in EUR', 'MODULE_PAYMENT_SWPPARTPAY_MIN_DE', '', 'The minimum amount for use of this payment. Check with your Svea campaign rules. Ask your Svea integration manager if unsure.', '6', '0', now())");
-    tep_db_query($common . ") values ('Max amount for DE in EUR', 'MODULE_PAYMENT_SWPPARTPAY_MAX_DE', '', 'The maximum amount for use of this payment. Check with your Svea campaign rules. Ask your Svea integration manager if unsure.', '6', '0', now())");
-    tep_db_query($common . ", set_function) values ('Transaction Mode', 'MODULE_PAYMENT_SWPPARTPAY_MODE', 'Test', 'Transaction mode used for processing orders. Production should be used for a live working cart. Test for testing.', '6', '0', now(), 'tep_cfg_select_option(array(\'Production\', \'Test\'), ')");
-    tep_db_query($common . ", set_function, use_function) values ('Set Order Status', 'MODULE_PAYMENT_SWPPARTPAY_ORDER_STATUS_ID', '0', 'Set the status of orders made with this payment module to this value (but see AutoDeliver option below).', '6', '0', now(), 'tep_cfg_pull_down_order_statuses(', 'tep_get_order_status_name')");
-    tep_db_query($common . ", set_function) values ('Display SveaWebPay Images', 'MODULE_PAYMENT_SWPPARTPAY_IMAGES', 'True', 'Do you want to display SveaWebPay images when choosing between payment options?', '6', '0', now(), 'tep_cfg_select_option(array(\'True\', \'False\'), ')");
-    tep_db_query($common . ") values ('Ignore OT list', 'MODULE_PAYMENT_SWPPARTPAY_IGNORE','ot_pretotal', 'Ignore the following order total codes, separated by commas.','6','0',now())");
-    tep_db_query($common . ", set_function, use_function) values ('Payment Zone', 'MODULE_PAYMENT_SWPPARTPAY_ZONE', '0', 'If a zone is selected, only enable this payment method for that zone.', '6', '2', now(), 'tep_cfg_pull_down_zone_classes(', 'tep_get_zone_class_title')");
-    tep_db_query($common . ") values ('Sort order of display.', 'MODULE_PAYMENT_SWPPARTPAY_SORT_ORDER', '0', 'Sort order of display. Lowest is displayed first.', '6', '0', now())");    
+        tep_db_query($common . ", set_function) values ('Enable Svea Payment Plan Module', 'MODULE_PAYMENT_SWPPARTPAY_STATUS', 'True', '', '6', '0', now(), 'tep_cfg_select_option(array(\'True\', \'False\'), ')");
+        tep_db_query($common . ") values ('Svea Username SE', 'MODULE_PAYMENT_SWPPARTPAY_USERNAME_SE', '', 'Username for Svea Payment Plan Sweden', '6', '0', now())");
+        tep_db_query($common . ") values ('Svea Password SE', 'MODULE_PAYMENT_SWPPARTPAY_PASSWORD_SE', '', 'Password for Svea Payment Plan Sweden', '6', '0', now())");
+        tep_db_query($common . ") values ('Svea Client No SE', 'MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_SE', '', '', '6', '0', now())");
+        tep_db_query($common . ") values ('Min amount for SE in SEK', 'MODULE_PAYMENT_SWPPARTPAY_MIN_SE', '', 'The minimum amount for use of this payment. Check with your Svea campaign rules. Ask your Svea integration manager if unsure.', '6', '0', now())");
+        tep_db_query($common . ") values ('Max amount for SE in SEK', 'MODULE_PAYMENT_SWPPARTPAY_MAX_SE', '', 'The maximum amount for use of this payment. Check with your Svea campaign rules. Ask your Svea integration manager if unsure.', '6', '0', now())");
+        tep_db_query($common . ") values ('Svea Username NO', 'MODULE_PAYMENT_SWPPARTPAY_USERNAME_NO', '', 'Username for Svea Payment Plan Norway', '6', '0', now())");
+        tep_db_query($common . ") values ('Svea Password NO', 'MODULE_PAYMENT_SWPPARTPAY_PASSWORD_NO', '', 'Password for Svea Payment Plan Norway', '6', '0', now())");
+        tep_db_query($common . ") values ('Svea Client no NO', 'MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_NO', '', '', '6', '0', now())");
+        tep_db_query($common . ") values ('Min amount for NO in NOK', 'MODULE_PAYMENT_SWPPARTPAY_MIN_NO', '', 'The minimum amount for use of this payment. Check with your Svea campaign rules. Ask your Svea integration manager if unsure.', '6', '0', now())");
+        tep_db_query($common . ") values ('Max amount for NO in NOK', 'MODULE_PAYMENT_SWPPARTPAY_MAX_NO', '', 'The maximum amount for use of this payment. Check with your Svea campaign rules. Ask your Svea integration manager if unsure.', '6', '0', now())");
+        tep_db_query($common . ") values ('Svea Username FI', 'MODULE_PAYMENT_SWPPARTPAY_USERNAME_FI', '', 'Username for Svea Payment Plan Finland', '6', '0', now())");
+        tep_db_query($common . ") values ('Svea Password FI', 'MODULE_PAYMENT_SWPPARTPAY_PASSWORD_FI', '', 'Password for Svea Payment Plan Finland', '6', '0', now())");
+        tep_db_query($common . ") values ('Svea Client no FI', 'MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_FI', '', '', '6', '0', now())");
+        tep_db_query($common . ") values ('Min amount for FI in EUR', 'MODULE_PAYMENT_SWPPARTPAY_MIN_FI', '', 'The minimum amount for use of this payment. Check with your Svea campaign rules. Ask your Svea integration manager if unsure.', '6', '0', now())");
+        tep_db_query($common . ") values ('Max amount for FI in EUR', 'MODULE_PAYMENT_SWPPARTPAY_MAX_FI', '', 'The maximum amount for use of this payment. Check with your Svea campaign rules. Ask your Svea integration manager if unsure.', '6', '0', now())");
+        tep_db_query($common . ") values ('Svea Username DK', 'MODULE_PAYMENT_SWPPARTPAY_USERNAME_DK', '', 'Username for Svea Payment Plan Denmark', '6', '0', now())");
+        tep_db_query($common . ") values ('Svea Password DK', 'MODULE_PAYMENT_SWPPARTPAY_PASSWORD_DK', '', 'Password for Svea Payment Plan Denmark', '6', '0', now())");
+        tep_db_query($common . ") values ('Svea Client no DK', 'MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_DK', '', '', '6', '0', now())");
+        tep_db_query($common . ") values ('Min amount for DK in DKK', 'MODULE_PAYMENT_SWPPARTPAY_MIN_DK', '', 'The minimum amount for use of this payment. Check with your Svea campaign rules. Ask your Svea integration manager if unsure.', '6', '0', now())");
+        tep_db_query($common . ") values ('Max amount for DK in DKK', 'MODULE_PAYMENT_SWPPARTPAY_MAX_DK', '', 'The maximum amount for use of this payment. Check with your Svea campaign rules. Ask your Svea integration manager if unsure.', '6', '0', now())");
+        tep_db_query($common . ") values ('Svea Username NL', 'MODULE_PAYMENT_SWPPARTPAY_USERNAME_NL', '', 'Username for Svea Payment Plan Netherlands', '6', '0', now())");
+        tep_db_query($common . ") values ('Svea Password NL', 'MODULE_PAYMENT_SWPPARTPAY_PASSWORD_NL', '', 'Password for Svea Payment Plan Netherlands', '6', '0', now())");
+        tep_db_query($common . ") values ('Svea Client no NL', 'MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_NL', '', '', '6', '0', now())");
+        tep_db_query($common . ") values ('Min amount for NL in EUR', 'MODULE_PAYMENT_SWPPARTPAY_MIN_NL', '', 'The minimum amount for use of this payment. Check with your Svea campaign rules. Ask your Svea integration manager if unsure.', '6', '0', now())");
+        tep_db_query($common . ") values ('Max amount for NL in EUR', 'MODULE_PAYMENT_SWPPARTPAY_MAX_NL', '', 'The maximum amount for use of this payment. Check with your Svea campaign rules. Ask your Svea integration manager if unsure.', '6', '0', now())");
+        tep_db_query($common . ") values ('Svea Username DE', 'MODULE_PAYMENT_SWPPARTPAY_USERNAME_DE', '', 'Username for Svea Payment Plan Germany', '6', '0', now())");
+        tep_db_query($common . ") values ('Svea Password DE', 'MODULE_PAYMENT_SWPPARTPAY_PASSWORD_DE', '', 'Password for Svea Payment Plan Germany', '6', '0', now())");
+        tep_db_query($common . ") values ('Svea Client no DE', 'MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_DE', '', '', '6', '0', now())");
+        tep_db_query($common . ") values ('Min amount for DE in EUR', 'MODULE_PAYMENT_SWPPARTPAY_MIN_DE', '', 'The minimum amount for use of this payment. Check with your Svea campaign rules. Ask your Svea integration manager if unsure.', '6', '0', now())");
+        tep_db_query($common . ") values ('Max amount for DE in EUR', 'MODULE_PAYMENT_SWPPARTPAY_MAX_DE', '', 'The maximum amount for use of this payment. Check with your Svea campaign rules. Ask your Svea integration manager if unsure.', '6', '0', now())");
+        tep_db_query($common . ", set_function) values ('Transaction Mode', 'MODULE_PAYMENT_SWPPARTPAY_MODE', 'Test', 'Transaction mode used for processing orders. Production should be used for a live working cart. Test for testing.', '6', '0', now(), 'tep_cfg_select_option(array(\'Production\', \'Test\'), ')");
+        tep_db_query($common . ", set_function, use_function) values ('Set Order Status', 'MODULE_PAYMENT_SWPPARTPAY_ORDER_STATUS_ID', '0', 'Set the status of orders made with this payment module to this value (but see AutoDeliver option below).', '6', '0', now(), 'tep_cfg_pull_down_order_statuses(', 'tep_get_order_status_name')");
+            tep_db_query($common . ", set_function) values ('Auto Deliver Order', 'MODULE_PAYMENT_SWPPARTPAY_AUTODELIVER', '3', 'AutoDeliver: When the order status of an order is set to this value, it will be delivered to Svea. Use in conjunction with Set Order Status above to autodeliver orders.', '6', '0', now(), 'tep_cfg_pull_down_order_statuses(', 'tep_get_order_status_name')");    
+        tep_db_query($common . ", set_function) values ('Display SveaWebPay Images', 'MODULE_PAYMENT_SWPPARTPAY_IMAGES', 'True', 'Do you want to display SveaWebPay images when choosing between payment options?', '6', '0', now(), 'tep_cfg_select_option(array(\'True\', \'False\'), ')");
+        tep_db_query($common . ") values ('Ignore OT list', 'MODULE_PAYMENT_SWPPARTPAY_IGNORE','ot_pretotal', 'Ignore the following order total codes, separated by commas.','6','0',now())");
+        tep_db_query($common . ", set_function, use_function) values ('Payment Zone', 'MODULE_PAYMENT_SWPPARTPAY_ZONE', '0', 'If a zone is selected, only enable this payment method for that zone.', '6', '2', now(), 'tep_cfg_pull_down_zone_classes(', 'tep_get_zone_class_title')");
+        tep_db_query($common . ") values ('Sort order of display.', 'MODULE_PAYMENT_SWPPARTPAY_SORT_ORDER', '0', 'Sort order of display. Lowest is displayed first.', '6', '0', now())");    
+
+        // insert svea order table if not exists already
+        $res = tep_db_query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '". DB_DATABASE ."' AND table_name = 'svea_order';");
+        $fields = $res->fetch_assoc();
+        if( $fields["COUNT(*)"] != 1 ) {
+            $sql = "CREATE TABLE svea_order (orders_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, sveaorderid INT NOT NULL, createorder_object BLOB, invoice_id INT )";
+            tep_db_query( $sql );
+        }
+//
+//        // insert svea order statuses into table order_status, if not exists already
+//        $res = tep_db_query('SELECT COUNT(*) FROM ' . TABLE_ORDERS_STATUS . ' WHERE orders_status_name = "'. SVEA_ORDERSTATUS_CLOSED .'"');
+//        $fields = $res->fetch_assoc();
+//        if( $fields["COUNT(*)"] == 0 ) {
+//            $sql =  'INSERT INTO ' . TABLE_ORDERS_STATUS . ' (`orders_status_id`, `language_id`, `orders_status_name`) VALUES ' .
+//                    '(' . SVEA_ORDERSTATUS_DELIVERED_ID . ', 1, "' . SVEA_ORDERSTATUS_DELIVERED . '")'
+//            ;
+//            tep_db_query( $sql );
+//        }     
     }
 
     // standard uninstall function
@@ -693,6 +697,7 @@ class sveawebpay_partpay extends SveaOsCommerce {
             'MODULE_PAYMENT_SWPPARTPAY_MAX_DE',            
             'MODULE_PAYMENT_SWPPARTPAY_MODE',
             'MODULE_PAYMENT_SWPPARTPAY_ORDER_STATUS_ID',
+            'MODULE_PAYMENT_SWPPARTPAY_AUTODELIVER',
             'MODULE_PAYMENT_SWPPARTPAY_IMAGES',
             'MODULE_PAYMENT_SWPPARTPAY_IGNORE',
             'MODULE_PAYMENT_SWPPARTPAY_ZONE',
@@ -780,7 +785,61 @@ class sveawebpay_partpay extends SveaOsCommerce {
         }
     }
        
-/**
+    /**
+     * Given an orderID, reconstruct the svea order object and send deliver order request, return response
+     *
+     * @param int $oID -- $oID is the order id
+     * @return Svea\DeliverOrderResult
+     */
+    function doDeliverOrderPartPay($oID) {
+
+        // get osCommerce order from db
+        $order = new order($oID);
+        
+        // get svea order id reference returned in createOrder request result
+        $sveaOrderId = $this->getSveaOrderId( $oID );
+        $swp_order = $this->getSveaCreateOrderObject( $oID );
+
+        // Create and initialize order object, using either test or production configuration
+        $sveaConfig = (MODULE_PAYMENT_SWPPARTPAY_MODE === 'Test') ? new OsCommerceSveaConfigTest() : new OsCommerceSveaConfigProd();
+
+        $swp_deliverOrder = WebPay::deliverOrder( $sveaConfig )
+            ->setOrderId($sveaOrderId)
+        ;
+
+        // TODO create helper functions in integration package that transforms createOrder -> deliverOrder -> closeOrder etc. (see INTG-324)
+
+        // this really exploits CreateOrderRow objects having public properties...
+        // ~hack
+        $swp_deliverOrder->orderRows = $swp_order->orderRows;
+        $swp_deliverOrder->shippingFeeRows = $swp_order->shippingFeeRows;
+        $swp_deliverOrder->invoiceFeeRows = $swp_order->invoiceFeeRows;
+        $swp_deliverOrder->fixedDiscountRows = $swp_order->fixedDiscountRows;
+        $swp_deliverOrder->relativeDiscountRows = $swp_order->relativeDiscountRows;
+        $swp_deliverOrder->countryCode = $swp_order->countryCode;
+        // /hack
+
+//print_r( $swp_order );
+//print_r( $swp_deliverOrder );
+//die;
+        
+        $swp_deliverResponse = $swp_deliverOrder->deliverPaymentPlanOrder()->doRequest();
+
+        // if deliverorder accepted, update svea_order table with Svea invoiceId
+        if( $swp_deliverResponse->accepted == true )
+        {
+            tep_db_query(
+                "update svea_order " .
+                "set invoice_id = " . $swp_deliverResponse->contractNumber . " " .
+                "where orders_id = " . (int)$oID )
+            ;
+        }
+        // return deliver order response
+        return $swp_deliverResponse;
+    }    
+    
+    
+    /**
      * Returns the currency used for an partpay country. 
      */
     function getPartpayCurrency( $country ) 
