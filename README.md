@@ -1,5 +1,5 @@
 # osCommerce - Svea payment module
-## Version 5.0.0
+## Version 5.1.0
 * Tested with osCommerce 3.3.3.4
 * Requires PHP 5.3 or later (namespace support)
 
@@ -66,6 +66,10 @@ In this example we'll first configure the Svea invoice payment method, instructi
 
 * _Set Order Status_: The osCommerce order status given to orders after the customer has completed checkout.
 
+* _Auto Deliver Order_: Order invoices will be delivered (sent out) to the customer by Svea if an order's status is set to this status. If Set Order Status (above) matches this setting the order will be autodelivered upon creation, thus avoiding the need to manually deliver the order in the Svea Admin interface. Ask your Svea integration manager if unsure about this setting.
+
+* _Invoice Distribution Type_: If _Auto Deliver Order_ (above) is set to true, this setting must match the corresponding setting in Svea's admin interface. Ask your Svea integration manager if unsure.
+
 * _Display SveaWebPay Images_: Set to true if you wish to display the Svea payment method logos during checkout payment method selection.
 
 * _Ignore OT list_: if you experience problems with i.e. incompatible order total modules, the module name(s) may be entered here and will then be ignored by the invoice payment module when writing the request to Svea.
@@ -117,6 +121,8 @@ For the other Svea payment methods (payment plan, card payment and direct bank p
 * _Transaction mode_: Determines whether payments using this method go to Svea's test or production servers. Until you have been giving the go ahead by Svea, this should be set to Test. Then, in order to receive payments for production orders, this should be switched over to its Production setting.
 
 * _Set Order Status_: The osCommerce order status given to orders after the customer has completed checkout.
+
+* _Auto Deliver Order_: Order payment plan will be delivered (sent out) to the customer by Svea if an order's status is set to this status. If Set Order Status (above) matches this setting the order will be autodelivered upon creation, thus avoiding the need to manually deliver the order in the Svea Admin interface. Ask your Svea integration manager if unsure about this setting.
 
 * _Ignore OT list_: if you experience problems with i.e. incompatible order total modules, the module name(s) may be entered here and will then be ignored by the invoice payment module.
 
