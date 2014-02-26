@@ -1,0 +1,10 @@
+The info.json file contains a description of module capabilities and characteristics in json format.
+The purpose of this file is to provide descriptive data along with the module source. 
+This in turn enables accurate module descriptions on the Svea WebPay site, without the need for manual updates with each module release.
+
+Files:
+docs/info.json
+docs/info.readme
+
+Format:
+JSON as described in http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf

@@ -1,0 +1,12 @@
+{
+    "testInfoOpencart": {
+        "features": [
+            "product price widget",
+            "get address"
+        ],
+        "admin features": [
+            "test credit",
+            "test deliver"
+        ]
+    }
+}
