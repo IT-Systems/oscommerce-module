@@ -1,12 +1,12 @@
-{
-    "testInfoOpencart": {
-        "features": [
+{   "Svea WebPay osCommerce module": 
+    {   "features": [
             "product price widget",
-            "get address"
+            "get address widget"
         ],
         "admin features": [
-            "test credit",
-            "test deliver"
+            "credit invoice",
+            "cancel invoice",
+            "deliver invoice"
         ]
-    }
+    }       
 }

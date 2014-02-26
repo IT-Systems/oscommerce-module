@@ -7,4 +7,82 @@ docs/info.json
 docs/info.readme
 
 Format:
-JSON as described in http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf
+Data is presented as a JSON object (http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf):
+
+{"module name": {description object} }
+
+where the description object is
+{ "heading": [characteristics array], "heading2": [..] .. }
+
+An example of using the json data to generate a page containing a html table:
+
+Given an info.json file containing
+{   "module_name": "Svea WebPay ZenCart module"
+    "module_version": "4.3.0",
+    "module_features": {
+        "Svea module features": [
+            "Svea Product Price widget",
+            "Svea Get Address widget"
+        ],
+        "Svea admin capabilities": [
+            "Credit Invoice orders to Svea from ZenCart admin order view",
+            "Cancel Invoice orders to Svea from ZenCart admin order view",
+            "Deliver Invoice orders to Svea from ZenCart admin order view"
+            "Cancel Payment Plan orders to Svea from ZenCart admin order view"
+            "Deliver Payment Plan orders to Svea from ZenCart admin order view"
+        ],
+
+sätta order status
+
+        
+    }       
+}
+
+When the module description is accessed on the Svea Webpay Site
+
+Then a the module characteristics should be displayed in the following html page:
+<html>
+<head>
+<title>Svea WebPay ZenCart module</title>
+</head>
+<body>
+
+
+
+</body>
+</html>
+
+
+
+
+
+TABELL MED VILKA LÄNDER VI STÖDER
+
+Testat i Opencart 1.2 – 2.0
+
+Allmänt
+•	Stöd för kuponger
+•	Stöd för enstegskassa
+
+Faktura
+•	Skapa order
+•	Svea fakturaavgift
+•	Visa lägsta belopp att betala på fakturan som Widget på produktsida
+•	Autofakturera vid köp
+Funktioner från admin
+•	Kreditera
+•	Fakturera
+•	Makulera
+
+Delbetala
+•	Skapa order
+•	Välj kampanj i shop
+•	Visa kampanjer, med lägsta att betala per månad som widget på produktsida
+•	Autofakturera vid köp
+Funktioner från admin
+•	Faktuera
+Kort
+•	Redirect till certitrade kortsida
+Direktbank
+•	Val av bank i kassan
+•	Redirect direkt till vald bank
