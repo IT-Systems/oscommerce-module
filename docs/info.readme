@@ -9,64 +9,97 @@ docs/info.readme
 Format:
 Data is presented as a JSON object (http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf):
 
-{"module name": {description object} }
-
-where the description object is
-{ "heading": [characteristics array], "heading2": [..] .. }
-
 An example of using the json data to generate a page containing a html table:
 
-Given an info.json file containing
-{
+Given an info.json file containing the following data
+"{
    "module_name": "Svea WebPay ZenCart module",
    "module_version": "4.3.0",
-   "module_payment_method_capabilities": [
-        { "invoice": ["SE", "NO", "DK", "FI", "DE", "NL"] },
-        { "part_payment": ["SE", "NO", "DK", "FI", "DE", "NL"] },
-        { "direct_bank": ["SE", "NO", "DK", "FI", "DE", "NL"] },
-        { "card": ["SE", "NO", "DK", "FI", "DE", "NL"] }
-    ],   
+   "module_shop_version_support": [ "1.5.1", "1.3.9" ],
+   "module_additional_requirements": [ "PHP 5.3 or higher (namespace support)" ],
    "module_per_country_capabilities": [
         { "SE": [ { "payment_methods": ["invoice", "part payment", "direct bank transfer", "credit card"] } ] },
         { "NO": [ { "payment_methods": ["invoice", "part payment", "direct bank transfer", "credit card"] } ] },
         { "DK": [ { "payment_methods": ["invoice", "part payment", "direct bank transfer", "credit card"] } ] },
         { "FI": [ { "payment_methods": ["invoice", "part payment", "direct bank transfer", "credit card"] } ] },
         { "DE": [ { "payment_methods": ["invoice", "part payment", "direct bank transfer", "credit card"] } ] },
-        { "NL": [ { "payment_methods": ["invoice", "part payment", "direct bank transfer", "credit card"] } ] }
+        { "NL": [ { "payment_methods": ["invoice", "part payment", "direct bank transfer", "credit card"] } ] },
+        { "Other": [ { "payment_methods": ["direct bank transfer", "credit card"] } ] }
     ],
-   "module_per_country_limitations": [
-        { "NO": [ { "module_features": [ { "get address widget" : "not available for private customers" } ] } ] },
-        { "DE": [ { "module_features": [ { "get address widget" : "not available" } ] } ] },
-        { "NL": [ { "module_features": [ { "get address widget" : "not available" } ] } ] }
+    "module_per_country_limitations": [
+        { "NO": [ 
+            { "Svea Get Address widget" : "not available for private customers" } 
+        ] },
+        { "DE": [ 
+            { "Svea Get Address widget" : "not available" }, 
+            "Shop billing address not set to Svea invoice address until after checkout confirmation." 
+        ] },
+        { "NL": [ 
+            { "Svea Get Address widget" : "not available" }, 
+            "Shop billing address not set to Svea invoice address until after checkout confirmation." 
+        ] }
     ],
-    "module_features": [
-        { "Svea module features": [ "Svea Product Price widget", "Svea Get Address widget" ] },
-        { "Svea admin capabilities": [
+    "module_shop_feature_limitations": [
+        "When using built-in coupon made out to a fixed amount, and more than two different tax rates are present in order, the Zencart and Svea tax amount calculations may differ for invoice and partpayment orders."
+    ],
+    "module_svea_feature_support": [
+        { "svea_extra_capabilities": [ 
+            { "Svea Product Price widget" : "Widget displays lowest amount to pay on product page (using invoice or payment plan)." },
+            { "Svea Get Address widget" : "Widget fetches customer address data from i.e. customer social security number." }
+        ] },
+        { "svea_admin_feature_support": [
+            "AutoDeliver order to Svea on customer checkout confirmation",
             "Credit Invoice orders to Svea from ZenCart admin order view",
             "Cancel Invoice orders to Svea from ZenCart admin order view",
             "Deliver Invoice orders to Svea from ZenCart admin order view",
             "Cancel Payment Plan orders to Svea from ZenCart admin order view",
             "Deliver Payment Plan orders to Svea from ZenCart admin order view"
         ] }
+    ],
+    "module_shop_third_party_support": [
+        { "Frotz one-step checkout" : "compatible with ZenCart 1.5.1 only" },
+        { "Zorkmid coupon" : "compatible from version 0.89f and up" }
     ]
-}    
+}",
+When the module description for the ZenCart module is accessed on the Svea Webpay Site,
+And the data is fetched from the ZenCart github repositiory,
+Then the module characteristics should be displayed to the user in the following fashion:
+"Svea WebPay ZenCart module version 4.3.0
 
-When the module description is accessed on the Svea Webpay Site
+FUNCTIONALITY
+The following payment methods are supported by the module:
+[matrix showing country/payment methods available]
 
-Then a the module characteristics should be displayed in the following html page:
-<html>
-<head>
-<title>Svea WebPay ZenCart module</title>
-</head>
-<body>
+The Svea WebPay ZenCart module supports all built-in ZenCart functionality, unless noted under Limitations below.
 
+Additional features provided by Svea module:
+* Svea Product Price widget: Widget displays lowest amount to pay on product page (using invoice or payment plan).
+* Svea Get Address widget: Widget fetches customer address data from i.e. customer social security number.
 
+The following Svea admin functions are available through the ZenCart module:
+* AutoDeliver order to Svea on customer checkout confirmation
+* Credit Invoice orders to Svea from ZenCart admin order view
+* Cancel Invoice orders to Svea from ZenCart admin order view
+* Deliver Invoice orders to Svea from ZenCart admin order view
+* Cancel Payment Plan orders to Svea from ZenCart admin order view
+* Deliver Payment Plan orders to Svea from ZenCart admin order view
 
-</body>
-</html>
+LIMITATIONS:
+Norway: 
+* Svea Get Address widget not available for private customers
+Germany: 
+* Svea Get Address widget not available
+* Shop billing address not set to Svea invoice address until after checkout confirmation
+Netherlands: 
+* Svea Get Address widget not available
+* Shop billing address not set to Svea invoice address until after checkout confirmation
 
+When using built-in coupon made out to a fixed amount, and more than two different tax rates are present in order, the Zencart and Svea tax amount calculations may differ for invoice and partpayment orders.
 
-
+Third party support:
+Although every measure has been taken to ensure that third party extensions will work with the Svea ZenCart module, we're unable to guarantee compatibility, except as noted below:
+* Frotz one-step checkout: compatible with ZenCart 1.5.1 only
+* Zorkmid coupon: compatible from version 0.89f and up"
 
 
 TABELL MED VILKA LÄNDER VI STÖDER
@@ -80,12 +113,12 @@ Allmänt
 Faktura
 •	Skapa order
 •	Svea fakturaavgift
-•	Visa lägsta belopp att betala på fakturan som Widget på produktsida
-•	Autofakturera vid köp
+xx•	Visa lägsta belopp att betala på fakturan som Widget på produktsida
+xx•	Autofakturera vid köp
 Funktioner från admin
-•	Kreditera
-•	Fakturera
-•	Makulera
+xx•	Kreditera
+xx•	Fakturera
+xx•	Makulera
 
 Delbetala
 •	Skapa order
