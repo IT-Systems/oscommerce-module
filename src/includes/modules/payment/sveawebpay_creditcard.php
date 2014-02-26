@@ -13,7 +13,7 @@ class sveawebpay_creditcard extends SveaOsCommerce {
         global $order;
 
         $this->code = 'sveawebpay_creditcard';
-        $this->version = "5.0.0";
+        $this->version = "5.1.0";
         
         // used by card, directbank when posting form in checkout_confirmation.php
         $this->form_action_url = (MODULE_PAYMENT_SWPCREDITCARD_MODE == 'Test') ? Svea\SveaConfig::SWP_TEST_URL : Svea\SveaConfig::SWP_PROD_URL;

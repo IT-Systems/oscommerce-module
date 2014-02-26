@@ -14,7 +14,7 @@ class sveawebpay_invoice extends SveaOsCommerce {
         global $order;
 
         $this->code = 'sveawebpay_invoice';
-        $this->version = "5.0.0";
+        $this->version = "5.1.0";
 
         $this->title = MODULE_PAYMENT_SWPINVOICE_TEXT_TITLE;
         $this->description = MODULE_PAYMENT_SWPINVOICE_TEXT_DESCRIPTION;
@@ -502,8 +502,6 @@ class sveawebpay_invoice extends SveaOsCommerce {
         // send payment request to svea, receive response       
         try {
             $swp_response = $swp_order->useInvoicePayment()->doRequest();
-//$swp_response = $swp_order->useInvoicePayment()->prepareRequest();
-//print_r($swp_response ); die;
             }
         catch (Exception $e){  
             // hack together a fake response object containing the error & errormessage
@@ -553,26 +551,52 @@ class sveawebpay_invoice extends SveaOsCommerce {
 
     // if payment accepted, set addresses based on response, insert order into database
     function after_process() {
-        global $insert_id, $order, $db;
+        global $insert_id, $order;
 
         $new_order_id = $insert_id;  // $insert_id contains the new order orders_id
-        
+
         // retrieve response object from before_process()
-        $swp_response = unserialize($_SESSION["swp_response"]);
-     
-        // insert order into database
-        $customer_notification = (SEND_EMAILS == 'true') ? '1' : '0';               
+        $createOrderResponse = unserialize($_SESSION["swp_response"]);
+
+        // store create order object along with response sveaOrderId in db
         $sql_data_array = array(
-            'orders_id' => $new_order_id,                          
-            'orders_status_id' => $order->info['order_status'], 
-            'date_added' => 'now()', 
-            'customer_notified' => $customer_notification,
-            'comments' => 
-                'Accepted by Svea ' . date("Y-m-d G:i:s") . ' Security Number #: ' . $swp_response->sveaOrderId .
-                " ". $order->info['comments']
+            'orders_id' => $new_order_id,
+            'sveaorderid' => $createOrderResponse->sveaOrderId,
+            'createorder_object' => $_SESSION["swp_order"]      // session data is already serialized
         );
-        tep_db_perform(TABLE_ORDERS_STATUS_HISTORY, $sql_data_array);
-                                                 
+        tep_db_perform("svea_order", $sql_data_array);
+        
+        // if autodeliver order status matches the new order status, deliver the order
+        if( $this->getCurrentOrderStatus( $new_order_id ) == MODULE_PAYMENT_SWPINVOICE_AUTODELIVER )
+        {
+            $deliverResponse = $this->doDeliverOrderInvoice($new_order_id);
+            if( $deliverResponse->accepted == true )
+            {
+
+                $comment = 'Order AutoDelivered. (SveaOrderId: ' .$this->getSveaOrderId( $new_order_id ). ')';
+                //$this->insertOrdersStatus( $new_order_id, SVEA_ORDERSTATUS_DELIVERED_ID, $comment );
+                $sql_data_array = array(
+                    'orders_id' => $new_order_id,
+                    'orders_status_id' => SVEA_ORDERSTATUS_DELIVERED_ID,
+                    'date_added' => 'now()',
+                    'customer_notified' => 0,  // 0 for "no email" (open lock symbol) in order status history   //TODO use card SEND_MAIL behaviour
+                    'comments' => $comment
+                );
+                tep_db_perform(TABLE_ORDERS_STATUS_HISTORY, $sql_data_array);
+
+                tep_db_query(   "update " . TABLE_ORDERS . " " .
+                                "set orders_status = " . SVEA_ORDERSTATUS_DELIVERED_ID . " " .
+                                "where orders_id = " . $new_order_id
+                );
+            }
+            else
+            {
+                $comment =  'WARNING: AutoDeliver failed, status not changed. ' .
+                            'Error: ' . $deliverResponse->errormessage . ' (SveaOrderId: ' .$this->getSveaOrderId( $new_order_id ). ')';
+                $this->insertOrdersStatus( $new_order_id, $this->getCurrentOrderStatus( $new_order_id ), $comment );
+            }
+        }
+
         // clean up our session variables set during checkout   //$SESSION[swp_*
         unset($_SESSION['swp_order']);
         unset($_SESSION['swp_response']);
@@ -589,7 +613,6 @@ class sveawebpay_invoice extends SveaOsCommerce {
     
     // standard check if installed function
     function check() {
-        global $db;
         if (!isset($this->_check)) {
             $check_rs = tep_db_query("select configuration_value from " . TABLE_CONFIGURATION . " where configuration_key = 'MODULE_PAYMENT_SWPINVOICE_STATUS'");
             $this->_check = (tep_db_num_rows($check_rs) > 0);
@@ -621,10 +644,33 @@ class sveawebpay_invoice extends SveaOsCommerce {
         tep_db_query($common . ") values ('SveaWebPay Client no DE', 'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_DE', '', '', '6', '0', now())");
         tep_db_query($common . ", set_function) values ('Transaction Mode', 'MODULE_PAYMENT_SWPINVOICE_MODE', 'Test', 'Transaction mode used for processing orders. Production should be used for a live working cart. Test for testing.', '6', '0', now(), 'tep_cfg_select_option(array(\'Production\', \'Test\'), ')");
         tep_db_query($common . ", set_function, use_function) values ('Set Order Status', 'MODULE_PAYMENT_SWPINVOICE_ORDER_STATUS_ID', '0', 'Set the status of orders made with this payment module to this value', '6', '0', now(), 'tep_cfg_pull_down_order_statuses(', 'tep_get_order_status_name')");
+        
+        tep_db_query($common . ", set_function) values ('Auto Deliver Order', 'MODULE_PAYMENT_SWPINVOICE_AUTODELIVER', '3', 'AutoDeliver: When the order status of an order is set to this value, it will be delivered to Svea. Use in conjunction with Set Order Status above to autodeliver orders.', '6', '0', now(), 'tep_cfg_pull_down_order_statuses(', 'tep_get_order_status_name')");
+        tep_db_query($common . ", set_function) values ('Invoice Distribution type', 'MODULE_PAYMENT_SWPINVOICE_DISTRIBUTIONTYPE', 'Post', 'Deliver orders per Post or Email? NOTE: This must match your Svea admin settings or invoices may be non-delivered. Ask your Svea integration manager if unsure.', '6', '0', now(), 'tep_cfg_select_option(array(\'Post\', \'Email\'), ')");
+        
         tep_db_query($common . ", set_function) values ('Display SveaWebPay Images', 'MODULE_PAYMENT_SWPINVOICE_IMAGES', 'True', 'Do you want to display SveaWebPay images when choosing between payment options?', '6', '0', now(), 'tep_cfg_select_option(array(\'True\', \'False\'), ')");
         tep_db_query($common . ") values ('Ignore OT list', 'MODULE_PAYMENT_SWPINVOICE_IGNORE','ot_pretotal', 'Ignore the following order total codes, separated by commas.','6','0',now())");
         tep_db_query($common . ", set_function, use_function) values ('Payment Zone', 'MODULE_PAYMENT_SWPINVOICE_ZONE', '0', 'If a zone is selected, only enable this payment method for that zone.', '6', '2', now(), 'tep_cfg_pull_down_zone_classes(', 'tep_get_zone_class_title')");
         tep_db_query($common . ") values ('Sort order of display.', 'MODULE_PAYMENT_SWPINVOICE_SORT_ORDER', '0', 'Sort order of display. Lowest is displayed first.', '6', '0', now())");
+
+        // insert svea order table if not exists already
+        $res = tep_db_query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '". DB_DATABASE ."' AND table_name = 'svea_order';");
+        $fields = $res->fetch_assoc();
+        if( $fields["COUNT(*)"] != 1 ) {
+            $sql = "CREATE TABLE svea_order (orders_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, sveaorderid INT NOT NULL, createorder_object BLOB, invoice_id INT )";
+            tep_db_query( $sql );
+        }
+
+        // insert svea order statuses into table order_status, if not exists already
+        $res = tep_db_query('SELECT COUNT(*) FROM ' . TABLE_ORDERS_STATUS . ' WHERE orders_status_name = "'. SVEA_ORDERSTATUS_CLOSED .'"');
+        $fields = $res->fetch_assoc();
+        if( $fields["COUNT(*)"] == 0 ) {
+            $sql =  'INSERT INTO ' . TABLE_ORDERS_STATUS . ' (`orders_status_id`, `language_id`, `orders_status_name`) VALUES ' .
+                    '(' . SVEA_ORDERSTATUS_DELIVERED_ID . ', 1, "' . SVEA_ORDERSTATUS_DELIVERED . '")'
+            ;
+            tep_db_query( $sql );
+        }        
+        
     }
 
     // standard uninstall function
@@ -656,6 +702,10 @@ class sveawebpay_invoice extends SveaOsCommerce {
             'MODULE_PAYMENT_SWPINVOICE_CLIENTNO_DE',
             'MODULE_PAYMENT_SWPINVOICE_MODE',
             'MODULE_PAYMENT_SWPINVOICE_ORDER_STATUS_ID',
+            
+            'MODULE_PAYMENT_SWPINVOICE_AUTODELIVER',
+            'MODULE_PAYMENT_SWPINVOICE_DISTRIBUTIONTYPE',
+            
             'MODULE_PAYMENT_SWPINVOICE_IMAGES',
             'MODULE_PAYMENT_SWPINVOICE_IGNORE',
             'MODULE_PAYMENT_SWPINVOICE_ZONE',
@@ -733,6 +783,57 @@ class sveawebpay_invoice extends SveaOsCommerce {
         }
     } 
 
+
+    /**
+     * Given an orderID, reconstruct the svea order object and send deliver order request, return response
+     *
+     * @param int $oID -- $oID is the order id
+     * @return Svea\DeliverOrderResult
+     */
+    function doDeliverOrderInvoice($oID) {
+
+        // get osCommerce order from db
+        $order = new order($oID);
+        
+        // get svea order id reference returned in createOrder request result
+        $sveaOrderId = $this->getSveaOrderId( $oID );
+        $swp_order = $this->getSveaCreateOrderObject( $oID );
+
+        // Create and initialize order object, using either test or production configuration
+        $sveaConfig = (MODULE_PAYMENT_SWPINVOICE_MODE === 'Test') ? new OsCommerceSveaConfigTest() : new OsCommerceSveaConfigProd();
+
+        $swp_deliverOrder = WebPay::deliverOrder( $sveaConfig )
+            ->setInvoiceDistributionType( MODULE_PAYMENT_SWPINVOICE_DISTRIBUTIONTYPE )
+            ->setOrderId($sveaOrderId)
+        ;
+
+        // TODO create helper functions in integration package that transforms createOrder -> deliverOrder -> closeOrder etc. (see INTG-324)
+
+        // this really exploits CreateOrderRow objects having public properties...
+        // ~hack
+        $swp_deliverOrder->orderRows = $swp_order->orderRows;
+        $swp_deliverOrder->shippingFeeRows = $swp_order->shippingFeeRows;
+        $swp_deliverOrder->invoiceFeeRows = $swp_order->invoiceFeeRows;
+        $swp_deliverOrder->fixedDiscountRows = $swp_order->fixedDiscountRows;
+        $swp_deliverOrder->relativeDiscountRows = $swp_order->relativeDiscountRows;
+        $swp_deliverOrder->countryCode = $swp_order->countryCode;
+        // /hack
+   
+        $swp_deliverResponse = $swp_deliverOrder->deliverInvoiceOrder()->doRequest();
+
+        // if deliverorder accepted, update svea_order table with Svea invoiceId
+        if( $swp_deliverResponse->accepted == true )
+        {
+            tep_db_query(
+                "update svea_order " .
+                "set invoice_id = " . $swp_deliverResponse->invoiceId . " " .
+                "where orders_id = " . (int)$oID )
+            ;
+        }
+        // return deliver order response
+        return $swp_deliverResponse;
+    }    
+    
     /**
      * Returns the currency used for an invoice country. 
      */
