@@ -17,26 +17,39 @@ where the description object is
 An example of using the json data to generate a page containing a html table:
 
 Given an info.json file containing
-{   "module_name": "Svea WebPay ZenCart module"
-    "module_version": "4.3.0",
-    "module_features": {
-        "Svea module features": [
-            "Svea Product Price widget",
-            "Svea Get Address widget"
-        ],
-        "Svea admin capabilities": [
+{
+   "module_name": "Svea WebPay ZenCart module",
+   "module_version": "4.3.0",
+   "module_payment_method_capabilities": [
+        { "invoice": ["SE", "NO", "DK", "FI", "DE", "NL"] },
+        { "part_payment": ["SE", "NO", "DK", "FI", "DE", "NL"] },
+        { "direct_bank": ["SE", "NO", "DK", "FI", "DE", "NL"] },
+        { "card": ["SE", "NO", "DK", "FI", "DE", "NL"] }
+    ],   
+   "module_per_country_capabilities": [
+        { "SE": [ { "payment_methods": ["invoice", "part payment", "direct bank transfer", "credit card"] } ] },
+        { "NO": [ { "payment_methods": ["invoice", "part payment", "direct bank transfer", "credit card"] } ] },
+        { "DK": [ { "payment_methods": ["invoice", "part payment", "direct bank transfer", "credit card"] } ] },
+        { "FI": [ { "payment_methods": ["invoice", "part payment", "direct bank transfer", "credit card"] } ] },
+        { "DE": [ { "payment_methods": ["invoice", "part payment", "direct bank transfer", "credit card"] } ] },
+        { "NL": [ { "payment_methods": ["invoice", "part payment", "direct bank transfer", "credit card"] } ] }
+    ],
+   "module_per_country_limitations": [
+        { "NO": [ { "module_features": [ { "get address widget" : "not available for private customers" } ] } ] },
+        { "DE": [ { "module_features": [ { "get address widget" : "not available" } ] } ] },
+        { "NL": [ { "module_features": [ { "get address widget" : "not available" } ] } ] }
+    ],
+    "module_features": [
+        { "Svea module features": [ "Svea Product Price widget", "Svea Get Address widget" ] },
+        { "Svea admin capabilities": [
             "Credit Invoice orders to Svea from ZenCart admin order view",
             "Cancel Invoice orders to Svea from ZenCart admin order view",
-            "Deliver Invoice orders to Svea from ZenCart admin order view"
-            "Cancel Payment Plan orders to Svea from ZenCart admin order view"
+            "Deliver Invoice orders to Svea from ZenCart admin order view",
+            "Cancel Payment Plan orders to Svea from ZenCart admin order view",
             "Deliver Payment Plan orders to Svea from ZenCart admin order view"
-        ],
-
-sätta order status
-
-        
-    }       
-}
+        ] }
+    ]
+}    
 
 When the module description is accessed on the Svea Webpay Site
 
