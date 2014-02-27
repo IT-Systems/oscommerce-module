@@ -1,13 +1,13 @@
 <?php
 /*
-SVEAWEBPAY PAYMENT MODULE FOR osCOMMERCE 2.3
------------------------------------------------
-Version 4.0
-*/
-define('MODULE_PAYMENT_SWPCREDITCARD_TEXT_TITLE','SVEA Korttimaksu');
-define('MODULE_PAYMENT_SWPCREDITCARD_TEXT_DESCRIPTION','SveaWebPay korttimaksu - ver 4.0');
-define('MODULE_PAYMENT_SWPCREDITCARD_HANDLING_APPLIES','tilaukseen lisätään toimitusmaksu');
-define('ERROR_ALLOWED_CURRENCIES_NOT_DEFINED','Yksi tai useampi sallituista valuutoista ei ole määritelty. Nämä on määriteltävä käyttämään SveaWebPay hosted solutionia. Kirjaudu admin paneeliin ja varmista että.');
+ * osCommerce 
+ * Svea Card
+ * FI 5.0
+ */
+define('MODULE_PAYMENT_SWPCREDITCARD_TEXT_TITLE','Svea Korttimaksu');
+define('MODULE_PAYMENT_SWPCREDITCARD_TEXT_DESCRIPTION','Svea korttimaksu - ver 5.0');
+
+define('ERROR_ALLOWED_CURRENCIES_NOT_DEFINED','Yksi tai useampi sallituista valuutoista ei ole määritelty. Nämä on määriteltävä käyttämään Svea Korttimaksu. Kirjaudu admin paneeliin ja varmista että.');
 define('ERROR_DEFAULT_CURRENCY_NOT_ALLOWED','Oletusvaluuta ei ole sallitussa luettelossa. Kirjaudu admin paneeliin ja varmista että oletusvaluutta kuuluu niihin sallituihin maksu-moduulissa.');  
 define('ERROR_MESSAGE_PAYMENT_FAILED','Maksu epäonnistui');  
 

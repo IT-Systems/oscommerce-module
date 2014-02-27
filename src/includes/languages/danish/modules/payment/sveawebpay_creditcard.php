@@ -1,13 +1,13 @@
 <?php
 /*
-SVEAWEBPAY PAYMENT MODULE FOR osCOMMERCE 2.3
------------------------------------------------
-Version 4.0
-*/
-define('MODULE_PAYMENT_SWPCREDITCARD_TEXT_TITLE','SVEA Kortbetaling');
-define('MODULE_PAYMENT_SWPCREDITCARD_TEXT_DESCRIPTION','SveaWebPay Kortbetaling Hosted - vers. 4.0');
-define('MODULE_PAYMENT_SWPCREDITCARD_HANDLING_APPLIES','Et admininistrationsgebyr på %s vil blive lagt på ordren ved kassen.');
-define('ERROR_ALLOWED_CURRENCIES_NOT_DEFINED','En eller flere af de tilladte valutaer er ikke præciserede. Dette skal ske, førend SweaWebPay Hosted Solution kan benyttes. Login på dit admin panel og tjek at alle valutaer er listede som tilladt i betalingsmodulet, og at de rigtige vekselkurser er indstillede korrekt.');
+ * osCommerce 
+ * Svea Card
+ * DK 5.0
+ */
+define('MODULE_PAYMENT_SWPCREDITCARD_TEXT_TITLE','Svea Kort');
+define('MODULE_PAYMENT_SWPCREDITCARD_TEXT_DESCRIPTION','Svea Kort - version 5.0');
+
+define('ERROR_ALLOWED_CURRENCIES_NOT_DEFINED','En eller flere af de tilladte valutaer er ikke præciserede. Dette skal ske, førend Svea Kort kan benyttes. Login på dit admin panel og tjek at alle valutaer er listede som tilladt i betalingsmodulet, og at de rigtige vekselkurser er indstillede korrekt.');
 define('ERROR_DEFAULT_CURRENCY_NOT_ALLOWED','Standardvalutaen er ikke blandt de listede som tilladte. Login i dit admin panel og tjek, at standardvalutaen er på den tilladte liste i betalingsmodulet.');  
 define('ERROR_MESSAGE_PAYMENT_FAILED','Betaling mislykkedes.');  
 
