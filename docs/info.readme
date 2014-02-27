@@ -7,11 +7,19 @@ docs/info.json
 docs/info.readme
 
 Format:
-Data is presented as a JSON object (http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf):
+Module ata is presented as a JSON object (http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf)
 
 An example of using the json data to generate a page containing a html table:
 
-Given an info.json file containing the following data
+Feature: Display Svea payment module information 
+    As a Svea module developer,
+    I wish to specify the module info in a way that it may be harvested and used to populate the module info on the Svea WebPay website, 
+    So that the module information on the site always reflects the functionality of the latest master branch on the github module repository.
+    
+Scenario: Display information about the Svea ZenCart module
+
+Given the file https://github.com/sveawebpay/zencart-module/blob/develop/docs/info.json containing the following data
+
 "{
    "module_name": "Svea WebPay ZenCart module",
    "module_version": "4.3.0",
@@ -24,6 +32,13 @@ Given an info.json file containing the following data
                 "part payment", 
                 "direct bank transfer", 
                 "credit card"
+            ] },
+            { "bank_transfer_banks_supported": [ 
+                "Danske Bank",
+                "Nordea",
+                "SEB",
+                "Handelsbanken",
+                "Swedbank"
             ] }
         ] },
         { "NO": [ 
@@ -33,6 +48,9 @@ Given an info.json file containing the following data
                 "direct bank transfer", 
                 "credit card"
             ] },
+            { "bank_transfer_banks_supported": [ 
+                "BankAxess" 
+            ] }, 
             { "svea_limitations": [ 
                 { "Svea Get Address widget" : "not available for private customers" }
             ] },
@@ -44,7 +62,6 @@ Given an info.json file containing the following data
             { "payment_methods": [
                 "invoice", 
                 "part payment", 
-                "direct bank transfer", 
                 "credit card"
             ] }
         ] },
@@ -54,13 +71,15 @@ Given an info.json file containing the following data
                 "part payment", 
                 "direct bank transfer", 
                 "credit card"
-            ] }        
+            ] },     
+            { "bank_transfer_banks_supported": [ 
+                "OP-Pohjola" 
+            ] }   
         ] },
         { "DE": [ 
             { "payment_methods": [
                 "invoice", 
                 "part payment", 
-                "direct bank transfer", 
                 "credit card"
             ] },            
             { "svea_limitations": [ 
@@ -71,7 +90,6 @@ Given an info.json file containing the following data
             { "payment_methods": [
                 "invoice", 
                 "part payment", 
-                "direct bank transfer", 
                 "credit card"
             ] },
             { "svea_limitations": [ 
@@ -80,7 +98,6 @@ Given an info.json file containing the following data
         ] },
         { "Other": [ 
             { "payment_methods": [
-                "direct bank transfer", 
                 "credit card"
             ] }        
         ] }
@@ -88,17 +105,32 @@ Given an info.json file containing the following data
     "module_per_country_limitations": [
         { "DE": [ 
             { "Svea Get Address widget" : "not available" }, 
-            "Shop billing address not set to Svea invoice address until after checkout confirmation." 
+            { "Information" : "Shop billing address not set to Svea invoice address until after checkout confirmation." }
         ] },
         { "NL": [ 
             { "Svea Get Address widget" : "not available" }, 
-            "Shop billing address not set to Svea invoice address until after checkout confirmation." 
+            { "Information" : "Shop billing address not set to Svea invoice address until after checkout confirmation." }
         ] }
     ],
-    "module_shop_feature_limitations": [
-        "When using built-in coupon made out to a fixed amount, and more than two different tax rates are present in order, the Zencart and Svea tax amount calculations may differ for invoice and partpayment orders."
-    ],
     "module_svea_feature_support": [
+        { "payment_method_capabilities": [
+            { "invoice": [
+                { "order flow" : "val i kassa->WS-EU->stannar i kassa" },
+                { "note": "When using built-in coupon made out to a fixed amount, and more than two different tax rates are present in order, the Zencart and Svea tax amount calculations may differ for invoice and partpayment orders." }
+            ] },
+            { "payment plan": [
+                { "order flow" : "val i kassa->WS-EU->stannar i kassa"  },
+                { "note": "When using built-in coupon made out to a fixed amount, and more than two different tax rates are present in order, the Zencart and Svea tax amount calculations may differ for invoice and partpayment orders." }
+            ] },
+            { "direct bank": [
+                { "order flow" : "shop->redirect->PP->bank->shop"  },
+                { "redirect": "Direct bank transfers redirect to the chosen bank to complete the transaction, then returns to the shop." }
+            ] },
+            { "credit card": [
+                { "order flow" : "shop->redirect->certitrade->shop" },
+                { "redirect": "Credit card transactions redirect to Certitrade, collect card data/3D-secure credentials, then returns to the shop." }
+            ] }
+        ] },
         { "svea_extra_capabilities": [ 
             { "Svea Product Price widget" : "Widget displays lowest amount to pay on product page (using invoice or payment plan)." },
             { "Svea Get Address widget" : "Widget fetches customer address data from i.e. customer social security number." }
@@ -117,14 +149,32 @@ Given an info.json file containing the following data
         { "Zorkmid coupon" : "compatible from version 0.89f and up" }
     ]
 }",
+
 When the module description for the ZenCart module is accessed on the Svea Webpay Site,
 And the data is fetched from the ZenCart github repositiory,
 Then the module characteristics should be displayed to the user in the following fashion:
+
 "Svea WebPay ZenCart module version 4.3.0
 
 FUNCTIONALITY
 The following payment methods are supported by the module:
 [matrix showing country/payment methods available]
+
+Invoice
+* order flow: "val i kassa->WS-EU->stannar i kassa"
+* note: "When using built-in coupon made out to a fixed amount, and more than two different tax rates are present in order, the Zencart and Svea tax amount calculations may differ for invoice and partpayment orders.
+
+Payment plan
+* order flow: "val i kassa->WS-EU->stannar i kassa"
+* note: "When using built-in coupon made out to a fixed amount, and more than two different tax rates are present in order, the Zencart and Svea tax amount calculations may differ for invoice and partpayment orders.
+
+Direct bank:
+* order flow: "shop->redirect->PP->bank->shop"
+* redirect: "Direct bank transfers redirect to the chosen bank to complete the transaction, then returns to the shop."
+
+Credit card": 
+* order flow : "shop->redirect->certitrade->shop"
+* redirect: "Credit card transactions redirect to Certitrade, collect card data/3D-secure credentials, then returns to the shop." }
 
 The Svea WebPay ZenCart module supports all built-in ZenCart functionality, unless noted under Limitations below.
 
@@ -150,41 +200,11 @@ Netherlands:
 * Svea Get Address widget not available
 * Shop billing address not set to Svea invoice address until after checkout confirmation
 
-When using built-in coupon made out to a fixed amount, and more than two different tax rates are present in order, the Zencart and Svea tax amount calculations may differ for invoice and partpayment orders.
+ADDITIONAL INFORMATION:
+* Credit card transactions redirects to Certitrade to collect card data and other credentials, then returns to the shop.
+* Direct bank transfers redirects to the chosen bank to complete the transaction, then returns to the shop.
 
-Third party support:
+THIRD PARTY EXTENSIONS SUPPORT:
 Although every measure has been taken to ensure that third party extensions will work with the Svea ZenCart module, we're unable to guarantee compatibility, except as noted below:
 * Frotz one-step checkout: compatible with ZenCart 1.5.1 only
 * Zorkmid coupon: compatible from version 0.89f and up"
-
-
-TABELL MED VILKA LÄNDER VI STÖDER
-
-Testat i Opencart 1.2 – 2.0
-
-Allmänt
-•	Stöd för kuponger
-•	Stöd för enstegskassa
-
-Faktura
-•	Skapa order
-•	Svea fakturaavgift
-xx•	Visa lägsta belopp att betala på fakturan som Widget på produktsida
-xx•	Autofakturera vid köp
-Funktioner från admin
-xx•	Kreditera
-xx•	Fakturera
-xx•	Makulera
-
-Delbetala
-•	Skapa order
-•	Välj kampanj i shop
-•	Visa kampanjer, med lägsta att betala per månad som widget på produktsida
-•	Autofakturera vid köp
-Funktioner från admin
-•	Faktuera
-Kort
-•	Redirect till certitrade kortsida
-Direktbank
-•	Val av bank i kassan
-•	Redirect direkt till vald bank
