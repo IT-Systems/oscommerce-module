@@ -42,11 +42,11 @@ class sveawebpay_partpay extends SveaOsCommerce {
         // do not use this module if the geograhical zone is set and we are not in it
         if (($this->enabled == true) && ((int) MODULE_PAYMENT_SWPPARTPAY_ZONE > 0)) {
             $check_flag = false;
-            $check_query = tep_db_query("select zone_id from " . TABLE_ZONES_TO_GEO_ZONES . 
-                " where geo_zone_id = '" . MODULE_PAYMENT_SWPPARTPAY_ZONE . "' and zone_country_id = '" . 
+            $check_query = tep_db_query("select zone_id from " . TABLE_ZONES_TO_GEO_ZONES .
+                " where geo_zone_id = '" . MODULE_PAYMENT_SWPPARTPAY_ZONE . "' and zone_country_id = '" .
                 $order->billing['country']['id'] . "' order by zone_id");
 
-            while( $row = mysqli_fetch_assoc( $check_query ) ) {                
+            while( $row = mysqli_fetch_assoc( $check_query ) ) {
                 if ($row['zone_id'] < 1) {
                     $check_flag = true;
                     break;
@@ -88,11 +88,11 @@ class sveawebpay_partpay extends SveaOsCommerce {
         // add svea partpay image file
         if ($this->display_images) {
             $fields[] = array(
-                'title' => '<img src=images/Svea/SVEASPLITEU_'.$order->customer['country']['iso_code_2'].'.png />', 
+                'title' => '<img src=images/Svea/SVEASPLITEU_'.$order->customer['country']['iso_code_2'].'.png />',
                 'field' => ''
-            );              
+            );
         }
-       
+
         // catch and display error messages raised when i.e. payment request from before_process() below turns out not accepted
         if (isset($_REQUEST['payment_error']) && $_REQUEST['payment_error'] == 'sveawebpay_partpay') {
             $fields[] = array('title' => '<span style="color:red">' . $_SESSION['SWP_ERROR'] . '</span>', 'field' => '');
@@ -159,7 +159,7 @@ class sveawebpay_partpay extends SveaOsCommerce {
                 $years .= "<option value='$y' $selected>$y</option>";
             }
             $birthYear = "<select name='sveaBirthYearPP' id='sveaBirthYearPP'>$years</select>";
-            
+
             //Months to 12
             $months = "";
             for($m = 1; $m <= 12; $m++){
@@ -170,7 +170,7 @@ class sveawebpay_partpay extends SveaOsCommerce {
                 $months .= "<option value='$val'>$m</option>";
             }
             $birthMonth = "<select name='sveaBirthMonthPP' id='sveaBirthMonthPP'>$months</select>";
-            
+
             //Days, to 31
             $days = "";
             for($d = 1; $d <= 31; $d++){
@@ -182,7 +182,7 @@ class sveawebpay_partpay extends SveaOsCommerce {
                 $days .= "<option value='$val'>$d</option>";
             }
             $birthDay = "<select name='sveaBirthDayPP' id='sveaBirthDayPP'>$days</select>";
-            
+
             $sveaBirthDateDivPP = '<div id="sveaBirthDate_divPP" >' .
                                     '<label for="sveaBirthYearPP">' . FORM_TEXT_BIRTHDATE . '</label><br />' .
                                     $birthYear . $birthMonth . $birthDay .
@@ -233,7 +233,7 @@ class sveawebpay_partpay extends SveaOsCommerce {
             $maxValue = 50000;
                 break;
         }
-        
+
         // no campaign for this amount?
         if(($minValue != '' && $order->info['total'] < $minValue) || ($maxValue != '' && $order->info['total'] > $maxValue))
         {
@@ -243,12 +243,12 @@ class sveawebpay_partpay extends SveaOsCommerce {
         {
             // inform customer of initial fee here
             $sveaInitialFee = '<br /><div>' . sprintf( FORM_TEXT_PARTPAY_FEE).'</div>';
-            
+
             if($order->billing['country']['iso_code_2'] == "SE" || $order->billing['country']['iso_code_2'] == "DK"){
                   $sveaSubmitPaymentOptions = '<button id="sveaSubmitPaymentOptions" type="button">'.FORM_TEXT_GET_ADDRESS.'</button><br />';
             }
              // create and add the field to be shown by our js when we select Payment Plan payment method
-            $sveaField =    
+            $sveaField =
                         '<div id="sveaPartPayField" style="display:none">' .
                             $sveaSSNPP .              //  SE, DK, NO
                             $sveaSSNFIPP .            //  FI, no getAddresses
@@ -282,21 +282,21 @@ class sveawebpay_partpay extends SveaOsCommerce {
         {
             $getAddressesResponse = unserialize($_SESSION['sveaGetAddressesResponse']);
             unset($_SESSION['sveaGetAddressesResponse']);
-         
+
             // set zencart billing address to invoice address from getAddresses response
             foreach($getAddressesResponse->customerIdentity as $asAddress ) // all GetAddressIdentity objects
             {
-                
+
                 if( $asAddress->addressSelector == $_POST['sveaAddressSelectorPP'] ) // write the selected GetAddressIdentity
                 {
                     if( $_POST['sveaIsCompany'] == 'false' ) // is individual?
-                    {    
+                    {
                         $order->billing['firstname'] = $asAddress->firstName;
                         $order->billing['lastname'] = $asAddress->lastName;
                         $order->billing['company'] = "";
                     }
                     elseif( $_POST['sveaIsCompany'] == 'true' ) // is company?
-                    {       
+                    {
                         $order->billing['company'] = $asAddress->fullName;
                         $order->billing['firstname'] = $asAddress->firstName;
                         $order->billing['lastname'] = $asAddress->lastName;
@@ -311,32 +311,32 @@ class sveawebpay_partpay extends SveaOsCommerce {
                     $order->billing['suburb'] =  $asAddress->coAddress;
                     $order->billing['city'] = $asAddress->locality;
                     $order->billing['postcode'] = $asAddress->zipCode;
-                           
+
                     $order->billing['country']['title'] = $this->getCountryName( $getAddressesResponse->country );  // other fields not set
                 }
             }
-        }    
-        
+        }
+
         $customer_country = $order->customer['country']['iso_code_2'];
-        
+
         // did the customer have a different currency selected than the invoice country currency?
         if( $_SESSION['currency'] != $this->getPartpayCurrency( $customer_country ) )
-        {            
+        {
             // set shop currency to the selected payment method currency
             $order->info['currency'] = $this->getPartpayCurrency( $customer_country );
             $_SESSION['currency'] = $order->info['currency'];
 
             // redirect to update order_totals to new currency, making sure to preserve post data
-            $_SESSION['sveapostdata'] = $_POST; 
-            tep_redirect(tep_href_link(FILENAME_CHECKOUT_CONFIRMATION));    // redirect to update order_totals to new currency               
+            $_SESSION['sveapostdata'] = $_POST;
+            tep_redirect(tep_href_link(FILENAME_CHECKOUT_CONFIRMATION));    // redirect to update order_totals to new currency
         }
-        
+
         if( isset($_SESSION['sveapostdata']) )
         {
             $_POST = array_merge( $_POST, $_SESSION['sveapostdata'] );
             unset( $_SESSION['sveapostdata'] );
-        }        
-        
+        }
+
         return false;
     }
 
@@ -379,7 +379,7 @@ class sveawebpay_partpay extends SveaOsCommerce {
         $user_language = $this->getLanguage();
 
         $currency = $order->info['currency'];
-        
+
         // Create and initialize order object, using either test or production configuration
         $sveaConfig = (MODULE_PAYMENT_SWPPARTPAY_MODE === 'Test') ? new OsCommerceSveaConfigTest() : new OsCommerceSveaConfigProd();
 
@@ -392,10 +392,10 @@ class sveawebpay_partpay extends SveaOsCommerce {
 
         // create product order rows from each item in cart
         $swp_order = $this->parseOrderProducts( $order->products, $swp_order );
-        
+
         // creates non-item order rows from Order Total entries
         $swp_order = $this->parseOrderTotals( $this->getOrderTotals(), $swp_order );
- 
+
         // customer is always private individual with partpay
 
         // create individual customer object
@@ -406,7 +406,7 @@ class sveawebpay_partpay extends SveaOsCommerce {
 
         // set individual customer SSN
         if( ($user_country == 'SE') ||
-            ($user_country == 'NO') || 
+            ($user_country == 'NO') ||
            ($user_country == 'DK') )
         {
             $swp_customer->setNationalIdNumber( $post_sveaSSN );
@@ -435,13 +435,13 @@ class sveawebpay_partpay extends SveaOsCommerce {
         {
             $myStreetAddress = Svea\Helper::splitStreetAddress( $order->billing['street_address'] ); // Split street address and house no
         }
-        else // other countries disregard housenumber field, so put entire address in streetname field     
+        else // other countries disregard housenumber field, so put entire address in streetname field
         {
             $myStreetAddress[0] = $order->billing['street_address'];
             $myStreetAddress[1] = $order->billing['street_address'];
             $myStreetAddress[2] = "";
         }
-            
+
         // set common fields
         $swp_customer
             ->setStreetAddress( $myStreetAddress[1], $myStreetAddress[2] )  // street, housenumber
@@ -480,7 +480,7 @@ class sveawebpay_partpay extends SveaOsCommerce {
         try {
             $swp_response = $swp_order->usePaymentPlanPayment($_SESSION['sveaPaymentOptionsPP'])->doRequest();
         }
-        catch (Exception $e){  
+        catch (Exception $e){
             // hack together a fake response object containing the error & errormessage
             $swp_response = (object) array( "accepted" => false, "resultcode" => 1000, "errormessage" => $e->getMessage() ); //new "error" 1000
         }
@@ -539,13 +539,13 @@ class sveawebpay_partpay extends SveaOsCommerce {
             'createorder_object' => $_SESSION["swp_order"]      // session data is already serialized
         );
         tep_db_perform("svea_order", $sql_data_array);
-        
+
         // if autodeliver order status matches the new order status, deliver the order
         if( $this->getCurrentOrderStatus( $new_order_id ) == MODULE_PAYMENT_SWPPARTPAY_AUTODELIVER )
         {
             $deliverResponse = $this->doDeliverOrderPartPay($new_order_id);
             if( $deliverResponse->accepted == true )
-            {            
+            {
                 $comment = 'Order AutoDelivered. (SveaOrderId: ' .$this->getSveaOrderId( $new_order_id ). ')';
                 //$this->insertOrdersStatus( $new_order_id, SVEA_ORDERSTATUS_DELIVERED_ID, $comment );
                 $sql_data_array = array(
@@ -569,7 +569,7 @@ class sveawebpay_partpay extends SveaOsCommerce {
                 $this->insertOrdersStatus( $new_order_id, $this->getCurrentOrderStatus( $new_order_id ), $comment );
             }
         }
-        
+
         // clean up our session variables set during checkout   //$SESSION[swp_*
         unset($_SESSION['swp_order']);
         unset($_SESSION['swp_response']);
@@ -630,11 +630,11 @@ class sveawebpay_partpay extends SveaOsCommerce {
         tep_db_query($common . ") values ('Max amount for DE in EUR', 'MODULE_PAYMENT_SWPPARTPAY_MAX_DE', '', 'The maximum amount for use of this payment. Check with your Svea campaign rules. Ask your Svea integration manager if unsure.', '6', '0', now())");
         tep_db_query($common . ", set_function) values ('Transaction Mode', 'MODULE_PAYMENT_SWPPARTPAY_MODE', 'Test', 'Transaction mode used for processing orders. Production should be used for a live working cart. Test for testing.', '6', '0', now(), 'tep_cfg_select_option(array(\'Production\', \'Test\'), ')");
         tep_db_query($common . ", set_function, use_function) values ('Set Order Status', 'MODULE_PAYMENT_SWPPARTPAY_ORDER_STATUS_ID', '0', 'Set the status of orders made with this payment module to this value (but see AutoDeliver option below).', '6', '0', now(), 'tep_cfg_pull_down_order_statuses(', 'tep_get_order_status_name')");
-            tep_db_query($common . ", set_function) values ('Auto Deliver Order', 'MODULE_PAYMENT_SWPPARTPAY_AUTODELIVER', '3', 'AutoDeliver: When the order status of an order is set to this value, it will be delivered to Svea. Use in conjunction with Set Order Status above to autodeliver orders.', '6', '0', now(), 'tep_cfg_pull_down_order_statuses(', 'tep_get_order_status_name')");    
+            tep_db_query($common . ", set_function) values ('Auto Deliver Order', 'MODULE_PAYMENT_SWPPARTPAY_AUTODELIVER', '3', 'AutoDeliver: When the order status of an order is set to this value, it will be delivered to Svea. Use in conjunction with Set Order Status above to autodeliver orders.', '6', '0', now(), 'tep_cfg_pull_down_order_statuses(', 'tep_get_order_status_name')");
         tep_db_query($common . ", set_function) values ('Display SveaWebPay Images', 'MODULE_PAYMENT_SWPPARTPAY_IMAGES', 'True', 'Do you want to display SveaWebPay images when choosing between payment options?', '6', '0', now(), 'tep_cfg_select_option(array(\'True\', \'False\'), ')");
         tep_db_query($common . ") values ('Ignore OT list', 'MODULE_PAYMENT_SWPPARTPAY_IGNORE','ot_pretotal', 'Ignore the following order total codes, separated by commas.','6','0',now())");
         tep_db_query($common . ", set_function, use_function) values ('Payment Zone', 'MODULE_PAYMENT_SWPPARTPAY_ZONE', '0', 'If a zone is selected, only enable this payment method for that zone.', '6', '2', now(), 'tep_cfg_pull_down_zone_classes(', 'tep_get_zone_class_title')");
-        tep_db_query($common . ") values ('Sort order of display.', 'MODULE_PAYMENT_SWPPARTPAY_SORT_ORDER', '0', 'Sort order of display. Lowest is displayed first.', '6', '0', now())");    
+        tep_db_query($common . ") values ('Sort order of display.', 'MODULE_PAYMENT_SWPPARTPAY_SORT_ORDER', '0', 'Sort order of display. Lowest is displayed first.', '6', '0', now())");
 
         // insert svea order table if not exists already
         $res = tep_db_query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '". DB_DATABASE ."' AND table_name = 'svea_order';");
@@ -652,13 +652,13 @@ class sveawebpay_partpay extends SveaOsCommerce {
 //                    '(' . SVEA_ORDERSTATUS_DELIVERED_ID . ', 1, "' . SVEA_ORDERSTATUS_DELIVERED . '")'
 //            ;
 //            tep_db_query( $sql );
-//        }     
+//        }
     }
 
     // standard uninstall function
     function remove() {
-        tep_db_query("delete from " . TABLE_CONFIGURATION . " where configuration_key in ('" . implode("', '", $this->keys()) . "')");       
-        // we don't delete svea_order tables, as data may be needed by other payment modules and to admin orders etc.      
+        tep_db_query("delete from " . TABLE_CONFIGURATION . " where configuration_key in ('" . implode("', '", $this->keys()) . "')");
+        // we don't delete svea_order tables, as data may be needed by other payment modules and to admin orders etc.
     }
 
     // must perfectly match keys inserted in install function
@@ -694,7 +694,7 @@ class sveawebpay_partpay extends SveaOsCommerce {
             'MODULE_PAYMENT_SWPPARTPAY_PASSWORD_DE',
             'MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_DE',
             'MODULE_PAYMENT_SWPPARTPAY_MIN_DE',
-            'MODULE_PAYMENT_SWPPARTPAY_MAX_DE',            
+            'MODULE_PAYMENT_SWPPARTPAY_MAX_DE',
             'MODULE_PAYMENT_SWPPARTPAY_MODE',
             'MODULE_PAYMENT_SWPPARTPAY_ORDER_STATUS_ID',
             'MODULE_PAYMENT_SWPPARTPAY_AUTODELIVER',
@@ -761,7 +761,6 @@ class sveawebpay_partpay extends SveaOsCommerce {
             case "30003" :
                 return sprintf("Svea error %s: %s", $err, ERROR_CODE_30003);
                 break;
-
             case "40000" :
                 return sprintf("Svea error %s: %s", $err, ERROR_CODE_40000);
                 break;
@@ -784,7 +783,7 @@ class sveawebpay_partpay extends SveaOsCommerce {
                 break;
         }
     }
-       
+
     /**
      * Given an orderID, reconstruct the svea order object and send deliver order request, return response
      *
@@ -795,7 +794,7 @@ class sveawebpay_partpay extends SveaOsCommerce {
 
         // get osCommerce order from db
         $order = new order($oID);
-        
+
         // get svea order id reference returned in createOrder request result
         $sveaOrderId = $this->getSveaOrderId( $oID );
         $swp_order = $this->getSveaCreateOrderObject( $oID );
@@ -822,7 +821,7 @@ class sveawebpay_partpay extends SveaOsCommerce {
 //print_r( $swp_order );
 //print_r( $swp_deliverOrder );
 //die;
-        
+
         $swp_deliverResponse = $swp_deliverOrder->deliverPaymentPlanOrder()->doRequest();
 
         // if deliverorder accepted, update svea_order table with Svea invoiceId
@@ -836,13 +835,13 @@ class sveawebpay_partpay extends SveaOsCommerce {
         }
         // return deliver order response
         return $swp_deliverResponse;
-    }    
-    
-    
+    }
+
+
     /**
-     * Returns the currency used for an partpay country. 
+     * Returns the currency used for an partpay country.
      */
-    function getPartpayCurrency( $country ) 
+    function getPartpayCurrency( $country )
     {
         $country_currencies = array(
             'MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_SE' => 'SEK',
@@ -854,18 +853,18 @@ class sveawebpay_partpay extends SveaOsCommerce {
         );
 
         $method = "MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_" . $country;
-        
+
         return $country_currencies[$method];
     }
-    
+
     /**
-     * Returns the currencies used in all countries where an partpay payment 
-     * method has been configured (i.e. clientno is set for country in config). 
+     * Returns the currencies used in all countries where an partpay payment
+     * method has been configured (i.e. clientno is set for country in config).
      * Used in partpay to determine currencies which must be set.
-     * 
-     * @return array - currencies for countries with ug clientno set in config 
+     *
+     * @return array - currencies for countries with ug clientno set in config
      */
-    function getPartpayCurrencies() 
+    function getPartpayCurrencies()
     {
         $country_currencies = array(
             'MODULE_PAYMENT_SWPPARTPAY_CLIENTNO_SE' => 'SEK',
@@ -881,7 +880,7 @@ class sveawebpay_partpay extends SveaOsCommerce {
         {
             if( constant($country)!=NULL ) $currencies[] = $currency;
         }
-        
+
         return array_unique( $currencies );
     }
 }
