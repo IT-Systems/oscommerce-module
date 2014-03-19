@@ -57,4 +57,10 @@ define('FORM_TEXT_GET_PAYPLAN','Hae osoite');
 define('ERROR_CODE_DEFAULT','Svea Error: ');
 
 define('FORM_TEXT_GET_ADDRESS','Hae osoite ja maskuvaihtoehdot');
+
+// Tupas specific translations
+define('FORM_TEXT_TUPAS_AUTHENTICATE', 'Tunnistaudu verkkopankissa');
+define('ERROR_TAMPERED_PARAMETERS', 'Tunnistautumistapahtumassa on tapahtunut odottamaton virhe. Yritä uudelleen.');
+define('ERROR_TUPAS_NOT_SET', 'Sinun täytyy ensin tunnistautua verkkopankissa jatkaaksesi.');
+define('ERROR_TUPAS_MISMATCH', 'Henkilötunnus ei vastaa Tupas -palvelusta saatua. Yritä uudelleen, ja tunnistaudu toistamiseen, jos virhe toistuu.');
 ?>

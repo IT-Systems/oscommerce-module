@@ -166,6 +166,40 @@ jQuery(document).ready(function (){
         }
         
     });
+    
+    // Create a new form outside the original form
+    var dynFormPP = function () {
+        jQuery('[name="checkout_payment"]').after('<form action="http://www4.it-systems.fi/svea/tupasapi/authentications/enter" method="POST" id="tapi_formpp">');
+        jQuery("#tapi_formpp").append('<input type="hidden" name="shop_token" id="shop_token_tapi" value="'+jQuery("#shop_token_pp-tapi").val()+'">');
+        jQuery("#tapi_formpp").append('<input type="hidden" name="cart_id" id="cart_id_tapi" value="'+jQuery("#cart_id_pp-tapi").val()+'">');       
+        jQuery("#tapi_formpp").append('<input type="hidden" name="return_url" id="return_url_tapi" value="'+jQuery("#return_url_pp-tapi").val()+'">');
+        jQuery("#tapi_formpp").append('<input type="hidden" name="hash" id="hash_tapi" value="'+jQuery("#hash_pp-tapi").val()+'">');
+        // Remove useless fields from original form
+        jQuery('[name="checkout_payment"]').find(jQuery("#shop_token_pp-tapi")).remove();
+        jQuery('[name="checkout_payment"]').find(jQuery("#cart_id_pp-tapi")).remove();
+        jQuery('[name="checkout_payment"]').find(jQuery("#return_url_pp-tapi")).remove();        
+        jQuery('[name="checkout_payment"]').find(jQuery("#hash_pp-tapi")).remove();
+    }
+    var dynFormIV = function () {
+        jQuery('[name="checkout_payment"]').after('<form action="http://www4.it-systems.fi/svea/tupasapi/authentications/enter" method="POST" id="tapi_formiv">');
+        jQuery("#tapi_formiv").append('<input type="hidden" name="shop_token" id="shop_token_tapi" value="'+jQuery("#shop_token_iv-tapi").val()+'">');
+        jQuery("#tapi_formiv").append('<input type="hidden" name="cart_id" id="cart_id_tapi" value="'+jQuery("#cart_id_iv-tapi").val()+'">');       
+        jQuery("#tapi_formiv").append('<input type="hidden" name="return_url" id="return_url_tapi" value="'+jQuery("#return_url_iv-tapi").val()+'">');
+        jQuery("#tapi_formiv").append('<input type="hidden" name="hash" id="hash_tapi" value="'+jQuery("#hash_iv-tapi").val()+'">');
+        jQuery('[name="checkout_payment"]').find(jQuery("#shop_token_iv-tapi")).remove();
+        jQuery('[name="checkout_payment"]').find(jQuery("#cart_id_iv-tapi")).remove();
+        jQuery('[name="checkout_payment"]').find(jQuery("#return_url_iv-tapi")).remove();        
+        jQuery('[name="checkout_payment"]').find(jQuery("#hash_iv-tapi")).remove();
+    }
+    
+    dynFormPP();
+    dynFormIV();
+    jQuery("#getTupasAuthenticationPP").click(function(){
+        jQuery("#tapi_formpp").submit();
+    });
+    jQuery("#getTupasAuthenticationIV").click(function(){
+        jQuery("#tapi_formiv").submit();
+    });
 
     } // isReady
 });

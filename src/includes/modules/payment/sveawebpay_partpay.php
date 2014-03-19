@@ -25,12 +25,34 @@ class sveawebpay_partpay extends SveaOsCommerce {
     $this->ignore_list = explode(',', MODULE_PAYMENT_SWPPARTPAY_IGNORE);
     if ((int)MODULE_PAYMENT_SWPPARTPAY_ORDER_STATUS_ID > 0)
       $this->order_status = MODULE_PAYMENT_SWPPARTPAY_ORDER_STATUS_ID;
+    
+    // Tupas API related 
+    $this->tupasapiurl = 'http://www4.it-systems.fi/svea/tupasapi/shops';
+    $this->usetupas = ((MODULE_PAYMENT_SWPPARTPAY_USETUPAS_FI == 'True') ? true : false);
+    
     if (is_object($order)) $this->update_status();
   }
 
     function update_status() {
         global $db, $order, $currencies, $messageStack;
 
+        /* Tupas modification [BEGINS] */
+        if (isset($_GET['succ']) && isset($_GET['stoken']) && isset($_GET['hash'])) { // Coming from Tupas API ?
+            $return = $this->checkTapiReturn($_GET['succ'], $_GET['stoken'], $_GET['hash'], (isset($_GET['ssn'])) ? $_GET['ssn'] : null, (isset($_GET['name'])) ? $_GET['name'] : null);
+            if ($return) {
+                if ($return['ok'] === true && $return['ssn']) {
+                    $_SESSION['TUPAS_PP_SSN'] = $return['ssn'];
+                    $_SESSION['TUPAS_PP_NAME'] = $return['name'];
+                    $_SESSION['TUPAS_PP_HASH'] = $return['hash'];
+                    $order->info['payment_method'] = $this->code;
+                    header('location:'.$_SERVER['PHP_SELF']);
+                } elseif ($return['ok'] === false) { // Tampered get params
+                    $messageStack->add('header', ERROR_TAMPERED_PARAMETERS, 'error');
+                }
+            }
+        }
+        /* Tupas modification [ENDS] */
+        
         // do not use this module if any of the allowed currencies are not set in osCommerce
         foreach ($this->getPartpayCurrencies() as $currency) {
             if (!is_array($currencies->currencies[strtoupper($currency)])) {
@@ -124,7 +146,22 @@ class sveawebpay_partpay extends SveaOsCommerce {
         if( ($customer_country == 'FI') )
         {
            // input text field for individual/company SSN, without getAddresses hook
-            $sveaSSNFIPP =        FORM_TEXT_SS_NO . '<br /><input type="text" name="sveaSSNFIPP" id="sveaSSNFIPP" maxlength="11" /><br />';
+            $sveaSSNFIPP =        FORM_TEXT_SS_NO . '<br /><input type="text" name="sveaSSNFIPP" id="sveaSSNFIPP" maxlength="11" ';
+            if ($this->usetupas === true) $sveaSSNFIPP.= 'value="' . $this->getSsn() . '" readonly="readonly" ';
+            $sveaSSNFIPP.= '/>';
+            
+            /* Tupas mod [BEGINS] */
+            if ($this->usetupas === true && !$_SESSION['TUPAS_PP_SSN']) {
+                $_SESSION['TUPAS_PP_SSN'] = null; // Init ssn and other params
+                $_SESSION['TUPAS_PP_NAME'] = null;
+                $_SESSION['TUPAS_PP_HASH'] = null;
+                $sveaSSNFIPP = '<button type="button" id="getTupasAuthenticationPP">'.FORM_TEXT_TUPAS_AUTHENTICATE.'</button><br/>'; // Button
+                $params = $this->getAuthenticationParams(); // Add a few params for better security before going to authentication api
+                foreach ($params as $key => $value) $sveaSSNFIPP.= '<input type="hidden" id="'.$key.'_pp-tapi" name="'.$key.'" value="'.$value.'">';
+            }
+            /* Tupas mod [ENDS] */
+            
+            $sveaSSNFIPP.= '<br />';
         }
 
         // these are the countries we support getAddress in (getAddress also depends on sveaSSN being present)
@@ -473,6 +510,22 @@ class sveawebpay_partpay extends SveaOsCommerce {
     function before_process() {
         global $order, $order_totals, $language, $billto, $sendto;
 
+        /* Tupas modification [BEGINS] */
+        // Just in case, check that we are sending the same ssn as we got from tupasAPI (if at all).
+        if ($this->usetupas === true) {
+            var_dump($_SESSION['swp_order']);
+            die();
+            if (!$_SESSION['TUPAS_PP_SSN']) {
+                $_SESSION['SWP_ERROR'] = ERROR_TUPAS_NOT_SET;
+                tep_redirect(tep_href_link(FILENAME_CHECKOUT_PAYMENT, 'payment_error='.$this->code));
+            }
+            if ($_SESSION['swp_delbet_request']['PayPlan']['SecurityNumber'] != $this->getSsn()) {
+                $_SESSION['SWP_ERROR'] = ERROR_TUPAS_MISMATCH;
+                tep_redirect(tep_href_link(FILENAME_CHECKOUT_PAYMENT, 'payment_error='.$this->code));
+            }
+        }
+        /* Tupas modification [ENDS] */    
+        
         // retrieve order object set in process_button()
         $swp_order = unserialize($_SESSION["swp_order"]);
 
@@ -597,6 +650,20 @@ class sveawebpay_partpay extends SveaOsCommerce {
     // insert configuration keys here
     function install() {
         $common = "insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added";
+        
+        /* Tupas modification [BEGINS] */
+        // Create tokens for this shop to be used in Tupas authentication process
+        $token = uniqid();
+        $response = $this->createShopInstance($token);
+        if (!$response) {
+            die("Could not create a shop instance to Tupas API."); // @todo :: Improve error handling (maybe)
+        }
+        tep_db_query($common . ", set_function) values ('Tupas Shop ID', 'MODULE_PAYMENT_SWPPARTPAY_TUPAS_SHOP_ID', '{$response->id}', '', '6', '0', now(), 'tep_cfg_select_option(array(\'{$response->id}\'), ')");
+        tep_db_query($common . ", set_function) values ('Tupas Shop Token', 'MODULE_PAYMENT_SWPPARTPAY_TUPAS_SHOP_TOKEN', '{$token}', '', '6', '0', now(), 'tep_cfg_select_option(array(\'{$token}\'), ')");
+        tep_db_query($common . ", set_function) values ('Tupas API Token', 'MODULE_PAYMENT_SWPPARTPAY_TUPAS_API_TOKEN', '{$response->api_token}', '', '6', '0', now(), 'tep_cfg_select_option(array(\'{$response->api_token}\'), ')");
+        tep_db_query($common . ", set_function) values ('SveaWebPay Use Tupas (FI)', 'MODULE_PAYMENT_SWPPARTPAY_USETUPAS_FI', 'True', 'Check customers social security number using TUPAS -authentication (only for finnish customers)', '6', '0', now(), 'tep_cfg_select_option(array(\'True\', \'False\'), ')");
+        /* Tupas modification [ENDS] */   
+        
         tep_db_query($common . ", set_function) values ('Enable Svea Payment Plan Module', 'MODULE_PAYMENT_SWPPARTPAY_STATUS', 'True', '', '6', '0', now(), 'tep_cfg_select_option(array(\'True\', \'False\'), ')");
         tep_db_query($common . ") values ('Svea Username SE', 'MODULE_PAYMENT_SWPPARTPAY_USERNAME_SE', '', 'Username for Svea Payment Plan Sweden', '6', '0', now())");
         tep_db_query($common . ") values ('Svea Password SE', 'MODULE_PAYMENT_SWPPARTPAY_PASSWORD_SE', '', 'Password for Svea Payment Plan Sweden', '6', '0', now())");
@@ -657,6 +724,12 @@ class sveawebpay_partpay extends SveaOsCommerce {
 
     // standard uninstall function
     function remove() {
+        /* Tupas modification [BEGINS] */
+        // Try to remove tupas instance from api
+        if (!$this->removeShopInstance()) {
+            die("Could not delete a shop instance from Tupas API."); // @todo :: Improve error handling (but how?)
+        }
+        /* Tupas modification [ENDS] */    
         tep_db_query("delete from " . TABLE_CONFIGURATION . " where configuration_key in ('" . implode("', '", $this->keys()) . "')");       
         // we don't delete svea_order tables, as data may be needed by other payment modules and to admin orders etc.      
     }
@@ -701,7 +774,12 @@ class sveawebpay_partpay extends SveaOsCommerce {
             'MODULE_PAYMENT_SWPPARTPAY_IMAGES',
             'MODULE_PAYMENT_SWPPARTPAY_IGNORE',
             'MODULE_PAYMENT_SWPPARTPAY_ZONE',
-            'MODULE_PAYMENT_SWPPARTPAY_SORT_ORDER'
+            'MODULE_PAYMENT_SWPPARTPAY_SORT_ORDER',
+            // Tupas API related fields
+            'MODULE_PAYMENT_SWPPARTPAY_USETUPAS_FI',
+            'MODULE_PAYMENT_SWPPARTPAY_TUPAS_SHOP_ID',
+            'MODULE_PAYMENT_SWPPARTPAY_TUPAS_SHOP_TOKEN',
+            'MODULE_PAYMENT_SWPPARTPAY_TUPAS_API_TOKEN'
         );
     }
 
@@ -884,5 +962,127 @@ class sveawebpay_partpay extends SveaOsCommerce {
         
         return array_unique( $currencies );
     }
+    
+    /* Tupas modification [BEGINS] */
+    function createShopInstance($shop_token){
+        $shop_info = array(
+            'name' => STORE_NAME,
+            'shop_token' => $shop_token,
+            'mode' => 'production',
+            'url' => HTTP_CATALOG_SERVER . DIR_WS_CATALOG
+            );
+        $data = array('json' => json_encode($shop_info));
+        // We can't be sure that cUrl is installed so use php's native methods
+        $params = array(
+            'http' => array(
+                'method' => 'POST',
+                'header' => "Content-type: application/x-www-form-urlencoded\r\n",
+                'content' => http_build_query($data)));
+
+        $context = stream_context_create($params);
+        $fp = @fopen($this->tupasapiurl, 'rb', false, $context);
+        if (!$fp) {
+            return false;
+        }
+        $response = json_decode(stream_get_contents($fp));
+        if ($response->status->code !== 200) {
+            return false;
+        }
+        return $response;
+    }  
+
+    function removeShopInstance() {
+        $shop_id_row = tep_db_fetch_array(tep_db_query("SELECT configuration_value FROM " . TABLE_CONFIGURATION . " WHERE configuration_key = 'MODULE_PAYMENT_SWPPARTPAY_TUPAS_SHOP_ID'"));
+        $shop_token_row = tep_db_fetch_array(tep_db_query("SELECT configuration_value FROM " . TABLE_CONFIGURATION . " WHERE configuration_key = 'MODULE_PAYMENT_SWPPARTPAY_TUPAS_SHOP_TOKEN'"));
+        $api_token_row = tep_db_fetch_array(tep_db_query("SELECT configuration_value FROM " . TABLE_CONFIGURATION . " WHERE configuration_key = 'MODULE_PAYMENT_SWPPARTPAY_TUPAS_API_TOKEN'"));
+
+        $data = array(
+            'json' => json_encode(array(
+                'shop_token' => $shop_token_row['configuration_value'],
+                'hash' => hash('sha256', $shop_token_row['configuration_value'].$api_token_row['configuration_value'])
+                ))
+            );
+        // We can't be sure that cUrl is installed so use php's native methods
+        $params = array(
+            'http' => array(
+                'method' => 'DELETE',
+                'header' => "Content-type: application/x-www-form-urlencoded\r\n",
+                'content' => http_build_query($data)));
+        $context = stream_context_create($params);
+
+        $fp = @fopen($this->tupasapiurl . "/" . $shop_id_row['configuration_value'], 'rb', false, $context);
+        if (!$fp) {
+            return false;
+        }
+        $response = json_decode(stream_get_contents($fp));
+        
+        if ($response->status->code !== 200) {
+            return false;
+        }
+        return $response;
+    }
+    
+    function getShopToken() {
+        $shop_token_row = tep_db_fetch_array(tep_db_query("SELECT configuration_value FROM " . TABLE_CONFIGURATION . " WHERE configuration_key = 'MODULE_PAYMENT_SWPPARTPAY_TUPAS_SHOP_TOKEN'"));
+        return $shop_token_row['configuration_value'];
+    }
+    
+    function getApiToken() {
+        $api_token_row = tep_db_fetch_array(tep_db_query("SELECT configuration_value FROM " . TABLE_CONFIGURATION . " WHERE configuration_key = 'MODULE_PAYMENT_SWPPARTPAY_TUPAS_API_TOKEN'"));
+        return $api_token_row['configuration_value'];
+    }    
+    
+    function getAuthenticationParams() {
+        global $cart;
+        $stoken = $this->getShopToken();
+        $atoken = $this->getApiToken();
+        $params = array(
+            'shop_token' => $stoken, 
+            'cart_id' => $cart->cartID,
+            'return_url' => tep_href_link(FILENAME_CHECKOUT_PAYMENT),
+            'hash' => strtoupper(hash('sha256', $stoken.'|'.$cart->cartID.'|'.$atoken))
+            );
+        return $params;
+    }
+    
+    function checkTapiReturn($success, $stoken, $hash, $ssn=null, $name=null) {
+        // First check that it was partpayment instance
+        if ($this->getShopToken() == $stoken) {
+            if ($success == '1') {
+                $mac_base = $this->getShopToken() . '|' .
+                            '1' . '|' .
+                            $ssn . '|' .
+                            $name . '|' .
+                            $this->getApiToken();
+                $calculated_hash = strtoupper(hash('sha256', $mac_base));
+                if ($calculated_hash == $hash) { // OK
+                    return array('ok' => true, 'ssn' => $ssn, 'name' => $name, 'hash' => $hash);
+                } else {
+                    return array('ok' => false);
+                }
+            } else {
+                return array('ok' => true, 'ssn' => null);
+            }
+        } else {
+            // Stokens didn't match
+            return false;
+        }
+    }
+    
+    function getSsn() {
+        $ssn = '';
+        if ($_SESSION['TUPAS_PP_SSN']) {
+            $mac_base = $this->getShopToken() . '|' .
+                        '1' . '|' .
+                        $_SESSION['TUPAS_PP_SSN'] . '|' .
+                        $_SESSION['TUPAS_PP_NAME'] . '|' .
+                        $this->getApiToken();
+            $calculated_hash = strtoupper(hash('sha256', $mac_base));
+            if ($_SESSION['TUPAS_PP_HASH'] == $calculated_hash) $ssn = $_SESSION['TUPAS_PP_SSN'];
+        }
+        return $ssn;
+    }
+    /* Tupas modification [ENDS] */
+    
 }
 ?>
