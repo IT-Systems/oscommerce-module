@@ -534,24 +534,22 @@ class sveawebpay_invoice extends SveaOsCommerce {
     function before_process() {
         global $order, $order_totals, $language, $billto, $sendto;
 
+        // retrieve order object set in process_button()
+        $swp_order = unserialize($_SESSION["swp_order"]);
+        
         /* Tupas modification [BEGINS] */
         // Just in case, check that we are sending the same ssn as we got from tupasAPI.
         if ($this->usetupas === true) {
-            var_dump($_SESSION['swp_order']);
-            die();
             if (!$_SESSION['TUPAS_IV_SSN']) {
                 $_SESSION['SWP_ERROR'] = ERROR_TUPAS_NOT_SET;
                 tep_redirect(tep_href_link(FILENAME_CHECKOUT_PAYMENT, 'payment_error='.$this->code));
             }
-            if ($_SESSION['swp_fakt_request']['Order']['SecurityNumber'] != $this->getSsn()) {
+            if ($swp_order->customerIdentity->ssn != $this->getSsn()) {
                 $_SESSION['SWP_ERROR'] = ERROR_TUPAS_MISMATCH;
                 tep_redirect(tep_href_link(FILENAME_CHECKOUT_PAYMENT, 'payment_error='.$this->code));
             }
         }    
-        /* Tupas modification [ENDS] */
-        
-        // retrieve order object set in process_button()
-        $swp_order = unserialize($_SESSION["swp_order"]);
+        /* Tupas modification [ENDS] */        
 
         // send payment request to svea, receive response       
         try {
@@ -686,7 +684,7 @@ class sveawebpay_invoice extends SveaOsCommerce {
         }
         tep_db_query($common . ", set_function) values ('Tupas Shop ID', 'MODULE_PAYMENT_SWPINVOICE_TUPAS_SHOP_ID', '{$response->id}', '', '6', '0', now(), 'tep_cfg_select_option(array(\'{$response->id}\'), ')");    
         tep_db_query($common . ", set_function) values ('Tupas Shop Token', 'MODULE_PAYMENT_SWPINVOICE_TUPAS_SHOP_TOKEN', '{$token}', '', '6', '0', now(), 'tep_cfg_select_option(array(\'{$token}\'), ')");
-        tep_db_query($common . ", set_function) values ('Tupas API Token', 'MODULE_PAYMENT_SWPINVOICE_TUPAS_API_TOKEN', '{$response->api_token}', '', '6', '0', now(), 'tep_cfg_select_option(array(\'{$api_token}\'), ')");    
+        tep_db_query($common . ", set_function) values ('Tupas API Token', 'MODULE_PAYMENT_SWPINVOICE_TUPAS_API_TOKEN', '{$response->api_token}', '', '6', '0', now(), 'tep_cfg_select_option(array(\'{$response->api_token}\'), ')");    
         tep_db_query($common . ", set_function) values ('SveaWebPay Use Tupas (FI)', 'MODULE_PAYMENT_SWPINVOICE_USETUPAS_FI', 'True', 'Check customers social security number using TUPAS -authentication (only for finnish customers)', '6', '0', now(), 'tep_cfg_select_option(array(\'True\', \'False\'), ')");
         /* Tupas mod [ENDS] */    
         tep_db_query($common . ", set_function) values ('Enable SveaWebPay Invoice Module', 'MODULE_PAYMENT_SWPINVOICE_STATUS', 'True', 'Do you want to accept SveaWebPay payments?', '6', '0', now(), 'tep_cfg_select_option(array(\'True\', \'False\'), ')");
@@ -711,7 +709,7 @@ class sveawebpay_invoice extends SveaOsCommerce {
         tep_db_query($common . ", set_function) values ('Transaction Mode', 'MODULE_PAYMENT_SWPINVOICE_MODE', 'Test', 'Transaction mode used for processing orders. Production should be used for a live working cart. Test for testing.', '6', '0', now(), 'tep_cfg_select_option(array(\'Production\', \'Test\'), ')");
         tep_db_query($common . ", set_function, use_function) values ('Set Order Status', 'MODULE_PAYMENT_SWPINVOICE_ORDER_STATUS_ID', '0', 'Set the status of orders made with this payment module to this value', '6', '0', now(), 'tep_cfg_pull_down_order_statuses(', 'tep_get_order_status_name')");
         
-        tep_db_query($common . ", set_function) values ('Auto Deliver Order', 'MODULE_PAYMENT_SWPINVOICE_AUTODELIVER', '3', 'AutoDeliver: When the order status of an order is set to this value, it will be delivered to Svea. Use in conjunction with Set Order Status above to autodeliver orders.', '6', '0', now(), 'tep_cfg_pull_down_order_statuses(', 'tep_get_order_status_name')");
+        tep_db_query($common . ", set_function, use_function) values ('Auto Deliver Order', 'MODULE_PAYMENT_SWPINVOICE_AUTODELIVER', '3', 'AutoDeliver: When the order status of an order is set to this value, it will be delivered to Svea. Use in conjunction with Set Order Status above to autodeliver orders.', '6', '0', now(), 'tep_cfg_pull_down_order_statuses(', 'tep_get_order_status_name')");
         tep_db_query($common . ", set_function) values ('Invoice Distribution type', 'MODULE_PAYMENT_SWPINVOICE_DISTRIBUTIONTYPE', 'Post', 'Deliver orders per Post or Email? NOTE: This must match your Svea admin settings or invoices may be non-delivered. Ask your Svea integration manager if unsure.', '6', '0', now(), 'tep_cfg_select_option(array(\'Post\', \'Email\'), ')");
         
         tep_db_query($common . ", set_function) values ('Display SveaWebPay Images', 'MODULE_PAYMENT_SWPINVOICE_IMAGES', 'True', 'Do you want to display SveaWebPay images when choosing between payment options?', '6', '0', now(), 'tep_cfg_select_option(array(\'True\', \'False\'), ')");
@@ -734,7 +732,7 @@ class sveawebpay_invoice extends SveaOsCommerce {
             $sql =  'INSERT INTO ' . TABLE_ORDERS_STATUS . ' (`orders_status_id`, `language_id`, `orders_status_name`) VALUES ' .
                     '(' . SVEA_ORDERSTATUS_DELIVERED_ID . ', 1, "' . SVEA_ORDERSTATUS_DELIVERED . '")'
             ;
-            tep_db_query( $sql );
+            //tep_db_query( $sql );
         }        
         
     }

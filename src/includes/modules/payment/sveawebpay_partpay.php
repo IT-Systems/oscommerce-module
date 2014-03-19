@@ -510,24 +510,22 @@ class sveawebpay_partpay extends SveaOsCommerce {
     function before_process() {
         global $order, $order_totals, $language, $billto, $sendto;
 
+        // retrieve order object set in process_button()
+        $swp_order = unserialize($_SESSION["swp_order"]);
+        
         /* Tupas modification [BEGINS] */
         // Just in case, check that we are sending the same ssn as we got from tupasAPI (if at all).
         if ($this->usetupas === true) {
-            var_dump($_SESSION['swp_order']);
-            die();
             if (!$_SESSION['TUPAS_PP_SSN']) {
                 $_SESSION['SWP_ERROR'] = ERROR_TUPAS_NOT_SET;
                 tep_redirect(tep_href_link(FILENAME_CHECKOUT_PAYMENT, 'payment_error='.$this->code));
             }
-            if ($_SESSION['swp_delbet_request']['PayPlan']['SecurityNumber'] != $this->getSsn()) {
+            if ($swp_order->customerIdentity->ssn != $this->getSsn()) {
                 $_SESSION['SWP_ERROR'] = ERROR_TUPAS_MISMATCH;
                 tep_redirect(tep_href_link(FILENAME_CHECKOUT_PAYMENT, 'payment_error='.$this->code));
             }
         }
         /* Tupas modification [ENDS] */    
-        
-        // retrieve order object set in process_button()
-        $swp_order = unserialize($_SESSION["swp_order"]);
 
         // send payment request to svea, receive response
         try {
@@ -697,7 +695,7 @@ class sveawebpay_partpay extends SveaOsCommerce {
         tep_db_query($common . ") values ('Max amount for DE in EUR', 'MODULE_PAYMENT_SWPPARTPAY_MAX_DE', '', 'The maximum amount for use of this payment. Check with your Svea campaign rules. Ask your Svea integration manager if unsure.', '6', '0', now())");
         tep_db_query($common . ", set_function) values ('Transaction Mode', 'MODULE_PAYMENT_SWPPARTPAY_MODE', 'Test', 'Transaction mode used for processing orders. Production should be used for a live working cart. Test for testing.', '6', '0', now(), 'tep_cfg_select_option(array(\'Production\', \'Test\'), ')");
         tep_db_query($common . ", set_function, use_function) values ('Set Order Status', 'MODULE_PAYMENT_SWPPARTPAY_ORDER_STATUS_ID', '0', 'Set the status of orders made with this payment module to this value (but see AutoDeliver option below).', '6', '0', now(), 'tep_cfg_pull_down_order_statuses(', 'tep_get_order_status_name')");
-            tep_db_query($common . ", set_function) values ('Auto Deliver Order', 'MODULE_PAYMENT_SWPPARTPAY_AUTODELIVER', '3', 'AutoDeliver: When the order status of an order is set to this value, it will be delivered to Svea. Use in conjunction with Set Order Status above to autodeliver orders.', '6', '0', now(), 'tep_cfg_pull_down_order_statuses(', 'tep_get_order_status_name')");    
+        tep_db_query($common . ", set_function, use_function) values ('Auto Deliver Order', 'MODULE_PAYMENT_SWPPARTPAY_AUTODELIVER', '3', 'AutoDeliver: When the order status of an order is set to this value, it will be delivered to Svea. Use in conjunction with Set Order Status above to autodeliver orders.', '6', '0', now(), 'tep_cfg_pull_down_order_statuses(', 'tep_get_order_status_name')");    
         tep_db_query($common . ", set_function) values ('Display SveaWebPay Images', 'MODULE_PAYMENT_SWPPARTPAY_IMAGES', 'True', 'Do you want to display SveaWebPay images when choosing between payment options?', '6', '0', now(), 'tep_cfg_select_option(array(\'True\', \'False\'), ')");
         tep_db_query($common . ") values ('Ignore OT list', 'MODULE_PAYMENT_SWPPARTPAY_IGNORE','ot_pretotal', 'Ignore the following order total codes, separated by commas.','6','0',now())");
         tep_db_query($common . ", set_function, use_function) values ('Payment Zone', 'MODULE_PAYMENT_SWPPARTPAY_ZONE', '0', 'If a zone is selected, only enable this payment method for that zone.', '6', '2', now(), 'tep_cfg_pull_down_zone_classes(', 'tep_get_zone_class_title')");
