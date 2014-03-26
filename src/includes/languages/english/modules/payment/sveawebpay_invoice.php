@@ -5,7 +5,7 @@
  * EN 5.0
 */
 define('MODULE_PAYMENT_SWPINVOICE_TEXT_TITLE','Svea Invoice');
-define('MODULE_PAYMENT_SWPINVOICE_TEXT_DESCRIPTION','Svea Invoice - version 5.0');
+define('MODULE_PAYMENT_SWPINVOICE_TEXT_DESCRIPTION','Svea Invoice - version 5.1.1');
 define('MODULE_PAYMENT_SWPINVOICE_HANDLING_APPLIES','A handling fee of %s %s will be applied to this order on checkout.');
 
 define('ERROR_ALLOWED_CURRENCIES_NOT_DEFINED','One or more of the allowed currencies are not defined. This must be enabled in order to use the SweaWebPay Hosted Solution. Log in to your admin panel, and ensure that all currencies listed as allowed in the payment module exists, and that the correct exchange rates are set.');

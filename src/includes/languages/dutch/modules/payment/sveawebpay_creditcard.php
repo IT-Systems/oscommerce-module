@@ -5,7 +5,7 @@
  * NL 5.0
  */
 define('MODULE_PAYMENT_SWPCREDITCARD_TEXT_TITLE','Svea Creditcard');
-define('MODULE_PAYMENT_SWPCREDITCARD_TEXT_DESCRIPTION','Svea Creditcard - version 5.0');
+define('MODULE_PAYMENT_SWPCREDITCARD_TEXT_DESCRIPTION','Svea Creditcard - version 5.1.1');
 
 define('ERROR_ALLOWED_CURRENCIES_NOT_DEFINED','Een of meer van de toegestane valutas zijn niet gedefinieerd. Dit moet zijn ingeschakeld om de Svea Creditcard te kunnen gebruiken. Log in op je admin panel, en zorg ervoor dat u al onze valuta als toegestaan in de betaalmodule bestaan, en dat de ze juiste wisselkoersen hebben.');
 define('ERROR_DEFAULT_CURRENCY_NOT_ALLOWED','De standaard valuta is niet onder die opgenomen lijst als toegestaan. Log in op je admin panel, en zorg ervoor dat de standaard valuta in de toegestande lijst staat  van  de betaalmodule.');  

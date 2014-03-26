@@ -5,7 +5,7 @@
  * EN 5.0
  */
 define('MODULE_PAYMENT_SWPCREDITCARD_TEXT_TITLE','Svea Card');
-define('MODULE_PAYMENT_SWPCREDITCARD_TEXT_DESCRIPTION','Svea Card - version 5.0');
+define('MODULE_PAYMENT_SWPCREDITCARD_TEXT_DESCRIPTION','Svea Card - version 5.1.1');
 
 define('ERROR_ALLOWED_CURRENCIES_NOT_DEFINED','One or more of the allowed currencies are not defined. This must be enabled in order to use Svea Card. Log in to your admin panel, and ensure that all currencies listed as allowed in the payment module exists, and that the correct exchange rates are set.');
 define('ERROR_DEFAULT_CURRENCY_NOT_ALLOWED','The default currency is not among those listed as allowed. Log in to your admin panel, and ensure that the default currency is in the allowed list in the payment module.');  
