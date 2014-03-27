@@ -1,6 +1,6 @@
 # osCommerce - Svea payment module
 ## Version 5.1.1
-* Tested with osCommerce 3.3.3.4
+* Tested with osCommerce 2.3.3.4
 * Requires PHP 5.3 or later (namespace support)
 
 ## Release history
