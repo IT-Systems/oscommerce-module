@@ -5,7 +5,7 @@
  * DE 5.0
  */
 define('MODULE_PAYMENT_SWPCREDITCARD_TEXT_TITLE','Svea Kartenzahlung');
-define('MODULE_PAYMENT_SWPCREDITCARD_TEXT_DESCRIPTION','Svea Kartenzahlung - version 5.1.1');
+define('MODULE_PAYMENT_SWPCREDITCARD_TEXT_DESCRIPTION','Svea Kartenzahlung - version 5.1.2');
 
 define('ERROR_ALLOWED_CURRENCIES_NOT_DEFINED','Eine oder mehrere Währungen sind nicht definiert. Diese muss aktiviert werden, um Svea Kartenzahlung zu verwenden');
 define('ERROR_DEFAULT_CURRENCY_NOT_ALLOWED','Loggen Sie in Ihrem Admin-Panel ein und um sicher zu sorgen, dass alle Währungen bei der Zahlungsmodul gelistet  und  erlaubt sind und auch dass die richtige Wechselkurse eingestellt sind');  

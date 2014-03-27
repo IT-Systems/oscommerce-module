@@ -6,7 +6,7 @@
  */
 
 define('MODULE_PAYMENT_SWPPARTPAY_TEXT_TITLE','Svea Delbetalning');
-define('MODULE_PAYMENT_SWPPARTPAY_TEXT_DESCRIPTION','Svea Delbetalning - version 5.1.1');
+define('MODULE_PAYMENT_SWPPARTPAY_TEXT_DESCRIPTION','Svea Delbetalning - version 5.1.2');
 define('ERROR_ALLOWED_CURRENCIES_NOT_DEFINED','En eller flera av de tillåtna valutorna är ej definierade. Dessa måste vara definierade för att kunna använda Svea Delbetalning. Logga in till din admin-panel, och säkerställ att alla de tillåtna valutorna i payment-modulen existerar, och att de korrekta växelkursera är satta.');
 define('ERROR_DEFAULT_CURRENCY_NOT_ALLOWED','Standardvalutan är ej med i listan av de tillåtna. Logga in till your admin-panel, och säkerställ att standardvalutan finns med bland de tillåtna i payment-modulen.');
 define('ERROR_MESSAGE_PAYMENT_FAILED','Betalningen misslyckades.');  

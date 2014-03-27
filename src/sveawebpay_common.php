@@ -1,7 +1,7 @@
 <?php //
 
-define('SVEA_ORDERSTATUS_DELIVERED_ID', 3);     // need to be one of osC default to show up in history?
-//define('SVEA_ORDERSTATUS_DELIVERED', 'Svea: Delivered');  // not used
+define('SVEA_ORDERSTATUS_DELIVERED_ID', 3);     // need to be one of osC default to show up in history -- don't change
+//define('SVEA_ORDERSTATUS_DELIVERED', 'Svea: Delivered');  // not used in osC module
 
 /**
  * Class SveaOsCommerce contains various utility functions used by Svea osCommerce payment modules
@@ -800,6 +800,29 @@ class SveaOsCommerce {
         }
         
         return $svea_order;
+    }
+    
+    /**
+     * called by invoice, partpay install() to insert the svea_order table into the osC database
+     * will die() presenting error message on failure
+     */
+    function insert_svea_order_table() {
+        $res = tep_db_query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '". DB_DATABASE ."' AND table_name = 'svea_order';");
+        if( $res ) {
+            $fields = $res->fetch_assoc();
+            if( $fields["COUNT(*)"] != 1 ) {
+                $sql = "CREATE TABLE svea_order (orders_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, sveaorderid INT NOT NULL, createorder_object BLOB, invoice_id INT )";
+                tep_db_query( $sql );
+            }
+        }
+        else { // didn't trigger tep_db_error(), but query still failed, so we die presenting error code for diagnosis, seen in osC 2.2rc3
+            $link = "db_link"; // tep_db global mysqli handle
+            global $$link;
+            $errno = mysqli_errno($$link);           
+            $errormessage = "An error occured when creating svea_order table, aborting.";
+
+            die('<font color="#000000"><strong> Error: ' . $errno .' '. $errormessage . ' Please contact Svea support.<br /><br /></strong></font>');
+        }
     }
 }
 ?>

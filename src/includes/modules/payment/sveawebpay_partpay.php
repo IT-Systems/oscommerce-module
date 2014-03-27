@@ -15,7 +15,7 @@ class sveawebpay_partpay extends SveaOsCommerce {
     global $order;
 
     $this->code = 'sveawebpay_partpay';
-    $this->version = "5.1.1";
+    $this->version = "5.1.2";
 
     $this->title = MODULE_PAYMENT_SWPPARTPAY_TEXT_TITLE;
     $this->description = MODULE_PAYMENT_SWPPARTPAY_TEXT_DESCRIPTION;
@@ -635,24 +635,9 @@ class sveawebpay_partpay extends SveaOsCommerce {
         tep_db_query($common . ") values ('Ignore OT list', 'MODULE_PAYMENT_SWPPARTPAY_IGNORE','ot_pretotal', 'Ignore the following order total codes, separated by commas.','6','0',now())");
         tep_db_query($common . ", set_function, use_function) values ('Payment Zone', 'MODULE_PAYMENT_SWPPARTPAY_ZONE', '0', 'If a zone is selected, only enable this payment method for that zone.', '6', '2', now(), 'tep_cfg_pull_down_zone_classes(', 'tep_get_zone_class_title')");
         tep_db_query($common . ") values ('Sort order of display.', 'MODULE_PAYMENT_SWPPARTPAY_SORT_ORDER', '0', 'Sort order of display. Lowest is displayed first.', '6', '0', now())");    
-
-        // insert svea order table if not exists already
-        $res = tep_db_query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '". DB_DATABASE ."' AND table_name = 'svea_order';");
-        $fields = $res->fetch_assoc();
-        if( $fields["COUNT(*)"] != 1 ) {
-            $sql = "CREATE TABLE svea_order (orders_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, sveaorderid INT NOT NULL, createorder_object BLOB, invoice_id INT )";
-            tep_db_query( $sql );
-        }
-
-        // insert svea order statuses into table order_status, if not exists already
-        $res = tep_db_query('SELECT COUNT(*) FROM ' . TABLE_ORDERS_STATUS . ' WHERE orders_status_name = "'. SVEA_ORDERSTATUS_DELIVERED .'"');
-        $fields = $res->fetch_assoc();
-        if( $fields["COUNT(*)"] == 0 ) {
-            $sql =  'INSERT INTO ' . TABLE_ORDERS_STATUS . ' (`orders_status_id`, `language_id`, `orders_status_name`) VALUES ' .
-                    '(' . SVEA_ORDERSTATUS_DELIVERED_ID . ', 1, "' . SVEA_ORDERSTATUS_DELIVERED . '")'
-            ;
-            tep_db_query( $sql );
-        }
+  
+        // insert svea order table if not exists already, or die trying
+        $this->insert_svea_order_table();      
     }
 
     // standard uninstall function
