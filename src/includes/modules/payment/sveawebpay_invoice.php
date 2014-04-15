@@ -28,6 +28,12 @@ class sveawebpay_invoice extends SveaOsCommerce {
         // Tupas API related 
         $this->tupasapiurl = 'http://www4.it-systems.fi/svea/tupasapi/shops';
         $this->usetupas = ((MODULE_PAYMENT_SWPINVOICE_USETUPAS_FI == 'True') ? true : false);
+        $this->tupas_mode = MODULE_PAYMENT_SWPINVOICE_TUPAS_MODE;
+        $this->tupas_shop_token = MODULE_PAYMENT_SWPINVOICE_TUPAS_SHOP_TOKEN;
+        
+        if ($this->tupas_settings_changed()) {
+            $this->editShopInstance();
+        }
         
         if (is_object($order)) $this->update_status();
     }
@@ -37,9 +43,10 @@ class sveawebpay_invoice extends SveaOsCommerce {
 
         /* Tupas modification -- Returning from Tupas API? [BEGINS] */
         if (isset($_GET['succ']) && isset($_GET['stoken']) && isset($_GET['hash'])) {
-            $return = $this->checkTapiReturn($_GET['succ'], $_GET['stoken'], $_GET['hash'], (isset($_GET['ssn'])) ? $_GET['ssn'] : null, (isset($_GET['name'])) ? $_GET['name'] : null);
+            $return = $this->checkTapiReturn($_GET['succ'], $_GET['cart_id'], $_GET['stoken'], $_GET['hash'], (isset($_GET['ssn'])) ? $_GET['ssn'] : null, (isset($_GET['name'])) ? $_GET['name'] : null);
             if ($return) {
                 if ($return['ok'] === true && $return['ssn']) { // If everything is fine, store variables into session
+                    $_SESSION['TUPAS_IV_CARTID'] = $return['cartid'];
                     $_SESSION['TUPAS_IV_SSN'] = $return['ssn'];
                     $_SESSION['TUPAS_IV_NAME'] = $return['name'];
                     $_SESSION['TUPAS_IV_HASH'] = $return['hash'];
@@ -226,7 +233,7 @@ class sveawebpay_invoice extends SveaOsCommerce {
         }
         
         // add information about invoice if invoice fee module enabled
-        if ( constant( MODULE_ORDER_TOTAL_SWPHANDLING_STATUS ) == 'True' ) {
+        if ( @constant( MODULE_ORDER_TOTAL_SWPHANDLING_STATUS ) == 'True' ) {
             $paymentfee_cost = constant( "MODULE_ORDER_TOTAL_SWPHANDLING_HANDLING_FEE_".$customer_country );
 
             $tax_class = constant( "MODULE_ORDER_TOTAL_SWPHANDLING_TAX_CLASS_".$customer_country );
@@ -549,7 +556,9 @@ class sveawebpay_invoice extends SveaOsCommerce {
                 tep_redirect(tep_href_link(FILENAME_CHECKOUT_PAYMENT, 'payment_error='.$this->code));
             }
         }    
-        /* Tupas modification [ENDS] */        
+        // For testing interface we must use this testing ssn (not real ssn's)
+        // $swp_order->customerIdentity->ssn = '160264-999N';
+        /* Tupas modification [ENDS] */ 
 
         // send payment request to svea, receive response       
         try {
@@ -682,11 +691,10 @@ class sveawebpay_invoice extends SveaOsCommerce {
         if (!$response) {
             die("Could not create a shop instance to Tupas API."); // @todo :: Improve error handling (but how?)
         }
-        tep_db_query($common . ", set_function) values ('Tupas Shop ID', 'MODULE_PAYMENT_SWPINVOICE_TUPAS_SHOP_ID', '{$response->id}', '', '6', '0', now(), 'tep_cfg_select_option(array(\'{$response->id}\'), ')");    
-        tep_db_query($common . ", set_function) values ('Tupas Shop Token', 'MODULE_PAYMENT_SWPINVOICE_TUPAS_SHOP_TOKEN', '{$token}', '', '6', '0', now(), 'tep_cfg_select_option(array(\'{$token}\'), ')");
-        tep_db_query($common . ", set_function) values ('Tupas API Token', 'MODULE_PAYMENT_SWPINVOICE_TUPAS_API_TOKEN', '{$response->api_token}', '', '6', '0', now(), 'tep_cfg_select_option(array(\'{$response->api_token}\'), ')");    
+        tep_db_query($common . ", set_function) values ('Tupas mode', 'MODULE_PAYMENT_SWPINVOICE_TUPAS_MODE', 'test', 'Tupas mode (test or production)', '6', '0', now(), 'tep_cfg_select_option(array(\'test\', \'production\'), ')");
+        tep_db_query($common . ") values ('Tupas Shop Token', 'MODULE_PAYMENT_SWPINVOICE_TUPAS_SHOP_TOKEN', '{$token}', 'Shop token (can be occasionally changed for better security)', '6', '0', now())");
         tep_db_query($common . ", set_function) values ('SveaWebPay Use Tupas (FI)', 'MODULE_PAYMENT_SWPINVOICE_USETUPAS_FI', 'True', 'Check customers social security number using TUPAS -authentication (only for finnish customers)', '6', '0', now(), 'tep_cfg_select_option(array(\'True\', \'False\'), ')");
-        /* Tupas mod [ENDS] */    
+        /* Tupas mod [ENDS] */
         tep_db_query($common . ", set_function) values ('Enable SveaWebPay Invoice Module', 'MODULE_PAYMENT_SWPINVOICE_STATUS', 'True', 'Do you want to accept SveaWebPay payments?', '6', '0', now(), 'tep_cfg_select_option(array(\'True\', \'False\'), ')");
         tep_db_query($common . ") values ('SveaWebPay Username SE', 'MODULE_PAYMENT_SWPINVOICE_USERNAME_SE', '', 'Username for SveaWebPay Invoice Sweden', '6', '0', now())");
         tep_db_query($common . ") values ('SveaWebPay Password SE', 'MODULE_PAYMENT_SWPINVOICE_PASSWORD_SE', '', 'Password for SveaWebPay Invoice Sweden', '6', '0', now())");
@@ -724,7 +732,7 @@ class sveawebpay_invoice extends SveaOsCommerce {
             $sql = "CREATE TABLE svea_order (orders_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, sveaorderid INT NOT NULL, createorder_object BLOB, invoice_id INT )";
             tep_db_query( $sql );
         }
-
+        
         // insert svea order statuses into table order_status, if not exists already
         $res = tep_db_query('SELECT COUNT(*) FROM ' . TABLE_ORDERS_STATUS . ' WHERE orders_status_name = "'. SVEA_ORDERSTATUS_CLOSED .'"');
         $fields = $res->fetch_assoc();
@@ -735,6 +743,15 @@ class sveawebpay_invoice extends SveaOsCommerce {
             //tep_db_query( $sql );
         }        
         
+        /* Tupas mod, create table to hold "static" tupas configuration data */
+        $fields = tep_db_query("SELECT COUNT(*) as rows FROM information_schema.tables WHERE table_schema = '". DB_DATABASE ."' AND table_name = 'svea_tupas';")->fetch_assoc();
+        if ($fields['rows'] == '0') {
+            tep_db_query("CREATE TABLE svea_tupas (id INT NOT NULL AUTO_INCREMENT, shop_id INT NOT NULL, api_token VARCHAR(45) NOT NULL, payment_module VARCHAR(45) NOT NULL,
+                previous_mode VARCHAR(10) NOT NULL, previous_shop_token VARCHAR(45) NOT NULL, PRIMARY KEY (`id`, `payment_module`), UNIQUE INDEX `pm_uniq` (`payment_module` ASC) )");
+        }
+        tep_db_query("INSERT INTO svea_tupas (shop_id, api_token, payment_module, previous_mode, previous_shop_token) VALUES ('{$response->id}', '{$response->api_token}', 'INVOICE', 'test', '{$token}') 
+            ON DUPLICATE KEY UPDATE shop_id = '{$response->id}', api_token = '{$response->api_token}', previous_mode = 'test', previous_shop_token = '{$token}';");
+        /* ends */
     }
 
     // standard uninstall function
@@ -782,9 +799,8 @@ class sveawebpay_invoice extends SveaOsCommerce {
             'MODULE_PAYMENT_SWPINVOICE_SORT_ORDER',
             // Tupas API related fields
             'MODULE_PAYMENT_SWPINVOICE_USETUPAS_FI',
-            'MODULE_PAYMENT_SWPINVOICE_TUPAS_SHOP_ID', 
+            'MODULE_PAYMENT_SWPINVOICE_TUPAS_MODE',
             'MODULE_PAYMENT_SWPINVOICE_TUPAS_SHOP_TOKEN', 
-            'MODULE_PAYMENT_SWPINVOICE_TUPAS_API_TOKEN' 
         );
     }
 
@@ -964,7 +980,7 @@ class sveawebpay_invoice extends SveaOsCommerce {
         $shop_info = array(
             'name' => STORE_NAME,
             'shop_token' => $shop_token,
-            'mode' => 'production',
+            'mode' => 'test',
             'url' => HTTP_CATALOG_SERVER . DIR_WS_CATALOG
             );
         $data = array('json' => json_encode($shop_info));
@@ -989,14 +1005,14 @@ class sveawebpay_invoice extends SveaOsCommerce {
     
     // admin uninstalls invoice module; sets shop at Tupas API inactive
     function removeShopInstance() { 
-        $shop_id_row = tep_db_fetch_array(tep_db_query("SELECT configuration_value FROM " . TABLE_CONFIGURATION . " WHERE configuration_key = 'MODULE_PAYMENT_SWPINVOICE_TUPAS_SHOP_ID'"));
-        $shop_token_row = tep_db_fetch_array(tep_db_query("SELECT configuration_value FROM " . TABLE_CONFIGURATION . " WHERE configuration_key = 'MODULE_PAYMENT_SWPINVOICE_TUPAS_SHOP_TOKEN'"));
-        $api_token_row = tep_db_fetch_array(tep_db_query("SELECT configuration_value FROM " . TABLE_CONFIGURATION . " WHERE configuration_key = 'MODULE_PAYMENT_SWPINVOICE_TUPAS_API_TOKEN'"));
+        $shop_id = $this->getShopId();
+        $shop_token = $this->tupas_shop_token;
+        $api_token = $this->getApiToken();
         
         $data = array(
             'json' => json_encode(array(
-                'shop_token' => $shop_token_row['configuration_value'], 
-                'hash' => hash('sha256', $shop_token_row['configuration_value'].$api_token_row['configuration_value'])
+                'shop_token' => $shop_token, 
+                'hash' => hash('sha256', $shop_token.$api_token)
                 ))
             );
         $params = array(
@@ -1005,7 +1021,7 @@ class sveawebpay_invoice extends SveaOsCommerce {
                 'header' => "Content-type: application/x-www-form-urlencoded\r\n",
                 'content' => http_build_query($data)));
         $context = stream_context_create($params);
-        $fp = @fopen($this->tupasapiurl."/".$shop_id_row['configuration_value'], 'rb', false, $context);
+        $fp = @fopen($this->tupasapiurl."/".$shop_id, 'rb', false, $context);
         if (!$fp) {
             return false;
         }
@@ -1022,9 +1038,14 @@ class sveawebpay_invoice extends SveaOsCommerce {
     }
     
     function getApiToken() {
-        $api_token_row = tep_db_fetch_array(tep_db_query("SELECT configuration_value FROM " . TABLE_CONFIGURATION . " WHERE configuration_key = 'MODULE_PAYMENT_SWPINVOICE_TUPAS_API_TOKEN'"));
-        return $api_token_row['configuration_value'];
-    }  
+        $api_token_row = tep_db_fetch_array(tep_db_query("SELECT api_token FROM svea_tupas WHERE payment_module = 'INVOICE'"));
+        return $api_token_row['api_token'];
+    }
+    
+    function getShopId() {
+        $shop_id_row = tep_db_fetch_array(tep_db_query("SELECT shop_id FROM svea_tupas WHERE payment_module = 'INVOICE'"));
+        return $shop_id_row['shop_id'];
+    }
     
     function getAuthenticationParams() { // shop user wants to authenticate, pass the params to go to api with
         global $cart;
@@ -1039,18 +1060,19 @@ class sveawebpay_invoice extends SveaOsCommerce {
         return $params;
     }
     
-    function checkTapiReturn($success, $stoken, $hash, $ssn=null, $name=null) {
+    function checkTapiReturn($success, $cart_id, $stoken, $hash, $ssn=null, $name=null) {
         // First check that it was partpayment instance
         if ($this->getShopToken() == $stoken) {
             if ($success == '1') {
                 $mac_base = $this->getShopToken() . '|' .
                             '1' . '|' .
+                            $cart_id . '|' .
                             $ssn . '|' .
                             $name . '|' .
                             $this->getApiToken();
                 $calculated_hash = strtoupper(hash('sha256', $mac_base));
                 if ($calculated_hash == $hash) { // OK
-                    return array('ok' => true, 'ssn' => $ssn, 'name' => $name, 'hash' => $hash);
+                    return array('ok' => true, 'ssn' => $ssn, 'name' => $name, 'hash' => $hash, 'cartid' => $cart_id);
                 } else {
                     return array('ok' => false);
                 }
@@ -1058,7 +1080,7 @@ class sveawebpay_invoice extends SveaOsCommerce {
                 return array('ok' => true, 'ssn' => null);
             }
         } else {
-            // Stokens didn't match, maybe invoice or 'hacking' attempt.
+            // Stokens didn't match
             return false;
         }
     }
@@ -1068,6 +1090,7 @@ class sveawebpay_invoice extends SveaOsCommerce {
         if ($_SESSION['TUPAS_IV_SSN']) {
             $mac_base = $this->getShopToken() . '|' .
                         '1' . '|' .
+                        $_SESSION['TUPAS_IV_CARTID'] . '|' .
                         $_SESSION['TUPAS_IV_SSN'] . '|' .
                         $_SESSION['TUPAS_IV_NAME'] . '|' .
                         $this->getApiToken();
@@ -1077,6 +1100,44 @@ class sveawebpay_invoice extends SveaOsCommerce {
             }
         }
         return $ssn;
+    }
+    
+    /*
+     * Check if the settings have been changed by the user. Returns boolean.
+     */
+    function tupas_settings_changed() {
+        $pvrow = tep_db_fetch_array(tep_db_query("SELECT previous_mode, previous_shop_token FROM svea_tupas WHERE payment_module = 'INVOICE'"));
+        return ($pvrow['previous_shop_token'] != $this->tupas_shop_token || $pvrow['previous_mode'] != $this->tupas_mode) ? true : false;
+    }
+    
+    function get_previous($col='shop_token'){
+        $pvrow = tep_db_fetch_array(tep_db_query("SELECT previous_{$col} AS prev FROM svea_tupas WHERE payment_module = 'INVOICE'"));
+        return ($pvrow['prev']);
+    }
+    
+    function editShopInstance() {
+        $previous_shop_token = $this->get_previous('shop_token');
+        $shop_id = $this->getShopId();
+        
+        // Perform a request
+        $shop_info = array(
+             'shop_token' => $this->tupas_shop_token,
+             'mode' => $this->tupas_mode,
+             'hash' => hash('sha256', $previous_shop_token . $this->getApiToken()));
+        $data = array('json' => json_encode($shop_info));
+        $params = array(
+             'http' => array(
+                 'method' => 'POST',
+                 'header' => "Content-type: application/x-www-form-urlencoded\r\n",
+                 'content' => http_build_query($data)));
+        $context = stream_context_create($params);
+        $fp = fopen($this->tupasapiurl."/".$shop_id, 'rb', false, $context);
+        $response = json_decode(stream_get_contents($fp));
+        
+        // And update previous values to current ones saved in tupas table
+        if ($response->status->code === 200) {
+            tep_db_query("UPDATE svea_tupas SET previous_shop_token = '{$this->tupas_shop_token}', previous_mode = '{$this->tupas_mode}' WHERE payment_module = 'INVOICE'");
+        }
     }
   /* Tupas modification [END] */
     

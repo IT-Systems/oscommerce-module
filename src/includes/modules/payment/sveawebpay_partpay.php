@@ -29,7 +29,13 @@ class sveawebpay_partpay extends SveaOsCommerce {
     // Tupas API related 
     $this->tupasapiurl = 'http://www4.it-systems.fi/svea/tupasapi/shops';
     $this->usetupas = ((MODULE_PAYMENT_SWPPARTPAY_USETUPAS_FI == 'True') ? true : false);
-    
+    $this->tupas_mode = MODULE_PAYMENT_SWPPARTPAY_TUPAS_MODE;
+    $this->tupas_shop_token = MODULE_PAYMENT_SWPPARTPAY_TUPAS_SHOP_TOKEN;
+
+    if ($this->tupas_settings_changed()) {
+        $this->editShopInstance();
+    }
+        
     if (is_object($order)) $this->update_status();
   }
 
@@ -38,9 +44,10 @@ class sveawebpay_partpay extends SveaOsCommerce {
 
         /* Tupas modification [BEGINS] */
         if (isset($_GET['succ']) && isset($_GET['stoken']) && isset($_GET['hash'])) { // Coming from Tupas API ?
-            $return = $this->checkTapiReturn($_GET['succ'], $_GET['stoken'], $_GET['hash'], (isset($_GET['ssn'])) ? $_GET['ssn'] : null, (isset($_GET['name'])) ? $_GET['name'] : null);
+            $return = $this->checkTapiReturn($_GET['succ'], $_GET['cart_id'], $_GET['stoken'], $_GET['hash'], (isset($_GET['ssn'])) ? $_GET['ssn'] : null, (isset($_GET['name'])) ? $_GET['name'] : null);
             if ($return) {
                 if ($return['ok'] === true && $return['ssn']) {
+                    $_SESSION['TUPAS_PP_CARTID'] = $return['cartid'];
                     $_SESSION['TUPAS_PP_SSN'] = $return['ssn'];
                     $_SESSION['TUPAS_PP_NAME'] = $return['name'];
                     $_SESSION['TUPAS_PP_HASH'] = $return['hash'];
@@ -145,11 +152,12 @@ class sveawebpay_partpay extends SveaOsCommerce {
 
         if( ($customer_country == 'FI') )
         {
+            
            // input text field for individual/company SSN, without getAddresses hook
             $sveaSSNFIPP =        FORM_TEXT_SS_NO . '<br /><input type="text" name="sveaSSNFIPP" id="sveaSSNFIPP" maxlength="11" ';
             if ($this->usetupas === true) $sveaSSNFIPP.= 'value="' . $this->getSsn() . '" readonly="readonly" ';
             $sveaSSNFIPP.= '/>';
-            
+
             /* Tupas mod [BEGINS] */
             if ($this->usetupas === true && !$_SESSION['TUPAS_PP_SSN']) {
                 $_SESSION['TUPAS_PP_SSN'] = null; // Init ssn and other params
@@ -656,9 +664,8 @@ class sveawebpay_partpay extends SveaOsCommerce {
         if (!$response) {
             die("Could not create a shop instance to Tupas API."); // @todo :: Improve error handling (maybe)
         }
-        tep_db_query($common . ", set_function) values ('Tupas Shop ID', 'MODULE_PAYMENT_SWPPARTPAY_TUPAS_SHOP_ID', '{$response->id}', '', '6', '0', now(), 'tep_cfg_select_option(array(\'{$response->id}\'), ')");
-        tep_db_query($common . ", set_function) values ('Tupas Shop Token', 'MODULE_PAYMENT_SWPPARTPAY_TUPAS_SHOP_TOKEN', '{$token}', '', '6', '0', now(), 'tep_cfg_select_option(array(\'{$token}\'), ')");
-        tep_db_query($common . ", set_function) values ('Tupas API Token', 'MODULE_PAYMENT_SWPPARTPAY_TUPAS_API_TOKEN', '{$response->api_token}', '', '6', '0', now(), 'tep_cfg_select_option(array(\'{$response->api_token}\'), ')");
+        tep_db_query($common . ", set_function) values ('Tupas mode', 'MODULE_PAYMENT_SWPPARTPAY_TUPAS_MODE', 'test', 'Tupas mode (test or production)', '6', '0', now(), 'tep_cfg_select_option(array(\'test\', \'production\'), ')");
+        tep_db_query($common . ") values ('Tupas Shop Token', 'MODULE_PAYMENT_SWPPARTPAY_TUPAS_SHOP_TOKEN', '{$token}', 'Shop token (can be occasionally changed for better security)', '6', '0', now())");
         tep_db_query($common . ", set_function) values ('SveaWebPay Use Tupas (FI)', 'MODULE_PAYMENT_SWPPARTPAY_USETUPAS_FI', 'True', 'Check customers social security number using TUPAS -authentication (only for finnish customers)', '6', '0', now(), 'tep_cfg_select_option(array(\'True\', \'False\'), ')");
         /* Tupas modification [ENDS] */   
         
@@ -718,6 +725,17 @@ class sveawebpay_partpay extends SveaOsCommerce {
 //            ;
 //            tep_db_query( $sql );
 //        }     
+        
+        /* Tupas mod, create table to hold "static" tupas configuration data */
+        $fields = tep_db_query("SELECT COUNT(*) as rows FROM information_schema.tables WHERE table_schema = '". DB_DATABASE ."' AND table_name = 'svea_tupas';")->fetch_assoc();
+        if ($fields['rows'] == '0') {
+            tep_db_query("CREATE TABLE svea_tupas (id INT NOT NULL AUTO_INCREMENT, shop_id INT NOT NULL, api_token VARCHAR(45) NOT NULL, payment_module VARCHAR(45) NOT NULL,
+                previous_mode VARCHAR(10) NOT NULL, previous_shop_token VARCHAR(45) NOT NULL, PRIMARY KEY (`id`, `payment_module`), UNIQUE INDEX `pm_uniq` (`payment_module` ASC) )");
+        }
+        tep_db_query("INSERT INTO svea_tupas (shop_id, api_token, payment_module, previous_mode, previous_shop_token) VALUES ('{$response->id}', '{$response->api_token}', 'PARTPAY', 'test', '{$token}') 
+            ON DUPLICATE KEY UPDATE shop_id = '{$response->id}', api_token = '{$response->api_token}', previous_mode = 'test', previous_shop_token = '{$token}';");
+        /* ends */
+            
     }
 
     // standard uninstall function
@@ -775,9 +793,8 @@ class sveawebpay_partpay extends SveaOsCommerce {
             'MODULE_PAYMENT_SWPPARTPAY_SORT_ORDER',
             // Tupas API related fields
             'MODULE_PAYMENT_SWPPARTPAY_USETUPAS_FI',
-            'MODULE_PAYMENT_SWPPARTPAY_TUPAS_SHOP_ID',
-            'MODULE_PAYMENT_SWPPARTPAY_TUPAS_SHOP_TOKEN',
-            'MODULE_PAYMENT_SWPPARTPAY_TUPAS_API_TOKEN'
+            'MODULE_PAYMENT_SWPPARTPAY_TUPAS_MODE',
+            'MODULE_PAYMENT_SWPPARTPAY_TUPAS_SHOP_TOKEN'
         );
     }
 
@@ -966,7 +983,7 @@ class sveawebpay_partpay extends SveaOsCommerce {
         $shop_info = array(
             'name' => STORE_NAME,
             'shop_token' => $shop_token,
-            'mode' => 'production',
+            'mode' => 'test',
             'url' => HTTP_CATALOG_SERVER . DIR_WS_CATALOG
             );
         $data = array('json' => json_encode($shop_info));
@@ -990,14 +1007,14 @@ class sveawebpay_partpay extends SveaOsCommerce {
     }  
 
     function removeShopInstance() {
-        $shop_id_row = tep_db_fetch_array(tep_db_query("SELECT configuration_value FROM " . TABLE_CONFIGURATION . " WHERE configuration_key = 'MODULE_PAYMENT_SWPPARTPAY_TUPAS_SHOP_ID'"));
-        $shop_token_row = tep_db_fetch_array(tep_db_query("SELECT configuration_value FROM " . TABLE_CONFIGURATION . " WHERE configuration_key = 'MODULE_PAYMENT_SWPPARTPAY_TUPAS_SHOP_TOKEN'"));
-        $api_token_row = tep_db_fetch_array(tep_db_query("SELECT configuration_value FROM " . TABLE_CONFIGURATION . " WHERE configuration_key = 'MODULE_PAYMENT_SWPPARTPAY_TUPAS_API_TOKEN'"));
+        $shop_id = $this->getShopId();
+        $shop_token = $this->tupas_shop_token;
+        $api_token = $this->getApiToken();
 
         $data = array(
             'json' => json_encode(array(
-                'shop_token' => $shop_token_row['configuration_value'],
-                'hash' => hash('sha256', $shop_token_row['configuration_value'].$api_token_row['configuration_value'])
+                'shop_token' => $shop_token, 
+                'hash' => hash('sha256', $shop_token.$api_token)
                 ))
             );
         // We can't be sure that cUrl is installed so use php's native methods
@@ -1008,7 +1025,7 @@ class sveawebpay_partpay extends SveaOsCommerce {
                 'content' => http_build_query($data)));
         $context = stream_context_create($params);
 
-        $fp = @fopen($this->tupasapiurl . "/" . $shop_id_row['configuration_value'], 'rb', false, $context);
+        $fp = @fopen($this->tupasapiurl."/".$shop_id, 'rb', false, $context);
         if (!$fp) {
             return false;
         }
@@ -1026,9 +1043,14 @@ class sveawebpay_partpay extends SveaOsCommerce {
     }
     
     function getApiToken() {
-        $api_token_row = tep_db_fetch_array(tep_db_query("SELECT configuration_value FROM " . TABLE_CONFIGURATION . " WHERE configuration_key = 'MODULE_PAYMENT_SWPPARTPAY_TUPAS_API_TOKEN'"));
-        return $api_token_row['configuration_value'];
-    }    
+        $api_token_row = tep_db_fetch_array(tep_db_query("SELECT api_token FROM svea_tupas WHERE payment_module = 'PARTPAY'"));
+        return $api_token_row['api_token'];
+    }
+    
+    function getShopId() {
+        $shop_id_row = tep_db_fetch_array(tep_db_query("SELECT shop_id FROM svea_tupas WHERE payment_module = 'PARTPAY'"));
+        return $shop_id_row['shop_id'];
+    }
     
     function getAuthenticationParams() {
         global $cart;
@@ -1043,18 +1065,19 @@ class sveawebpay_partpay extends SveaOsCommerce {
         return $params;
     }
     
-    function checkTapiReturn($success, $stoken, $hash, $ssn=null, $name=null) {
+    function checkTapiReturn($success, $cart_id, $stoken, $hash, $ssn=null, $name=null) {
         // First check that it was partpayment instance
         if ($this->getShopToken() == $stoken) {
             if ($success == '1') {
                 $mac_base = $this->getShopToken() . '|' .
                             '1' . '|' .
+                            $cart_id . '|' .
                             $ssn . '|' .
                             $name . '|' .
                             $this->getApiToken();
                 $calculated_hash = strtoupper(hash('sha256', $mac_base));
                 if ($calculated_hash == $hash) { // OK
-                    return array('ok' => true, 'ssn' => $ssn, 'name' => $name, 'hash' => $hash);
+                    return array('ok' => true, 'ssn' => $ssn, 'name' => $name, 'hash' => $hash, 'cartid' => $cart_id);
                 } else {
                     return array('ok' => false);
                 }
@@ -1072,6 +1095,7 @@ class sveawebpay_partpay extends SveaOsCommerce {
         if ($_SESSION['TUPAS_PP_SSN']) {
             $mac_base = $this->getShopToken() . '|' .
                         '1' . '|' .
+                        $_SESSION['TUPAS_PP_CARTID'] . '|' .
                         $_SESSION['TUPAS_PP_SSN'] . '|' .
                         $_SESSION['TUPAS_PP_NAME'] . '|' .
                         $this->getApiToken();
@@ -1080,6 +1104,45 @@ class sveawebpay_partpay extends SveaOsCommerce {
         }
         return $ssn;
     }
+    
+    /*
+     * Check if the settings have been changed by the user. Returns boolean.
+     */
+    function tupas_settings_changed() {
+        $pvrow = tep_db_fetch_array(tep_db_query("SELECT previous_mode, previous_shop_token FROM svea_tupas WHERE payment_module = 'PARTPAY'"));
+        return ($pvrow['previous_shop_token'] != $this->tupas_shop_token || $pvrow['previous_mode'] != $this->tupas_mode) ? true : false;
+    }
+    
+    function get_previous($col='shop_token'){
+        $pvrow = tep_db_fetch_array(tep_db_query("SELECT previous_{$col} AS prev FROM svea_tupas WHERE payment_module = 'PARTPAY'"));
+        return ($pvrow['prev']);
+    }
+    
+    function editShopInstance() {
+        $previous_shop_token = $this->get_previous('shop_token');
+        $shop_id = $this->getShopId();
+        
+        // Perform a request
+        $shop_info = array(
+             'shop_token' => $this->tupas_shop_token,
+             'mode' => $this->tupas_mode,
+             'hash' => hash('sha256', $previous_shop_token . $this->getApiToken()));
+        $data = array('json' => json_encode($shop_info));
+        $params = array(
+             'http' => array(
+                 'method' => 'POST',
+                 'header' => "Content-type: application/x-www-form-urlencoded\r\n",
+                 'content' => http_build_query($data)));
+        $context = stream_context_create($params);
+        $fp = fopen($this->tupasapiurl."/".$shop_id, 'rb', false, $context);
+        $response = json_decode(stream_get_contents($fp));
+        
+        // And update previous values to current ones saved in tupas table
+        if ($response->status->code === 200) {
+            tep_db_query("UPDATE svea_tupas SET previous_shop_token = '{$this->tupas_shop_token}', previous_mode = '{$this->tupas_mode}' WHERE payment_module = 'PARTPAY'");
+        }
+    }
+    
     /* Tupas modification [ENDS] */
     
 }
