@@ -828,14 +828,14 @@ class SveaOsCommerce {
     /**
      * called by invoice, partpay install() to insert the svea_tupas table into the osC database
      */
-    function insert_svea_tupas_table($payment_mode) {
+    function insert_svea_tupas_table($payment_mode, $shop_token, $response) {
         $fields = tep_db_query("SELECT COUNT(*) as rows FROM information_schema.tables WHERE table_schema = '". DB_DATABASE ."' AND table_name = 'svea_tupas';")->fetch_assoc();
         if ($fields['rows'] == '0') {
             tep_db_query("CREATE TABLE svea_tupas (id INT NOT NULL AUTO_INCREMENT, shop_id INT NOT NULL, api_token VARCHAR(45) NOT NULL, payment_module VARCHAR(45) NOT NULL,
                 previous_mode VARCHAR(10) NOT NULL, previous_shop_token VARCHAR(45) NOT NULL, PRIMARY KEY (`id`, `payment_module`), UNIQUE INDEX `pm_uniq` (`payment_module` ASC) )");
         }
-        tep_db_query("INSERT INTO svea_tupas (shop_id, api_token, payment_module, previous_mode, previous_shop_token) VALUES ('{$response->id}', '{$response->api_token}', '{$payment_mode}', 'test', '{$token}') 
-            ON DUPLICATE KEY UPDATE shop_id = '{$response->id}', api_token = '{$response->api_token}', previous_mode = 'test', previous_shop_token = '{$token}';");
+        tep_db_query("INSERT INTO svea_tupas (shop_id, api_token, payment_module, previous_mode, previous_shop_token) VALUES ('{$response->id}', '{$response->api_token}', '{$payment_mode}', 'test', '{$shop_token}') 
+            ON DUPLICATE KEY UPDATE shop_id = '{$response->id}', api_token = '{$response->api_token}', previous_mode = 'test', previous_shop_token = '{$shop_token}';");
     }
 }
 ?>

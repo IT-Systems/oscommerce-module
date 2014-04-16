@@ -725,7 +725,7 @@ class sveawebpay_invoice extends SveaOsCommerce {
 
         // insert svea order table if not exists already, or die trying
         $this->insert_svea_order_table();
-        $this->insert_svea_tupas_table('INVOICE');
+        $this->insert_svea_tupas_table('INVOICE', $token, $response);
     }
             
     // standard uninstall function
