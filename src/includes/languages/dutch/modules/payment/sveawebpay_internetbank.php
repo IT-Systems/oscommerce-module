@@ -6,7 +6,7 @@
  */
 
 define('MODULE_PAYMENT_SWPINTERNETBANK_TEXT_TITLE','Svea Directe Bankbetaling');
-define('MODULE_PAYMENT_SWPINTERNETBANK_TEXT_DESCRIPTION','Svea Directe Bankbetaling - version 5.0');
+define('MODULE_PAYMENT_SWPINTERNETBANK_TEXT_DESCRIPTION','Svea Directe Bankbetaling - version 5.1.2');
 
 define('ERROR_ALLOWED_CURRENCIES_NOT_DEFINED','Een of meer van de toegestane valutas zijn niet gedefinieerd. Dit moet zijn ingeschakeld om de Svea Directe Bankbetaling te kunnen gebruiken. Log in op je admin panel, en zorg ervoor dat u al onze valuta als toegestaan in de betaalmodule bestaan, en dat de ze juiste wisselkoersen hebben.');
 define('ERROR_DEFAULT_CURRENCY_NOT_ALLOWED','De standaard valuta is niet onder die opgenomen lijst als toegestaan. Log in op je admin panel, en zorg ervoor dat de standaard valuta in de toegestande lijst staat  van  de betaalmodule.');  

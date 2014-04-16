@@ -2,7 +2,7 @@
 /*
 SveaWEBPAY PAYMENT MODULE FOR osCOMMERCE 2.3
 -----------------------------------------------
-Swedish Version 5.0
+Swedish version 5.1.2
 */
 define('MODULE_PAYMENT_SWPINVOICE_TEXT_TITLE','Svea Faktura');
 define('MODULE_PAYMENT_SWPINVOICE_TEXT_DESCRIPTION','Svea Faktura - ver 5.0');

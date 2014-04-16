@@ -5,7 +5,7 @@
  * DK 5.0
  */
 define('MODULE_PAYMENT_SWPPARTPAY_TEXT_TITLE','Svea Delbetaling');
-define('MODULE_PAYMENT_SWPPARTPAY_TEXT_DESCRIPTION','Svea Delbetaling - vers. 5.0');
+define('MODULE_PAYMENT_SWPPARTPAY_TEXT_DESCRIPTION','Svea Delbetaling - version 5.1.2');
 
 define('ERROR_ALLOWED_CURRENCIES_NOT_DEFINED','En eller flere af de tilladte valutaer er ikke præciserede. Dette skal ske, førend Svea Delbetaling kan benyttes. Login på dit admin panel og tjek, at alle valutaer er listede som tilladt i betalingsmodulet, og at de rigtige vekselkurser er indstillede korrekt.');
 define('ERROR_DEFAULT_CURRENCY_NOT_ALLOWED','Standardvalutaen er ikke blandt de listede som tilladte. Login i dit admin panel og tjek, at standardvalutaen er på listen over tilladte valutaer i betalingsmodulet.');  
