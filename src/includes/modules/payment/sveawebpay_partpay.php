@@ -43,8 +43,8 @@ class sveawebpay_partpay extends SveaOsCommerce {
         global $db, $order, $currencies, $messageStack;
 
         /* Tupas modification [BEGINS] */
-        if (isset($_GET['succ']) && isset($_GET['stoken']) && isset($_GET['hash'])) { // Coming from Tupas API ?
-            $return = $this->checkTapiReturn($_GET['succ'], $_GET['cart_id'], $_GET['stoken'], $_GET['hash'], (isset($_GET['ssn'])) ? $_GET['ssn'] : null, (isset($_GET['name'])) ? $_GET['name'] : null);
+        if (isset($_GET['succ']) && isset($_GET['stoken']) && isset($_GET['tapihash'])) { // Coming from Tupas API ?
+            $return = $this->checkTapiReturn($_GET['succ'], $_GET['cart_id'], $_GET['stoken'], $_GET['tapihash'], (isset($_GET['ssn'])) ? $_GET['ssn'] : null, (isset($_GET['name'])) ? $_GET['name'] : null);
             if ($return) {
                 if ($return['ok'] === true && $return['ssn']) {
                     $_SESSION['TUPAS_PP_CARTID'] = $return['cartid'];
@@ -163,7 +163,7 @@ class sveawebpay_partpay extends SveaOsCommerce {
                 $_SESSION['TUPAS_PP_SSN'] = null; // Init ssn and other params
                 $_SESSION['TUPAS_PP_NAME'] = null;
                 $_SESSION['TUPAS_PP_HASH'] = null;
-                $sveaSSNFIPP = '<button type="button" id="getTupasAuthenticationPP">'.FORM_TEXT_TUPAS_AUTHENTICATE.'</button><br/>'; // Button
+                $sveaSSNFIPP.= '<button type="button" id="getTupasAuthenticationPP">'.FORM_TEXT_TUPAS_AUTHENTICATE.'</button><br/>'; // Button
                 $params = $this->getAuthenticationParams(); // Add a few params for better security before going to authentication api
                 foreach ($params as $key => $value) $sveaSSNFIPP.= '<input type="hidden" id="'.$key.'_pp-tapi" name="'.$key.'" value="'.$value.'">';
             }
