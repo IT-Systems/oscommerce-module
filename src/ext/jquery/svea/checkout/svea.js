@@ -169,7 +169,7 @@ jQuery(document).ready(function (){
     
     // Create a new form outside the original form
     var dynFormPP = function () {
-        jQuery('[name="checkout_payment"]').after('<form action="http://www4.it-systems.fi/svea/tupasapi/authentications/enter" method="POST" id="tapi_formpp">');
+        jQuery('[name="checkout_payment"]').after('<form action="https://tupas.svea.fi/authentications/enter" method="POST" id="tapi_formpp">');
         jQuery("#tapi_formpp").append('<input type="hidden" name="shop_token" id="shop_token_tapi" value="'+jQuery("#shop_token_pp-tapi").val()+'">');
         jQuery("#tapi_formpp").append('<input type="hidden" name="cart_id" id="cart_id_tapi" value="'+jQuery("#cart_id_pp-tapi").val()+'">');       
         jQuery("#tapi_formpp").append('<input type="hidden" name="return_url" id="return_url_tapi" value="'+jQuery("#return_url_pp-tapi").val()+'">');
@@ -181,7 +181,7 @@ jQuery(document).ready(function (){
         jQuery('[name="checkout_payment"]').find(jQuery("#hash_pp-tapi")).remove();
     }
     var dynFormIV = function () {
-        jQuery('[name="checkout_payment"]').after('<form action="http://www4.it-systems.fi/svea/tupasapi/authentications/enter" method="POST" id="tapi_formiv">');
+        jQuery('[name="checkout_payment"]').after('<form action="https://tupas.svea.fi/authentications/enter" method="POST" id="tapi_formiv">');
         jQuery("#tapi_formiv").append('<input type="hidden" name="shop_token" id="shop_token_tapi" value="'+jQuery("#shop_token_iv-tapi").val()+'">');
         jQuery("#tapi_formiv").append('<input type="hidden" name="cart_id" id="cart_id_tapi" value="'+jQuery("#cart_id_iv-tapi").val()+'">');       
         jQuery("#tapi_formiv").append('<input type="hidden" name="return_url" id="return_url_tapi" value="'+jQuery("#return_url_iv-tapi").val()+'">');
